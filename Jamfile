@@ -1,0 +1,14 @@
+C++FLAGS += -std=c++11 ;
+LINK = c++ ;
+
+Main aed512 :
+	68B21.cpp
+	68B50.cpp
+	aedbus.cpp
+	clk.cpp
+	main.cpp
+	mapper.cpp
+	peripheral.cpp
+	ram.cpp
+	rom.cpp
+	;

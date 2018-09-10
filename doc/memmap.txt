@@ -1,0 +1,28 @@
+0x0000 - 0x001f U286 
+	00 - 03 PIA0
+	04 - 07 PIA1
+	08 - 0b PIA2
+	0c - 0f ACIA
+	10 - 13 DA
+	14 - 17 STX+Y
+	18 - 1b DISPACC + DISPACCI#
+	1b - 1f DISPACC
+0x0020 - 0x0027 U290
+	20 - NC
+	21 - LSPIXCNT
+	22 - MSPIXCNT
+	23 - WRITEMASK
+	24 - MISCBITS
+	25 - PCONT
+	26 - XSLATCH
+	27 - YSLATCH
+0x0028 - 0x002b U322 
+	28 - PLSW / PLSR
+	29 - PMSW / PMSR
+	2a - ADRE / RDMISC
+	2b - ADRF / no_assignment
+0x0d00 - 0x27FF RAM 
+0x1cxx RED LUT (3cxx(w) 8xx(r) on AED767)
+0x1dxx GREEN LUT (3dxx(w) 9xx(r) on AED767)
+0x1exx BLUE LUT (3exx(w) axx(r) on AED767)
+0xc000 - 0xffff ROM
