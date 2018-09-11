@@ -10,7 +10,7 @@
 
 uint8_t
 M68B21::read(int offset) {
-    uint8_t result = _store[offset];
+    uint8_t result = random() & 0xff; //_store[offset];
     return result;
 }
 
