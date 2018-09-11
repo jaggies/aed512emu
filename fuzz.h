@@ -1,0 +1,34 @@
+/*
+ * fuzz.h
+ *
+ *  Created on: Sep 10, 2018
+ *      Author: jmiller
+ */
+
+#ifndef FUZZ_H_
+#define FUZZ_H_
+
+#include "peripheral.h"
+
+// A class for fuzzing peripherals to allow the device to boot.
+// It returns random data to allow the code to eventually get what it's
+// looking for.
+class Fuzz: public Peripheral {
+    public:
+        Fuzz(int start, int size, const std::string& name = "RAM")
+                : Peripheral(start, size, name) { }
+        virtual ~Fuzz() = default;
+
+        // Reads peripheral register at offset
+        uint8_t read(int offset) override { return random() & 0xff; }
+
+        // Writes peripheral register at offset
+        void write(int offset, uint8_t value) override { }
+
+        // Reset to initial state
+        void reset() override {
+            // TODO
+        }
+};
+
+#endif /* FUZZ_H_ */

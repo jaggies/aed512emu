@@ -6,6 +6,7 @@ Main aed512 :
 	68B50.cpp
 	aedbus.cpp
 	clk.cpp
+	fuzz.cpp
 	main.cpp
 	mapper.cpp
 	peripheral.cpp
