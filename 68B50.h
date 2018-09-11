@@ -14,7 +14,7 @@
 class M68B50: public Peripheral {
     public:
         M68B50(int start, const std::string& name = "68B21")
-                : Peripheral(start, 4, name), _store(4, 0) { };
+                : Peripheral(start, 2, name), _store(2, 0) { };
         virtual ~M68B50() = default;
 
         // Reads peripheral register at offset
