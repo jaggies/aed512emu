@@ -23,6 +23,9 @@ static const size_t RAM_START = 0x00; // TODO
 static const size_t RAM_SIZE = 5 * 1024; // RAM
 static const size_t CPU_MEM = 64 * 1024; // Total address space
 static const size_t VIDEO_MEM = 256 * 1024; // AED 512
+static const size_t CLUT_RED = 0x1c00;
+static const size_t CLUT_GRN = 0x1d00;
+static const size_t CLUT_BLU = 0x1e00;
 
 static std::vector<std::string> roms = {
     "rom/aed_v86_c0.bin",
@@ -53,9 +56,15 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _videoMemory(VIDEO_MEM, 0xff) {
     _mapper.add(new M68B21(0x00, "PIA0"));
     _mapper.add(new M68B21(0x04, "PIA1"));
     _mapper.add(new M68B21(0x08, "PIA2"));
+    _mapper.add(new M68B50(0x0c, "SIO0"));
+    _mapper.add(new M68B50(0x0e, "SIO1"));
     _mapper.add(new Fuzz(0x2a, 1, "FUZZ"));
+    _mapper.add(new Unknown(0x10, 0x20, "DEBUG"));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
     _mapper.add(new Ram(RAM_START, RAM_SIZE - RAM_START));
+    _mapper.add(new Ram(CLUT_RED, 0x100, "RED"));
+    _mapper.add(new Ram(CLUT_GRN, 0x100, "GRN"));
+    _mapper.add(new Ram(CLUT_BLU, 0x100, "BLU"));
     _mapper.add(new Unknown(0, CPU_MEM));
 
     std::cerr << std::hex; // dump in hex
