@@ -150,8 +150,8 @@ struct CPU6502
 
     void irq()
     {
-        stack_push((pc + 0) >> 8);
-        stack_push((pc + 0) & 0xFF);
+        stack_push((pc - 1) >> 8);
+        stack_push((pc - 1) & 0xFF);
         stack_push(p);
         pc = bus.read(0xFFFE) + bus.read(0xFFFF) * 256;
         exception = NONE;
@@ -159,8 +159,8 @@ struct CPU6502
 
     void nmi()
     {
-        stack_push((pc + 0) >> 8);
-        stack_push((pc + 0) & 0xFF);
+        stack_push((pc - 1) >> 8);
+        stack_push((pc - 1) & 0xFF);
         stack_push(p);
         pc = bus.read(0xFFFA) + bus.read(0xFFFB) * 256;
         exception = NONE;
