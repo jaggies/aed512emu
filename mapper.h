@@ -47,12 +47,14 @@ class Mapper: public Peripheral {
             }
         }
 
+        // Resets all peripherals
         void reset() override {
             for (Peripheral* p : _peripherals) {
                 p->reset();
             }
         }
 
+        // Adds a peripheral and mapping
         void add(Peripheral* p) {
             _peripherals.push_back(p);
         }
