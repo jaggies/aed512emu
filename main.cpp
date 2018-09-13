@@ -8,7 +8,7 @@ class Clock : public CLK {
     public:
         Clock() : _count(0) { }
         ~Clock() = default;
-        void add_cpu_cycles(size_t cycles) { }
+        void add_cpu_cycles(size_t cycles) { _count += cycles; }
         size_t getCount() const { return _count; }
         void reset() { _count = 0; }
     private:
