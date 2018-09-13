@@ -15,24 +15,43 @@
 #include "unknown.h"
 #include "fuzz.h"
 
-static const size_t RAM_START = 0x00; // TODO
+static std::vector<std::string> aed512roms = {
+    "rom/512/aed_v86_c0.bin",
+    "rom/512/aed_v86_c8.bin",
+    "rom/512/aed_v86_d0.bin",
+    "rom/512/aed_v86_d8.bin",
+    "rom/512/aed_v86_e0.bin",
+    "rom/512/aed_v86_e8.bin",
+    "rom/512/aed_v86_f0.bin",
+    "rom/512/aed_v86_f8.bin"
+};
+
+static std::vector<std::string> aed767roms = {
+    "rom/767/890037-05_a325.bin",
+    "rom/767/890037-04_a326.bin",
+    "rom/767/890037-03_a327.bin",
+    "rom/767/890037-02_a328.bin",
+    "rom/767/890037-01_a329.bin"
+};
+
+#ifdef AED767
+static std::vector<std::string>& roms = aed767roms;
+static const size_t RAM_SIZE = 10 * 1024; // RAM
+static const size_t CLUT_RED = 0x3c00;
+static const size_t CLUT_GRN = 0x3d00;
+static const size_t CLUT_BLU = 0x3e00;
+#else
+static std::vector<std::string>& roms = aed512roms;
 static const size_t RAM_SIZE = 5 * 1024; // RAM
-static const size_t CPU_MEM = 64 * 1024; // Total address space
-static const size_t VIDEO_MEM = 256 * 1024; // AED 512
 static const size_t CLUT_RED = 0x1c00;
 static const size_t CLUT_GRN = 0x1d00;
 static const size_t CLUT_BLU = 0x1e00;
+#endif
 
-static std::vector<std::string> roms = {
-    "rom/aed_v86_c0.bin",
-    "rom/aed_v86_c8.bin",
-    "rom/aed_v86_d0.bin",
-    "rom/aed_v86_d8.bin",
-    "rom/aed_v86_e0.bin",
-    "rom/aed_v86_e8.bin",
-    "rom/aed_v86_f0.bin",
-    "rom/aed_v86_f8.bin"
-};
+static const size_t RAM_START = 0x00; // TODO
+static const size_t CPU_MEM = 64 * 1024; // Total address space
+static const size_t VIDEO_MEM = 256 * 1024; // AED 512
+
 
 AedBus::AedBus() : _mapper(0, CPU_MEM), _videoMemory(VIDEO_MEM, 0xff),
             _pia0(0), _pia1(0), _pia2(0), _sio0(0), _sio1(0) {
