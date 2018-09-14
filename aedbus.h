@@ -23,8 +23,17 @@ class AedBus : public BUS {
         virtual ~AedBus();
         uint8_t read(int addr) override { return _mapper.read(addr); }
         void write(int addr, unsigned char value) override { _mapper.write(addr, value); }
-        void doVideoIrq() {
+        void doVideo() {
             _pia1->assertLine(M68B21::CB1);
+        }
+        void doSerial() {
+            uint8_t byte;
+            if (_sio0->transmit(byte)) {
+                std::cout << byte;
+            }
+            if (_sio0->transmit(byte)) {
+                std::cout << byte;
+            }
         }
     private:
         Mapper _mapper;

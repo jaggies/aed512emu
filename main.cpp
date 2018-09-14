@@ -25,7 +25,8 @@ int main(int argc, char** argv)
         cpu.cycle();
         if (!(clock.getCount() % 20000)) {
             // TODO: automate this with a signal handler. Should operate at 60Hz.
-            bus.doVideoIrq();
+            bus.doVideo();
+            bus.doSerial();
         }
     }
 }
