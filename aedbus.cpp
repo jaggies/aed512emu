@@ -16,7 +16,24 @@
 #include "unknown.h"
 #include "fuzz.h"
 
-static std::vector<std::string> aed512roms = {
+#ifdef AED767
+static const size_t RAM_SIZE = 10 * 1024; // RAM
+static const size_t CLUT_RED = 0x3c00;
+static const size_t CLUT_GRN = 0x3d00;
+static const size_t CLUT_BLU = 0x3e00;
+static std::vector<std::string> roms = {
+    "rom/767/890037-05_a325.bin",
+    "rom/767/890037-04_a326.bin",
+    "rom/767/890037-03_a327.bin",
+    "rom/767/890037-02_a328.bin",
+    "rom/767/890037-01_a329.bin"
+};
+#else
+static const size_t RAM_SIZE = 5 * 1024; // RAM
+static const size_t CLUT_RED = 0x1c00;
+static const size_t CLUT_GRN = 0x1d00;
+static const size_t CLUT_BLU = 0x1e00;
+static std::vector<std::string> roms = {
     "rom/512/aed_v86_c0.bin",
     "rom/512/aed_v86_c8.bin",
     "rom/512/aed_v86_d0.bin",
@@ -26,27 +43,6 @@ static std::vector<std::string> aed512roms = {
     "rom/512/aed_v86_f0.bin",
     "rom/512/aed_v86_f8.bin"
 };
-
-static std::vector<std::string> aed767roms = {
-    "rom/767/890037-05_a325.bin",
-    "rom/767/890037-04_a326.bin",
-    "rom/767/890037-03_a327.bin",
-    "rom/767/890037-02_a328.bin",
-    "rom/767/890037-01_a329.bin"
-};
-
-#ifdef AED767
-static std::vector<std::string>& roms = aed767roms;
-static const size_t RAM_SIZE = 10 * 1024; // RAM
-static const size_t CLUT_RED = 0x3c00;
-static const size_t CLUT_GRN = 0x3d00;
-static const size_t CLUT_BLU = 0x3e00;
-#else
-static std::vector<std::string>& roms = aed512roms;
-static const size_t RAM_SIZE = 5 * 1024; // RAM
-static const size_t CLUT_RED = 0x1c00;
-static const size_t CLUT_GRN = 0x1d00;
-static const size_t CLUT_BLU = 0x1e00;
 #endif
 
 static const size_t RAM_START = 0x00; // TODO
@@ -76,8 +72,7 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _videoMemory(VIDEO_MEM, 0xff),
     _mapper.add(_pia2 = new M68B21(0x08, "PIA2", SW2));
     _mapper.add(_sio0 = new M68B50(0x0c, "SIO0"));
     _mapper.add(_sio1 = new M68B50(0x0e, "SIO1"));
-    _mapper.add(new AedRegs(0x2a, 1, "aedregs"));
-    _mapper.add(new Unknown(0x10, 0x20, "DEBUG"));
+    _mapper.add(new AedRegs(0x00, 0x30, "aedregs"));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
     _mapper.add(new Ram(RAM_START, RAM_SIZE - RAM_START));
     _mapper.add(new Ram(CLUT_RED, 0x100, "RED"));

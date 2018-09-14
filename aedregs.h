@@ -19,16 +19,10 @@ class AedRegs: public Peripheral {
         virtual ~AedRegs() = default;
 
         // Reads peripheral register at offset
-        uint8_t read(int offset) override {
-//            std::cerr << name() << "[" << offset <<"] -> " << (int) _values[offset] << std::endl;
-            _values[offset] = ~_values[offset];
-            return _values[offset];
-        }
+        uint8_t read(int offset) override;
 
         // Writes peripheral register at offset
-        void write(int offset, uint8_t value) override {
-            _values[offset] = value;
-        }
+        void write(int offset, uint8_t value) override;
 
         // Hardware reset initializes all registers to peripheral-defined value
         void reset() override {
@@ -38,6 +32,7 @@ class AedRegs: public Peripheral {
         }
 
     private:
+        void dump(int offset, uint8_t value);
         std::vector<uint8_t> _values;
 };
 
