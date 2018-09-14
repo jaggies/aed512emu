@@ -23,10 +23,14 @@ int main(int argc, char** argv)
     cpu.reset();
     while (1) {
         cpu.cycle();
-        if (!(clock.getCount() % 20000)) {
+        if (!(clock.getCount() % 1000)) {
             // TODO: automate this with a signal handler. Should operate at 60Hz.
-            bus.doVideo();
-            bus.doSerial();
+            if (bus.doVideo()) {
+                cpu.nmi();
+            }
+            if (bus.doSerial()) {
+                cpu.irq();
+            }
         }
     }
 }

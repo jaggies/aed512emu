@@ -56,7 +56,7 @@ static const uint8_t SW1 = ~0x10; // negate since open is 0
 static const uint8_t SW2 = ~0x7d;
 
 AedBus::AedBus() : _mapper(0, CPU_MEM), _videoMemory(VIDEO_MEM, 0xff),
-            _pia0(0), _pia1(0), _pia2(0), _sio0(0), _sio1(0) {
+            _pia0(0), _pia1(0), _pia2(0), _sio0(0), _sio1(0), _nextVideoSync(0) {
     // Open all ROM files and copy to ROM location in romBuffer
     std::vector<uint8_t> romBuffer;
     size_t offset = 0;

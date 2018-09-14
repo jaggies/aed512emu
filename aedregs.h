@@ -20,7 +20,7 @@ class AedRegs: public Peripheral {
 
         // Reads peripheral register at offset
         uint8_t read(int offset) override {
-            std::cerr << name() << "[" << offset <<"] -> " << (int) _values[offset] << std::endl;
+//            std::cerr << name() << "[" << offset <<"] -> " << (int) _values[offset] << std::endl;
             _values[offset] = ~_values[offset];
             return _values[offset];
         }
