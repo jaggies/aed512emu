@@ -43,6 +43,15 @@ class M68B21 : public Peripheral {
                 case CB2: CRB |= 0x40; break;
             }
         }
+        // Assert IRQ line
+        void deassertLine(Line line) {
+            switch(line) {
+                case CA1: CRA &= 0x80; break;
+                case CA2: CRA &= 0x40; break;
+                case CB1: CRB &= 0x80; break;
+                case CB2: CRB &= 0x40; break;
+            }
+        }
 
         void setA(uint8_t data) { inA = data; }
         void setB(uint8_t data) { inB = data; }
