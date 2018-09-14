@@ -16,9 +16,9 @@ class M68B21 : public Peripheral {
         enum Line {
             CA1, CA2, CB1, CB2
         };
-        M68B21(int start, const std::string& name = "68B21")
+        M68B21(int start, const std::string& name = "68B21", uint8_t aInit = 0, uint8_t bInit = 0)
                 : Peripheral(start, 4, name),
-                  PRA(0), DDRA(0), CRA(0), PRB(0), DDRB(0), CRB(0) { }
+                  PRA(0), DDRA(0), CRA(0), PRB(0), DDRB(0), CRB(0), inA(aInit), inB(bInit) { }
         virtual ~M68B21() = default;
 
         // Reads peripheral register at offset
@@ -29,7 +29,9 @@ class M68B21 : public Peripheral {
 
         // Reset to initial state
         void reset() override {
-            PRA = PRB = DDRA = DDRB = CRA = CRB = 0;
+            PRA = inA;
+            PRB = inB;
+            DDRA = DDRB = CRA = CRB = 0;
         }
 
         // Assert IRQ line
@@ -42,6 +44,9 @@ class M68B21 : public Peripheral {
             }
         }
 
+        void setA(uint8_t data) { inA = data; }
+        void setB(uint8_t data) { inB = data; }
+
     private:
         uint8_t PRA; // Peripheral Register A (when CRA2 is set)
         uint8_t DDRA; // Data Direction Register A. A bit value of 0 = input, 1 = output
@@ -49,6 +54,8 @@ class M68B21 : public Peripheral {
         uint8_t PRB; // Peripheral Register A (when CRB2 is set)
         uint8_t DDRB; // Data Direction Register B. A bit value of 0 = input, 1 = output
         uint8_t CRB; // Control Register B
+        uint8_t inA; // Read-only input value, port A
+        uint8_t inB; // Read-only input value, port B
 };
 
 #endif /* M68B21_H_ */

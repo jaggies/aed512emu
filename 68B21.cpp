@@ -18,7 +18,7 @@ uint8_t M68B21::read(int offset) {
     switch (offset) {
         case 0: // PRA or DDRA
             if (CRA & CRA2) {
-                result = PRA;
+                result = inA;
                 CRA &= 0x3f; // read of peripheral register resets IRQ bits
             } else {
                 result = DDRA;
@@ -29,7 +29,7 @@ uint8_t M68B21::read(int offset) {
             break;
         case 2: // PRB or DDRB
             if (CRB & CRB2) {
-                result = PRB;
+                result = inB;
                 CRB &= 0x3f; // read of peripheral register resets IRQ bits
             } else {
                 result = DDRB;

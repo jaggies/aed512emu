@@ -5,6 +5,7 @@ Main aed512 :
 	68B21.cpp
 	68B50.cpp
 	aedbus.cpp
+	aedregs.cpp
 	clk.cpp
 	fuzz.cpp
 	main.cpp
