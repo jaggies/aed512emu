@@ -13,7 +13,7 @@
 
 class M68B50: public Peripheral {
     public:
-        enum ControlRegisterWrite {
+        enum ControlRegisterWrite { // reflected in control register
             CR0 = 1, // counter divide sel1
             CR1 = 2, // counter divide sel2
             CR2 = 4, // word select 1 (0 == 7bits, 1 == 8bits)
@@ -24,7 +24,7 @@ class M68B50: public Peripheral {
             CR7 = 128 // receive interrupt enable
         };
 
-        enum ControlRegisterRead {
+        enum ControlRegisterRead { // reflected in status register
             RDRF = 1, // receive data register full
             TDRE = 2, // transmit data register empty
             DCD  = 4, // data carrier detect
@@ -36,7 +36,10 @@ class M68B50: public Peripheral {
         };
 
         M68B50(int start, const std::string& name = "68B21")
-                : Peripheral(start, 2, name), control(0), txdata(0), rxdata(0) { };
+                : Peripheral(start, 2, name), control(0), status(0), txdata(0), rxdata(0) {
+            reset();
+        };
+
         virtual ~M68B50() = default;
 
         // Reads peripheral register at offset
@@ -49,7 +52,7 @@ class M68B50: public Peripheral {
         bool receive(uint8_t data);
 
         // Output from serial port. Returns true if data was available
-        bool transmit(uint8_t& data);
+        bool transmit(uint8_t* data);
 
         // IRQ is set. TODO: add callback to invoke IRQ automatically
         bool irqAsserted() const { return control & IRQ; }
@@ -57,9 +60,12 @@ class M68B50: public Peripheral {
         // Reset to initial state
         void reset() override {
             txdata = rxdata = control = 0;
+            status = TDRE | CTS | DCD; // transmit data should be empty
         }
+
     private:
         uint8_t control;
+        uint8_t status;
         uint8_t txdata;
         uint8_t rxdata;
 };

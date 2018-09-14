@@ -8,14 +8,15 @@
 #include "68B50.h"
 
 #define CONTROL 0
+#define STATUS 0 // reading control register
 #define DATA 1
 
 uint8_t
 M68B50::read(int offset) {
-    if ((offset & 1) == CONTROL) {
-        return control;
+    if ((offset & 1) == STATUS) {
+        return status;
     } else {
-        control &= ~RDRF; // data removed from buffer
+        status &= ~RDRF; // data removed from buffer
         return rxdata;
     }
 }
@@ -28,7 +29,7 @@ M68B50::write(int offset, uint8_t value) {
             break;
         case DATA:
             txdata = value;
-            control &= ~TDRE; // data now in buffer
+            status &= ~TDRE; // data now in buffer
             break;
     }
 }
@@ -37,28 +38,28 @@ M68B50::write(int offset, uint8_t value) {
 bool
 M68B50::receive(uint8_t byte) {
     const uint8_t IRQ_ENABLED = CR7;
-    if (control & RDRF) {
+    if (status & RDRF) {
         return false; // receiver data register full
     }
 
     rxdata = byte;
-    control |= RDRF;
+    status |= RDRF; // something is now in the receive buffer
     if (control & IRQ_ENABLED) {
-        control |= IRQ; // IRQ enabled
+        status |= IRQ; // IRQ enabled
     }
     return true;
 }
 
 // Output from serial port. Returns true if data was available
 bool
-M68B50::transmit(uint8_t& byte) {
+M68B50::transmit(uint8_t* byte) {
     const uint8_t IRQ_ENABLED = (CR5); // CR5 | !CR6
     const uint8_t IRQ_MASK = (CR6 | CR5);
-    if ((control & TDRE) == 0) { // transmit data register contains data
-        byte = txdata;
-        control |= TDRE; // now it's empty
+    if (!(status & TDRE)) { // transmit data register contains data
+        *byte = txdata;
+        status |= TDRE; // now it's empty
         if ((control & IRQ_MASK) == IRQ_ENABLED) {
-            control |= IRQ;
+            status |= IRQ;
         }
         return true;
     }

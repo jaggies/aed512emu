@@ -44,11 +44,11 @@ class AedBus : public BUS {
         // Handles serial ports. Returns true if IRQ was generated
         bool doSerial() {
             uint8_t byte;
-            if (_sio0->transmit(byte)) {
-                std::cout << byte;
+            if (_sio0->transmit(&byte)) {
+                std::cout << "SIO0: " << (int) byte << std::endl;
             }
-            if (_sio0->transmit(byte)) {
-                std::cout << byte;
+            if (_sio1->transmit(&byte)) {
+                std::cout << "SIO1: " << (int) byte << std::endl;
             }
 
 //            // HACK some serial bits.
