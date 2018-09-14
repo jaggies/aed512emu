@@ -52,8 +52,8 @@ static const size_t CLUT_BLU = 0x1e00;
 static const size_t RAM_START = 0x00; // TODO
 static const size_t CPU_MEM = 64 * 1024; // Total address space
 static const size_t VIDEO_MEM = 256 * 1024; // AED 512
-static const uint8_t SW1 = 0x10;
-static const uint8_t SW2 = 0x7d;
+static const uint8_t SW1 = ~0x10; // negate since open is 0
+static const uint8_t SW2 = ~0x7d;
 
 AedBus::AedBus() : _mapper(0, CPU_MEM), _videoMemory(VIDEO_MEM, 0xff),
             _pia0(0), _pia1(0), _pia2(0), _sio0(0), _sio1(0) {
