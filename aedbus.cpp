@@ -12,15 +12,11 @@
 #include <string>
 #include "aedbus.h"
 #include "aedregs.h"
-#include "io.h"
-#include "unknown.h"
+#include "ram.h"
 #include "fuzz.h"
 
 #ifdef AED767
-static const size_t RAM_SIZE = 10 * 1024; // RAM
-static const size_t CLUT_RED = 0x3c00;
-static const size_t CLUT_GRN = 0x3d00;
-static const size_t CLUT_BLU = 0x3e00;
+#define SRAM_SIZE 2048
 static std::vector<std::string> roms = {
     "rom/767/890037-05_a325.bin",
     "rom/767/890037-04_a326.bin",
@@ -29,10 +25,7 @@ static std::vector<std::string> roms = {
     "rom/767/890037-01_a329.bin"
 };
 #else
-static const size_t RAM_SIZE = 5 * 1024; // RAM
-static const size_t CLUT_RED = 0x1c00;
-static const size_t CLUT_GRN = 0x1d00;
-static const size_t CLUT_BLU = 0x1e00;
+#define SRAM_SIZE 1024
 static std::vector<std::string> roms = {
     "rom/512/aed_v86_c0.bin",
     "rom/512/aed_v86_c8.bin",
@@ -44,8 +37,14 @@ static std::vector<std::string> roms = {
     "rom/512/aed_v86_f8.bin"
 };
 #endif
-
+static const size_t RAM_SIZE = 5 * SRAM_SIZE; // RAM
+static const size_t ACAIK_BASE = RAM_SIZE; // AED 767 only
+static const size_t LED_BASE = 6 * SRAM_SIZE;
+static const size_t MAP_MEM_BASE = 7 * SRAM_SIZE; // LUT memory
 static const size_t RAM_START = 0x00; // TODO
+static const size_t CLUT_RED = MAP_MEM_BASE;
+static const size_t CLUT_GRN = MAP_MEM_BASE + 256;
+static const size_t CLUT_BLU = MAP_MEM_BASE + 512;
 static const size_t CPU_MEM = 64 * 1024; // Total address space
 static const size_t VIDEO_MEM = 256 * 1024; // AED 512
 static const uint8_t SW1 = ~0x10; // negate since open is 0
@@ -75,11 +74,12 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _videoMemory(VIDEO_MEM, 0xff),
     _mapper.add(new Fuzz(0x2a, 1, "FUZZ!"));
     _mapper.add(new AedRegs(0x00, 0x30, "aedregs"));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
+    _mapper.add(new RamDebug(LED_BASE, SRAM_SIZE, "LED"));
     _mapper.add(new Ram(RAM_START, RAM_SIZE - RAM_START));
     _mapper.add(new Ram(CLUT_RED, 0x100, "RED"));
     _mapper.add(new Ram(CLUT_GRN, 0x100, "GRN"));
     _mapper.add(new Ram(CLUT_BLU, 0x100, "BLU"));
-    _mapper.add(new Unknown(0, CPU_MEM));
+    _mapper.add(new RamDebug(0, CPU_MEM, "unmapped"));
 
     std::cerr << std::hex; // dump in hex
     std::cerr << _mapper;

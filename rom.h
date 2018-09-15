@@ -15,8 +15,8 @@
 class Rom: public Ram {
     public:
         Rom(int start, const std::vector<uint8_t>& init) : Ram(start, init.size(), "ROM") {
-            assert(init.size() == getBuffer().size());
-            std::copy(init.begin(), init.end(), getBuffer().begin());
+            assert(init.size() == _storage.size());
+            std::copy(init.begin(), init.end(), _storage.begin());
         }
         virtual ~Rom() = default;
 

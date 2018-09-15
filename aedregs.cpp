@@ -11,8 +11,8 @@
 
 // Reads peripheral register at offset
 uint8_t AedRegs::read(int offset) {
-    std::cerr << "read(" << offset << ") ";
     uint8_t result = _values[offset];
+    std::cerr << "read(" << offset << ")->" << (int) result << " ";
     dump(offset, result);
     if (offset == datafl) {
         _values[datafl] ++;
