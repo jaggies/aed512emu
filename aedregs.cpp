@@ -11,7 +11,7 @@
 
 // Reads peripheral register at offset
 uint8_t AedRegs::read(int offset) {
-    std::cerr << "read " << offset << " ";
+    std::cerr << "read(" << offset << ") ";
     uint8_t result = _values[offset];
     dump(offset, result);
     if (offset == datafl) {
@@ -23,7 +23,7 @@ uint8_t AedRegs::read(int offset) {
 // Writes peripheral register at offset
 void AedRegs::write(int offset, uint8_t value) {
     _values[offset] = value;
-    std::cerr << "write " << offset << " " << (int) value << " ";
+    std::cerr << "write(" << offset << ", " << (int) value << ") ";
     dump(offset, value);
 }
 
@@ -54,6 +54,7 @@ void AedRegs::dump(int offset, uint8_t value) {
 
         case pxcntl:
         case pxcnth:
+            // TODO: assert _pia1.CA2+ if this count is related to PIXCNTOFLO
             std::cerr << "pxcnt " << (((int) _values[pxcnth] << 8) | _values[pxcntl]) << std::endl;
         break;
 
