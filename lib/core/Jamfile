@@ -1,0 +1,9 @@
+SubDir TOP lib core ;
+
+Library libemu : 
+	clk.cpp
+	mapper.cpp
+	peripheral.cpp
+	ram.cpp
+	rom.cpp
+	;

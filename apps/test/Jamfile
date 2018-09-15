@@ -1,0 +1,10 @@
+SubDir TOP apps test ;
+SubDirHdrs $(TOP) lib aed ;
+SubDirHdrs $(TOP) lib core ;
+SubDirHdrs $(TOP) lib cpu ;
+SubDirHdrs $(TOP) lib devices ;
+
+Depends aed512 : libemu.a ;
+LINKLIBS on aed512 = $(LINKLIBS) -lemu ;
+
+Main aed512 : main.cpp ;

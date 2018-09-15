@@ -1,0 +1,9 @@
+SubDir TOP lib devices ;
+SubDirHdrs $(TOP) lib core ;
+SubDirHdrs $(TOP) lib cpu ;
+
+Library libemu : 
+	68B21.cpp
+	68B50.cpp
+	fuzz.cpp
+	;

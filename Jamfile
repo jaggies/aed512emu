@@ -1,17 +1,3 @@
-C++FLAGS += -std=c++11 ;
-LINK = c++ ;
-#DEFINES += AED767 ;
-
-Main aed512 :
-	68B21.cpp
-	68B50.cpp
-	aedbus.cpp
-	aedregs.cpp
-	clk.cpp
-	fuzz.cpp
-	main.cpp
-	mapper.cpp
-	peripheral.cpp
-	ram.cpp
-	rom.cpp
-	;
+SubDir TOP ;
+SubInclude TOP lib ;
+SubInclude TOP apps ;
