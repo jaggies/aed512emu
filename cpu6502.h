@@ -25,19 +25,19 @@ template<class CLK, class BUS>
 class CPU6502 {
     public:
         CPU6502(CLK& clk_, BUS& bus_) :
-                clk(clk_), bus(bus_), a(0), x(0), y(0), s(0), p(0x20), exception(RESET) {
+                clk(clk_), bus(bus_), a(0), x(0), y(0), s(0), p(0x20) {
         }
 
         void irq() {
-            ex |= PENDING_IRQ;
+            pending_ex |= PENDING_IRQ;
         }
 
         void nmi() {
-            ex |= PENDING_NMI;
+            pending_ex |= PENDING_NMI;
         }
 
         void reset() {
-            ex |= PENDING_RESET;
+            pending_ex |= PENDING_RESET;
         }
 
         void cycle() {
@@ -66,14 +66,8 @@ class CPU6502 {
         static const unsigned char PENDING_NONE = 0;
         static const unsigned char PENDING_NMI = 1;
         static const unsigned char PENDING_IRQ = 2;
-        static const unsigned char PENDING_BRK = 4;
         static const unsigned char PENDING_RESET = 8;
-        int ex = 0; // One of the above
-
-        // The current exception state
-        enum Exception {
-            NONE, RESET, NMI, BRK, IRQ
-        } exception;
+        int pending_ex = 0; // One of the above
 
         void stack_push(unsigned char d) {
             bus.write(0x100 + s--, d);
@@ -149,18 +143,20 @@ class CPU6502 {
             std::cerr << "do_reset!\n";
             s = 0xFD;
             pc = bus.read(0xFFFC) + bus.read(0xFFFD) * 256;
-            exception = NONE;
-            ex = PENDING_NONE;
+            p |= I; // disable interrupts
+            pending_ex = PENDING_NONE;
+            clk.add_cpu_cycles(6); // TODO: maybe reset counter
         }
 
         void do_irq() {
             std::cerr << "do_irq!\n";
             stack_push((pc - 1) >> 8);
             stack_push((pc - 1) & 0xFF);
-            stack_push(p);
+            stack_push(p & ~B);
             pc = bus.read(0xFFFE) + bus.read(0xFFFF) * 256;
-            ex &= ~PENDING_IRQ;
-            exception = IRQ; // cleared in RTI
+            p |= I; // disable interrupts
+            pending_ex &= ~PENDING_IRQ;
+            clk.add_cpu_cycles(6);
         }
 
         void do_nmi() {
@@ -169,49 +165,34 @@ class CPU6502 {
             stack_push((pc - 1) & 0xFF);
             stack_push(p);
             pc = bus.read(0xFFFA) + bus.read(0xFFFB) * 256;
-            ex &= ~PENDING_NMI;
-            exception = NMI; // cleared in RTI
-        }
-
-        void do_brk() {
-            std::cerr << "do_brk!\n";
-            stack_push((pc - 1) >> 8);
-            stack_push((pc - 1) & 0xFF);
-            stack_push(p | B); // | B says the Synertek 6502 reference
-            pc = bus.read(0xFFFE) + bus.read(0xFFFF) * 256;
-            ex &= ~PENDING_BRK;
-            exception = BRK;
+            p |= I; // disable interrupts
+            pending_ex &= ~PENDING_NMI;
+            clk.add_cpu_cycles(6);
         }
 
         void do_cycle() {
             unsigned char m;
 
             // Reset always happens, regardless of whether we're currently in an exception
-            if (ex & PENDING_RESET) {
+            if (pending_ex & PENDING_RESET) {
                 do_reset();
                 return;
-            }
-
-            // If we're not currently handling an exception, do it now
-            if (exception == NONE) {
-                // These are handled highest priority first
-                if (ex & PENDING_NMI) {
-                    do_nmi(); // TODO: check whether NMI can happen while processing IRQ
-                    return;
-                } else if (ex & PENDING_IRQ) {
-                    do_irq();
-                    return;
-                } else if (ex & PENDING_BRK) {
-                    do_brk();
-                    return;
-                }
+            } else if (pending_ex & PENDING_NMI) { // handle NMI first, ignoring state of I bit
+                do_nmi();
+                return;
+            } else if (!(p & I) && (pending_ex & PENDING_IRQ)) {
+                do_irq();
+                return;
             }
 
             unsigned char inst = read_pc_inc();
 
             switch (inst) {
                 case 0x00: { // BRK
-                    exception = BRK;
+                    stack_push((pc - 1) >> 8);
+                    stack_push((pc - 1) & 0xFF);
+                    stack_push(p | B); // | B says the Synertek 6502 reference
+                    pc = bus.read(0xFFFE) + bus.read(0xFFFF) * 256;
                     break;
                 }
 
@@ -1106,6 +1087,7 @@ class CPU6502 {
                 }
 
                 case 0x28: { // PLP
+                    // TODO: Clear the I bit
                     p = stack_pull();
                     break;
                 }
@@ -1351,7 +1333,6 @@ class CPU6502 {
                     unsigned char pcl = stack_pull();
                     unsigned char pch = stack_pull();
                     pc = pcl + pch * 256 + 1;
-                    exception = NONE;
                     break;
                 }
 
