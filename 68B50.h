@@ -55,7 +55,7 @@ class M68B50: public Peripheral {
         bool transmit(uint8_t* data);
 
         // IRQ is set. TODO: add callback to invoke IRQ automatically
-        bool irqAsserted() const { return control & IRQ; }
+        bool irqAsserted() const { return status & IRQ; }
 
         // Reset to initial state
         void reset() override {

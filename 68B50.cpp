@@ -5,6 +5,7 @@
  *      Author: jmiller
  */
 
+#include <cassert>
 #include "68B50.h"
 
 #define CONTROL 0
@@ -13,16 +14,21 @@
 
 uint8_t
 M68B50::read(int offset) {
-    if ((offset & 1) == STATUS) {
-        return status;
-    } else {
-        status &= ~RDRF; // data removed from buffer
-        return rxdata;
+    assert(offset < size());
+    switch (offset) {
+        case STATUS:
+            return status;
+        case DATA:
+            status &= ~(RDRF | IRQ); // data removed from Rx buffer
+            return rxdata;
+        default:
+            return 0;
     }
 }
 
 void
 M68B50::write(int offset, uint8_t value) {
+    assert(offset < size());
     switch (offset) {
         case CONTROL:
             control = value;
