@@ -21,14 +21,19 @@ int main(int argc, char** argv)
     AedBus bus;
     CPU6502<Clock, AedBus> cpu(CPU6502<Clock, AedBus>(clock, bus));
     cpu.reset();
+    bus.send("Hello!\n");
     while (1) {
         cpu.cycle();
-        if (!(clock.getCount() % 1000)) {
+//        if (!(clock.getCount() % 11000))
+        {
             // TODO: automate this with a signal handler. Should operate at 60Hz.
             if (bus.doVideo()) {
+                std::cerr << "Scheduling NMI for video!\n";
                 cpu.nmi();
+                cpu.irq();
             }
             if (bus.doSerial()) {
+                std::cerr << "Scheduling IRQ for serial!\n";
                 cpu.irq();
             }
         }
