@@ -33,6 +33,8 @@ class CPU6502 {
         }
 
         void nmi() {
+            // Overlapping NMIs are potentially problematic. Ensure they don't happen for now.
+            assert((pending_ex & PENDING_NMI) != PENDING_NMI);
             pending_ex |= PENDING_NMI;
         }
 
