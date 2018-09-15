@@ -21,10 +21,10 @@ class Fuzz: public Peripheral {
         virtual ~Fuzz() = default;
 
         // Reads peripheral register at offset
-        uint8_t read(int offset) override { return _storage[offset]++; }
+        uint8_t read(int offset) override { return random(); } //_storage[offset]++; }
 
         // Writes peripheral register at offset
-        void write(int offset, uint8_t value) override { _storage[offset] = value; }
+        void write(int offset, uint8_t value) override { } //_storage[offset] = value; }
 
         // Reset to initial state
         void reset() override {
