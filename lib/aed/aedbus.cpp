@@ -15,7 +15,7 @@
 #include "generic.h"
 #include "io.h"
 
-#ifdef AED767
+#if defined(AED767) || defined(AED1024)
 #define SRAM_SIZE 2048
 static std::vector<std::string> roms = {
     "rom/767/890037-05_a325.bin",
@@ -38,7 +38,9 @@ static std::vector<std::string> roms = {
 };
 #endif
 static const size_t RAM_SIZE = 5 * SRAM_SIZE; // RAM
-static const size_t ACAIK_BASE = RAM_SIZE; // AED 767 only
+#if defined(AED767) || defined(AED1024)
+static const size_t ACAIK_BASE = RAM_SIZE; // AED 767/1024 only
+#endif
 static const size_t LED_BASE = 6 * SRAM_SIZE;
 static const size_t MAP_MEM_BASE = 7 * SRAM_SIZE; // LUT memory
 static const size_t RAM_START = 0x00; // TODO
@@ -46,7 +48,6 @@ static const size_t CLUT_RED = MAP_MEM_BASE;
 static const size_t CLUT_GRN = MAP_MEM_BASE + 256;
 static const size_t CLUT_BLU = MAP_MEM_BASE + 512;
 static const size_t CPU_MEM = 64 * 1024; // Total address space
-static const size_t VIDEO_MEM = 256 * 1024; // AED 512
 static const uint8_t SW1 = ~0x10; // negate since open is 0
 static const uint8_t SW2 = ~0x7d;
 

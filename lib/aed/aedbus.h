@@ -58,10 +58,10 @@ class AedBus : public BUS {
         M68B50 * _sio0;
         M68B50 * _sio1;
         AedRegs* _aedRegs;
-        uint64_t _nextVsync;
         uint64_t _nextHsync;
-        uint8_t _vSync;
+        uint64_t _nextVsync;
         uint8_t _hSync;
+        uint8_t _vSync;
         std::queue<uint8_t> _serialFifo;
 };
 

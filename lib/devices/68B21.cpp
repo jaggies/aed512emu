@@ -45,7 +45,6 @@ uint8_t M68B21::read(int offset) {
 
 void M68B21::write(int offset, uint8_t value) {
     assert(offset < 4);
-    uint8_t result = 0;
     switch (offset) {
         case 0: // PRA or DDRA
             if (CRA & CRA2) {
