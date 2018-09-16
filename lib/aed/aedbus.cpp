@@ -13,7 +13,7 @@
 #include "aedbus.h"
 #include "aedregs.h"
 #include "ram.h"
-#include "fuzz.h"
+#include "generic.h"
 
 #ifdef AED767
 #define SRAM_SIZE 2048
@@ -71,7 +71,10 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _videoMemory(VIDEO_MEM, 0xff),
     _mapper.add(_pia2 = new M68B21(0x08, "PIA2", SW2));
     _mapper.add(_sio0 = new M68B50(0x0c, "SIO0"));
     _mapper.add(_sio1 = new M68B50(0x0e, "SIO1"));
-    _mapper.add(new Fuzz(0x2a, 1, "FUZZ!"));
+    _mapper.add(new Generic(0x2a, 1,
+            [](int offset) { return random(); },
+            [](int offset, uint8_t value) { },
+            "aed2a"));
     _mapper.add(new AedRegs(0x00, 0x30, "aedregs"));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
     _mapper.add(new RamDebug(LED_BASE, SRAM_SIZE, "LED"));
