@@ -3,3 +3,4 @@ SubInclude TOP lib aed ;
 SubInclude TOP lib core ;
 SubInclude TOP lib cpu ;
 SubInclude TOP lib devices ;
+SubInclude TOP lib util ;
