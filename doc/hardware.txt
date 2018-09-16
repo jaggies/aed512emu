@@ -1,0 +1,97 @@
+Most of these come from Sheet 12
+--------------------------------
+
+stx+y (0x14 - 0x17) "Store X and Y counters"
+	0x14: loxld load x counter low (capxl)
+	0x15: hixld load x counter high (capxh)
+	0x16: loyld load y counter low (capyl)
+	0x17: hiyld load y counter high (capyh)
+
+vmnoi (0x18) "Video memory load/store pixel, no inc/dec"
+	pixel[7:0] = data[7:0]
+
+vminx (0x19) "Video memory load/store pixel and inc/dec X" (see stx+y)
+	pixel[7:0] = data[7:0]
+
+vminy (0x1a) "Video memory load/store pixel and inc/dec Y"
+	pixel[7:0] = data[7:0]
+
+vminxy (0x1b) = "Video memory load/store and inc/dec XY"
+	pixel[7:0] = data[7:0]
+
+dmanoi (0x1c) "DMA pixel, no inc/dec"
+	pixel[7:0] = data[7:0]
+
+dmainx (0x1d) "DMA pixel, inc/dec X"
+	pixel[7:0] = data[7:0]
+
+dmainy (0x1e) "DMA pixel, inc/dec Y"
+	pixel[7:0] = data[7:0]
+
+dmainxy (0x1f) "DMA pixel, inc/dec XY"
+	pixel[7:0] = data[7:0]
+
+unused (0x20)
+
+pxcntl (0x21) "Horizontal DMA Pixel Count (low byte)"
+	[7:0] = data[7:0]
+
+pxcnth (0x22) "Horizontal DMA Pixel Count (high byte)"
+	[7:4] = undefined
+	[3:0] = data[3:0]
+
+wrmsk (0x23) "Pixel write mask"
+	[7:0] = data
+
+misc0 (0x24) "Misc enable bits" (U195)
+	7 pixcnt_enable			Enable DMA pixel counters
+	6 yu/d 					High = up, Low = down. Affects (capyh,capyl)
+	5 xu/d					High = up, Low = down. Affects (capxh,capxl)
+	4 dmawrtdis#
+	3 b+wena
+	2 wonb
+	1 yzs
+	0 z/rm 					Zoom / Roam ? (page 23)
+
+hstctl (0x25) Host control (U340)
+	7 EXWRTDSP#
+	6 BBITMODE
+	5 COMMANDEND
+	4 DEVICE_END
+	3 PDI
+	2 PDO
+	1 PSI
+	0 PC0	
+
+xscrl (0x26) "X scroll register"
+	[7:0] data
+
+yscrl (0x27) "Y scroll register"
+	[7:0] data
+
+hstpl (0x28) "Host Port (low byte)"
+	[7:0] host low byte
+
+hstph (0x29) "Host Port (high byte)"
+	[7:0] host high byte
+
+miscrd (0x2a READ) "Misc bits" (Sheet 14)
+	7: DO# (pcont, bit2)
+	6: DI# (pcont, bit3)
+	5: ***AED 1024: RST_FLAG ("dont do full reset if high")
+	   ***AED 512: nc
+	4: BREAK key - nc
+	3: REPEAT key - nc
+	2: SHIFT key - nc
+	1: CTRL key - nc
+	0: ***AED 1024: HZRCO 
+	   ***AED 512: HZ blank
+
+datafl (0x2a WRITE) ADRE# 
+	Enables DATA_FLAG# ?
+
+stdvma (0x2b WRITE) ADRF#
+	Enables ECREQ ?
+
+---- Notes
+Useful macros: XYCTRS
