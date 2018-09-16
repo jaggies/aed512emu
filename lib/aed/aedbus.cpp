@@ -11,7 +11,6 @@
 #include <vector>
 #include <string>
 #include "aedbus.h"
-#include "aedregs.h"
 #include "ram.h"
 #include "generic.h"
 #include "io.h"
@@ -56,9 +55,8 @@ static const uint64_t LINE_TIME = SECS2USECS(1) / 15750;
 static const uint64_t FRAME_TIME = SECS2USECS(60) / 60;
 static const uint64_t LINE_SYNC_TIME = LINE_TIME / 20; // TODO
 
-AedBus::AedBus() : _mapper(0, CPU_MEM), _videoMemory(VIDEO_MEM, 0xff),
-            _pia0(0), _pia1(0), _pia2(0), _sio0(0), _sio1(0), _nextHsync(0), _nextVsync(0),
-            _hSync(0), _vSync(0) {
+AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
+        _sio0(0), _sio1(0), _aedRegs(0), _nextHsync(0), _nextVsync(0), _hSync(0), _vSync(0) {
     // Open all ROM files and copy to ROM location in romBuffer
     std::vector<uint8_t> romBuffer;
     size_t offset = 0;
@@ -82,7 +80,7 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _videoMemory(VIDEO_MEM, 0xff),
             [this](int offset) { return this->_hSync; },
             [](int offset, uint8_t value) { },
             "miscrd"));
-    _mapper.add(new AedRegs(0x00, 0x30, "aedregs"));
+    _mapper.add(_aedRegs = new AedRegs(0x00, 0x30, "aedregs"));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
     _mapper.add(new RamDebug(LED_BASE, SRAM_SIZE, "LED"));
     _mapper.add(new Ram(RAM_START, RAM_SIZE - RAM_START));

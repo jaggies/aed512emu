@@ -3,6 +3,7 @@ SubDirHdrs $(TOP) lib aed ;
 SubDirHdrs $(TOP) lib core ;
 SubDirHdrs $(TOP) lib cpu ;
 SubDirHdrs $(TOP) lib devices ;
+SubDirHdrs $(TOP) lib util ;
 
 Depends aed512 : libemu.a ;
 LINKLIBS on aed512 = $(LINKLIBS) -lemu ;

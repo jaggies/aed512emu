@@ -79,4 +79,15 @@
 #define grnclt  0x3900
 #define bluclt  0x3a00
 
+enum Misc0 {
+    PIXCNT_EN = (1 << 7),
+    Y_UD = (1 << 6), // y increment up (high) down (low)
+    X_UD = (1 << 5), // x increment up (high) down (low)
+    DMA_WRT_DIS = (1 << 4), // disable DMA write. TODO
+    BW_EN = (1 << 3), // enable BW mode?
+    W_ON_B = (1 << 2), // inverse video?
+    YZS = (1 << 1), // ??? no idea
+    Z_RM = 1 // ???
+};
+
 #endif /* IO_H_ */

@@ -18,6 +18,7 @@
 #include "rom.h"
 #include "68B21.h"
 #include "68B50.h"
+#include "aedregs.h"
 
 class AedBus : public BUS {
     #define SECS2USECS(a) ((a)*1000000)
@@ -42,14 +43,21 @@ class AedBus : public BUS {
             }
         }
 
+        // Delegate functions.
+        const size_t getDisplayWidth() const { return _aedRegs->getDisplayWidth(); }
+
+        const size_t getDisplayHeight() const { return _aedRegs->getDisplayHeight(); }
+
+        const std::vector<uint8_t>& getVideoMemory() const { return _aedRegs->getVideoMemory(); }
+
     private:
         Mapper _mapper;
-        std::vector<uint8_t> _videoMemory;
         M68B21 * _pia0;
         M68B21 * _pia1;
         M68B21 * _pia2;
         M68B50 * _sio0;
         M68B50 * _sio1;
+        AedRegs* _aedRegs;
         uint64_t _nextVsync;
         uint64_t _nextHsync;
         uint8_t _vSync;
