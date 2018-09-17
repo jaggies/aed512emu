@@ -14,8 +14,8 @@
 class Generic: public Peripheral {
     public:
         Generic(int start, int size,
-                std::function<uint8_t(int)> read,
-                std::function<void(int offset, uint8_t value)> write,
+                const std::function<uint8_t(int)>& read,
+                const std::function<void(int offset, uint8_t value)>& write,
                 const std::string& name="generic") : Peripheral(start, size, name),
                     _read(read), _write(write) { }
         virtual ~Generic() = default;
