@@ -151,7 +151,6 @@ class CPU6502 {
         }
 
         void do_irq() {
-            std::cerr << "do_irq!\n";
             stack_push((pc - 1) >> 8);
             stack_push((pc - 1) & 0xFF);
             stack_push(p & ~B);
@@ -162,7 +161,6 @@ class CPU6502 {
         }
 
         void do_nmi() {
-            std::cerr << "do_nmi!\n";
             stack_push((pc - 1) >> 8);
             stack_push((pc - 1) & 0xFF);
             stack_push(p);

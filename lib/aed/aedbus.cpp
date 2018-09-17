@@ -52,8 +52,8 @@ static const uint8_t SW1 = ~0x10; // negate since open is 0
 static const uint8_t SW2 = ~0x7d;
 
 // Video timing
-static const uint64_t LINE_TIME = SECS2USECS(1) / 15750;
-static const uint64_t FRAME_TIME = SECS2USECS(60) / 60;
+static const uint64_t LINE_TIME = SECS2USECS(1L) / 15750;
+static const uint64_t FRAME_TIME = SECS2USECS(1L) / 60;
 static const uint64_t LINE_SYNC_TIME = LINE_TIME / 20; // TODO
 
 AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
@@ -83,7 +83,7 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
             "miscrd"));
     _mapper.add(_aedRegs = new AedRegs(0x00, 0x30, "aedregs"));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
-    _mapper.add(new RamDebug(LED_BASE, SRAM_SIZE, "LED"));
+    _mapper.add(new Ram(LED_BASE, SRAM_SIZE, "LED"));
     _mapper.add(new Ram(RAM_START, RAM_SIZE - RAM_START));
     _mapper.add(new Ram(CLUT_RED, 0x100, "RED"));
     _mapper.add(new Ram(CLUT_GRN, 0x100, "GRN"));
@@ -102,7 +102,7 @@ AedBus::doVideo() {
    bool doIrq = false;
    struct timeval tp = { 0 };
    gettimeofday(&tp, NULL);
-   uint64_t now = tp.tv_sec * SECS2USECS(tp.tv_sec) + tp.tv_usec;
+   uint64_t now = SECS2USECS(tp.tv_sec) + tp.tv_usec;
    if (now > _nextVsync) {
        _vSync = 1;
        _nextVsync = now + FRAME_TIME; // 60Hz
@@ -132,7 +132,7 @@ AedBus::doSerial() {
        std::cout << "SIO1: " << (int) byte << std::endl;
    }
 
-   if (!_serialFifo.empty() && _sio0->receive(_serialFifo.front())) {
+   if (!_serialFifo.empty() && _sio1->receive(_serialFifo.front())) {
        _serialFifo.pop();
    }
    return _sio0->irqAsserted() || _sio1->irqAsserted();

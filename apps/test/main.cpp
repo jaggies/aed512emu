@@ -46,7 +46,7 @@ int main(int argc, char** argv)
     int frameCount = 0;
     while (1) {
         cpu.cycle();
-//        if (!(clock.getCount() % 11000))
+//        if (!(clock.getCount() % 1000))
         {
             // TODO: automate this with a signal handler. Should operate at 60Hz.
             if (bus.doVideo()) {

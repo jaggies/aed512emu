@@ -25,7 +25,7 @@ void AedRegs::doVideoUpdate(int dX, int dY, uint8_t color, uint16_t count) {
     while (count--) {
         x += dX;
         y += dY;
-        assert(x < DISPLAY_WIDTH);
+//        assert(x < DISPLAY_WIDTH);
         assert(y < DISPLAY_HEIGHT);
         std::cerr << "Write pixel (" << x << ", " << y << ") inc[" << dX << "," << dY << "]"
                 " = " << (int) color << std::endl;
