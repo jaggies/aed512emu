@@ -44,7 +44,6 @@ class AedBus : public BUS {
         }
 
         void send(char c) {
-            std::cerr << "Adding string to queue: '" << c << "' holding = " << _serialFifo.size() << std::endl;
             _serialFifo.push(c);
         }
 

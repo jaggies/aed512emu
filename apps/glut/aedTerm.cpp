@@ -45,7 +45,7 @@ static void checkGLError(const char* msg) {
     }
 }
 
-static void
+void
 displayString(float x, float y, char *string)
 {
     int len, i;
@@ -107,8 +107,6 @@ static void display(void)
     checkGLError("before display()");
     glPushMatrix();
         // Compute (u,v) and (x,y) scaling factors to center the image on the screen
-        float imageAspect = imageHeight / imageWidth;
-        float windowAspect = (float) windowHeight / windowWidth;
         glClearColor(0.0, 0.0, 0.5, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         if (true) {
@@ -173,7 +171,6 @@ static void idle() {
         glutPostRedisplay();
     }
     if (bus->doSerial()) {
-        std::cerr << "Scheduling IRQ for serial!\n";
         cpu->irq();
     }
 }
@@ -189,8 +186,6 @@ int main(int argc, char **argv)
     bus = new AedBus;
     cpu = new CPU6502<Clock, AedBus>(CPU6502<Clock, AedBus>(clock, *bus));
     cpu->reset();
-    bus->send("Hello!\n");
-
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);

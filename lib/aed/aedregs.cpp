@@ -27,8 +27,8 @@ void AedRegs::doVideoUpdate(int dX, int dY, uint8_t color, uint16_t count) {
         y += dY;
 //        assert(x < DISPLAY_WIDTH);
         assert(y < DISPLAY_HEIGHT);
-        std::cerr << "Write pixel (" << x << ", " << y << ") inc[" << dX << "," << dY << "]"
-                " = " << (int) color << std::endl;
+//        std::cerr << "Write pixel (" << x << ", " << y << ") inc[" << dX << "," << dY << "]"
+//                " = " << (int) color << std::endl;
         _videoMemory[y*DISPLAY_WIDTH + x] = color;
     }
 }
