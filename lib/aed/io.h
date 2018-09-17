@@ -87,7 +87,7 @@ enum Misc0 {
     BW_EN = (1 << 3), // enable BW mode?
     W_ON_B = (1 << 2), // inverse video?
     YZS = (1 << 1), // ??? no idea
-    Z_RM = 1 // ???
+    Z_RM = (1 << 0) // ???
 };
 
 #endif /* IO_H_ */

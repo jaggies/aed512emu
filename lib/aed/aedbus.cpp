@@ -79,7 +79,7 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
     _mapper.add(_sio1 = new M68B50(sio1st, "SIO1"));
     _mapper.add(new Generic(miscrd, 1,
             [this](int offset) { return this->_hSync; },
-            [](int offset, uint8_t value) { },
+            [this](int offset, uint8_t value) { },
             "miscrd"));
     _mapper.add(_aedRegs = new AedRegs(0x00, 0x30, "aedregs"));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));

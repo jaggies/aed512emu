@@ -26,7 +26,7 @@ void AedRegs::doVideoUpdate(int dX, int dY, uint8_t color, uint16_t count) {
         x += dX;
         y += dY;
 //        assert(x < DISPLAY_WIDTH);
-        assert(y < DISPLAY_HEIGHT);
+//        assert(y < DISPLAY_HEIGHT);
 //        std::cerr << "Write pixel (" << x << ", " << y << ") inc[" << dX << "," << dY << "]"
 //                " = " << (int) color << std::endl;
         _videoMemory[y*DISPLAY_WIDTH + x] = color;
@@ -42,26 +42,49 @@ void AedRegs::write(int offset, uint8_t value) {
     uint16_t pixcount = 1; // TODO: update for DMA
     switch (offset) {
         case dmanoi: std::cerr << "*** DMANOI ***\n"; // TODO
+        break;
+
+        case dmainx: std::cerr << "*** DMAINX ***\n"; // TODO
+        break;
+
+        case dmainy: std::cerr << "*** DMAINY ***\n"; // TODO
+        break;
+
+        case dmainxy: std::cerr << "*** DMAINXY ***\n"; // TODO
+        break;
+
         case vmnoi:
             dX = dY = 0;
             doVideoUpdate(dX, dY, value, pixcount);
             break;
-        case dmainx: std::cerr << "*** pixel DMAINX ***\n"; // TODO
+
         case vminx:
             dX = (_storage[misc0] & X_UD) ? 1 : -1;
             doVideoUpdate(dX, dY, value, pixcount);
             break;
-        case dmainy: std::cerr << "*** pixel DMAINY ***\n"; // TODO
+
         case vminy:
+            std::cerr << "vmin_y " << std::endl;
             dY = (_storage[misc0] & Y_UD) ? 1 : -1;
             doVideoUpdate(dX, dY, value, pixcount);
             break;
-        case dmainxy: std::cerr << "*** pixel DMAINXY ***\n"; // TODO
+
         case vminxy:
+            std::cerr << "vmin_xy " << std::endl;
             dX = (_storage[misc0] & X_UD) ? 1 : -1;
             dY = (_storage[misc0] & Y_UD) ? 1 : -1;
             doVideoUpdate(dX, dY, value, pixcount);
             break;
+
+        case misc0: {
+            static const char* bits[] = { "zrm", "yzs", "wob", "bw", "dma", "xup", "yup", "pxen" };
+            std::cerr << "misc0 [";
+            for (int i = 0; i < 8; i++) {
+                std::cerr << ((value & (1<<i)) ? " " : "!") << bits[i] << ", ";
+            }
+            std::cerr << "]\n";
+        }
+        break;
     }
 }
 
