@@ -25,7 +25,7 @@ template<class CLK, class BUS>
 class CPU6502 {
     public:
         CPU6502(CLK& clk_, BUS& bus_) :
-                clk(clk_), bus(bus_), a(0), x(0), y(0), s(0), p(0x20) {
+                clk(clk_), bus(bus_), a(0), x(0), y(0), s(0), p(R|I|B) {
         }
 
         void irq() {
@@ -48,6 +48,15 @@ class CPU6502 {
 
         int get_pc() const { return pc; }
 
+        // For debug/testing only
+        void set_pc(int pc_) { pc = pc_; }
+
+        void dump(std::ostream& os) {
+            os << "pc=" << pc << " p=" << (int) p;
+            os << " a=" << (int) a << " x=" << (int) x << " y=" << (int) y;
+            os << " s=" << (int) s << std::endl;
+        }
+
     private:
 
         CLK &clk;
@@ -58,7 +67,8 @@ class CPU6502 {
         unsigned char a, x, y, s, p;
         static const unsigned char N = 0x80;
         static const unsigned char V = 0x40;
-        static const unsigned char B = 0x10;
+        static const unsigned char R = 0x20; // reserved, must be '1' at all times
+        static const unsigned char B = 0x10; // this bit never gets set directly
         static const unsigned char D = 0x08;
         static const unsigned char I = 0x04;
         static const unsigned char Z = 0x02;
@@ -142,10 +152,10 @@ class CPU6502 {
         }
 
         void do_reset() {
-            std::cerr << "do_reset!\n";
             s = 0xFD;
             pc = bus.read(0xFFFC) + bus.read(0xFFFD) * 256;
-            p |= I; // disable interrupts
+            p = R|I|B; // disable interrupts
+            assert(p & R);
             pending_ex = PENDING_NONE;
             clk.add_cpu_cycles(6); // TODO: maybe reset counter
         }
@@ -153,7 +163,7 @@ class CPU6502 {
         void do_irq() {
             stack_push((pc - 1) >> 8);
             stack_push((pc - 1) & 0xFF);
-            stack_push(p & ~B);
+            stack_push(p);
             pc = bus.read(0xFFFE) + bus.read(0xFFFF) * 256;
             p |= I; // disable interrupts
             pending_ex &= ~PENDING_IRQ;
@@ -189,9 +199,10 @@ class CPU6502 {
 
             switch (inst) {
                 case 0x00: { // BRK
-                    stack_push((pc - 1) >> 8);
-                    stack_push((pc - 1) & 0xFF);
+                    stack_push((pc) >> 8);
+                    stack_push((pc) & 0xFF);
                     stack_push(p | B); // | B says the Synertek 6502 reference
+                    p |= I;
                     pc = bus.read(0xFFFE) + bus.read(0xFFFF) * 256;
                     break;
                 }
@@ -1087,8 +1098,7 @@ class CPU6502 {
                 }
 
                 case 0x28: { // PLP
-                    // TODO: Clear the I bit
-                    p = stack_pull();
+                    p = R | B | stack_pull();
                     break;
                 }
 
@@ -1329,7 +1339,7 @@ class CPU6502 {
                 }
 
                 case 0x40: { // RTI
-                    p = stack_pull();
+                    p = R | stack_pull();
                     unsigned char pcl = stack_pull();
                     unsigned char pch = stack_pull();
                     pc = pcl + pch * 256 + 1;
