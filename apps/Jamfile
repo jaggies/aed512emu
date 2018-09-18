@@ -1,3 +1,4 @@
 SubDir TOP apps ;
 SubInclude TOP apps glut ;
 SubInclude TOP apps test ;
+SubInclude TOP apps 6502tests ;

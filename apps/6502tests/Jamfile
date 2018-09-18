@@ -1,0 +1,13 @@
+SubDir TOP apps 6502tests ;
+SubDirHdrs $(TOP) lib core ;
+SubDirHdrs $(TOP) lib cpu ;
+SubDirHdrs $(TOP) lib devices ;
+SubDirHdrs $(TOP) lib util ;
+
+Depends 6502test : libemu.a ;
+LINKLIBS on 6502test = $(LINKLIBS) -lemu ;
+
+Main 6502test : 
+    dis6502.cpp
+    6502test.cpp 
+    ;
