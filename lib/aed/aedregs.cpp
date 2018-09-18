@@ -85,6 +85,10 @@ void AedRegs::write(int offset, uint8_t value) {
             std::cerr << "]\n";
         }
         break;
+        case pxcntl:
+        case pxcnth:
+            std::cerr << "pxcnt=" << *(uint16_t*)&_storage[pxcntl] << std::endl;
+        break;
     }
 }
 
