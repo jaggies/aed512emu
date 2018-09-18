@@ -13,6 +13,7 @@
 #include <GL/glu.h>
 #include <iostream>
 #include "cpu6502.h"
+#include "mos6502.h"
 #include "clk.h"
 #include "bus.h"
 #include "aedbus.h"
@@ -35,7 +36,7 @@ class Clock : public CLK {
         size_t _count;
 };
 
-static CPU6502<Clock, AedBus>* cpu;
+static CPU* cpu;
 static AedBus* bus;
 
 static void checkGLError(const char* msg) {
@@ -183,8 +184,14 @@ void mouseWheel(int button, int dir, int x, int y)
 int main(int argc, char **argv)
 {
     Clock clock;
-    bus = new AedBus;
-    cpu = new CPU6502<Clock, AedBus>(CPU6502<Clock, AedBus>(clock, *bus));
+    AedBus b;
+    bus = &b;
+    cpu = new CPU6502([&b](int addr) { return bus->read(addr); },
+                        [&b](int addr, uint8_t value) { bus->write(addr, value); },
+                        [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
+//    cpu = new mos6502([&b](int addr) { return bus->read(addr); },
+//                    [&b](int addr, uint8_t value) { bus->write(addr, value); },
+//                    [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
     cpu->reset();
 
     glutInit(&argc, argv);

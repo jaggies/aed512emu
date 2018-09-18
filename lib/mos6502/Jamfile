@@ -1,0 +1,4 @@
+SubDir TOP lib mos6502 ;
+SubDirHdrs $(TOP) lib core ;
+
+Library libemu : mos6502.cpp ;

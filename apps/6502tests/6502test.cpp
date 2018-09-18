@@ -3,6 +3,7 @@
 #include <tuple>
 #include "dis6502.h"
 #include "cpu6502.h"
+#include "mos6502.h"
 #include "mapper.h"
 #include "clk.h"
 #include "bus.h"
@@ -65,12 +66,14 @@ class System: public BUS {
 int main(int argc, char** argv) {
     Clock clock;
     System system;
-    CPU6502<Clock, BUS> cpu(CPU6502<Clock, BUS>(clock, system));
+    mos6502 cpu([&system](int addr) { return system.read(addr); },
+            [&system](int addr, uint8_t value) { system.write(addr, value); },
+            [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
+
     int lastpc = cpu.get_pc();
     cpu.set_pc(0x0400); // force start of program
     while (1) {
         std::string line;
-        int count;
         int pc = cpu.get_pc();
         cpu.cycle();
         if (lastpc == pc) {
@@ -78,10 +81,11 @@ int main(int argc, char** argv) {
             cpu.dump(std::cerr);
             break;
         } else {
-            std::tie(count, line) = disassemble_6502(pc,
-                [&system](int offset) { return system.read(offset); }
-            );
-            std::cerr << line << "\n";
+//            int count;
+//            std::tie(count, line) = disassemble_6502(pc,
+//                [&system](int offset) { return system.read(offset); }
+//            );
+//            std::cerr << line << "\n";
         }
         lastpc = pc;
     }

@@ -1,5 +1,6 @@
 #include <iostream>
 #include "cpu6502.h"
+#include "mos6502.h"
 #include "clk.h"
 #include "bus.h"
 #include "aedbus.h"
@@ -40,7 +41,12 @@ int main(int argc, char** argv)
 {
     Clock clock;
     AedBus bus;
-    CPU6502<Clock, AedBus> cpu(CPU6502<Clock, AedBus>(clock, bus));
+//    CPU6502 cpu([&bus](int addr) { return bus.read(addr); },
+//            [&bus](int addr, uint8_t value) { bus.write(addr, value); },
+//            [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
+    mos6502 cpu([&bus](int addr) { return bus.read(addr); },
+                [&bus](int addr, uint8_t value) { bus.write(addr, value); },
+                [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
     cpu.reset();
     bus.send("Hello!\n");
     int frameCount = 0;
@@ -50,15 +56,15 @@ int main(int argc, char** argv)
         {
             // TODO: automate this with a signal handler. Should operate at 60Hz.
             if (bus.doVideo()) {
-                std::cerr << "Scheduling NMI for video!\n";
+//                std::cerr << "Scheduling NMI for video!\n";
                 cpu.nmi();
                 cpu.irq();
-                std::string path = "frame";
-                path += std::to_string(frameCount++);
-                writeFrame(path, bus.getDisplayWidth(), bus.getDisplayHeight(), bus.getVideoMemory());
+                //std::string path = "frame";
+                //path += std::to_string(frameCount++);
+                //writeFrame(path, bus.getDisplayWidth(), bus.getDisplayHeight(), bus.getVideoMemory());
             }
             if (bus.doSerial()) {
-                std::cerr << "Scheduling IRQ for serial!\n";
+//                std::cerr << "Scheduling IRQ for serial!\n";
                 cpu.irq();
             }
         }

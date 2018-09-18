@@ -3,6 +3,7 @@ SubDirHdrs $(TOP) lib aed ;
 SubDirHdrs $(TOP) lib core ;
 SubDirHdrs $(TOP) lib cpu ;
 SubDirHdrs $(TOP) lib devices ;
+SubDirHdrs $(TOP) lib mos6502 ;
 SubDirHdrs $(TOP) lib util ;
 SubDirHdrs /opt/local/include ;
 
