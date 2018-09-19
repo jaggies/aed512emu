@@ -25,11 +25,11 @@ void writeFrame(const std::string& path, int width, int height, const std::vecto
        std::cerr << "Can't write image " <<  path << std::endl;
        return;
     }
-    for (size_t h = 0; h < height; h++) {
+    for (int h = height - 1; h >= 0; h--) {
        for (size_t w = 0; w < width; w++) {
            unsigned char rgb[3];
            // TODO: use CLUT
-           rgb[0] = rgb[1] = rgb[2] = mem[h*width + w];
+           rgb[0] = rgb[1] = rgb[2] = mem[h*width + w] ? 0xff : 0;
            pbm->write(pbm, rgb);
        }
     }
@@ -48,25 +48,22 @@ int main(int argc, char** argv)
                 [&bus](int addr, uint8_t value) { bus.write(addr, value); },
                 [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
     cpu.reset();
-    bus.send("Hello!\n");
+    bus.send("Hello world!!!\n");
     int frameCount = 0;
     while (1) {
-        cpu.cycle();
-//        if (!(clock.getCount() % 1000))
-        {
-            // TODO: automate this with a signal handler. Should operate at 60Hz.
-            if (bus.doVideo()) {
-//                std::cerr << "Scheduling NMI for video!\n";
-                cpu.nmi();
-                cpu.irq();
-                //std::string path = "frame";
-                //path += std::to_string(frameCount++);
-                //writeFrame(path, bus.getDisplayWidth(), bus.getDisplayHeight(), bus.getVideoMemory());
+        for (int i = 0; i < 1000000; i++) {
+            cpu.cycle();
+        }
+        // TODO: automate this with a signal handler. Should operate at 60Hz.
+        if (bus.doVideo()) {
+            cpu.nmi();
+            if (true) {
+                std::string path = "frame" + std::to_string(frameCount++);
+                writeFrame(path, bus.getDisplayWidth(), bus.getDisplayHeight(), bus.getVideoMemory());
             }
-            if (bus.doSerial()) {
-//                std::cerr << "Scheduling IRQ for serial!\n";
-                cpu.irq();
-            }
+        }
+        if (bus.doSerial()) {
+            cpu.irq();
         }
     }
 }
