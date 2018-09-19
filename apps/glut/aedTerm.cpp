@@ -23,7 +23,7 @@ static int imageWidth = 0;
 static int imageHeight = 0;
 static int windowWidth = 512;
 static int windowHeight = 512;
-static std::vector<uint32_t> imageData(512*512, 0xff00ff00);
+static std::vector<uint32_t> imageData;
 
 class Clock : public CLK {
     public:
@@ -110,7 +110,7 @@ static void display(void)
         // Compute (u,v) and (x,y) scaling factors to center the image on the screen
         glClearColor(0.0, 0.0, 0.5, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        if (true) {
+        if (false) {
             glEnable(GL_TEXTURE_2D);
             glDisable(GL_BLEND);
             glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
@@ -123,8 +123,8 @@ static void display(void)
             glEnd();
             glDisable(GL_TEXTURE_2D);
         } else {
-            glPixelZoom(1.0, -1.0);
-            glRasterPos3f(0, 1, 0);
+            glPixelZoom((float) windowWidth / imageWidth, (float) windowHeight / imageHeight);
+            glRasterPos3f(0, 0, 0);
             glDrawPixels(imageWidth, imageHeight, GL_RGBA, GL_UNSIGNED_BYTE, &imageData[0]);
         }
     glPopMatrix();
@@ -152,20 +152,22 @@ static void passiveMotion(int x, int y)
 
 static void idle() {
     // Amortize by doing more CPU clocks per idle call
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
         cpu->cycle();
     }
     // TODO: automate this with a signal handler. Should operate at 60Hz.
     if (bus->doVideo()) {
         cpu->nmi();
-        cpu->irq();
         // copy pixels to texture
         const std::vector<uint8_t>& display = bus->getVideoMemory();
         for (int y = 0; y < bus->getDisplayHeight(); y++) {
             size_t row = (bus->getDisplayHeight() - y - 1) * bus->getDisplayWidth();
             for (int x = 0; x < bus->getDisplayWidth(); x++) {
-                uint8_t video = display[row + x]; // TODO: use CLUT
-                imageData[row + x]= 0xff000000 | (video << 16) | (video << 8) | video;
+                uint8_t idx = display[row + x];
+                uint8_t red = bus->read(0x1c00 + idx);
+                uint8_t grn = bus->read(0x1d00 + idx);
+                uint8_t blu = bus->read(0x1e00 + idx);
+                imageData[row + x]= 0xff000000 | (blu << 16) | (grn << 8) | red;
             }
         }
         updateTexture();
@@ -184,14 +186,14 @@ void mouseWheel(int button, int dir, int x, int y)
 int main(int argc, char **argv)
 {
     Clock clock;
-    AedBus b;
-    bus = &b;
-    cpu = new CPU6502([&b](int addr) { return bus->read(addr); },
-                        [&b](int addr, uint8_t value) { bus->write(addr, value); },
-                        [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
-//    cpu = new mos6502([&b](int addr) { return bus->read(addr); },
-//                    [&b](int addr, uint8_t value) { bus->write(addr, value); },
-//                    [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
+    AedBus aedbus;
+    bus = &aedbus;
+//    cpu = new CPU6502([&b](int addr) { return bus->read(addr); },
+//                        [&b](int addr, uint8_t value) { bus->write(addr, value); },
+//                        [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
+    cpu = new mos6502([](int addr) { return ::bus->read(addr); },
+                    [](int addr, uint8_t value) { ::bus->write(addr, value); },
+                    [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
     cpu->reset();
 
     glutInit(&argc, argv);
