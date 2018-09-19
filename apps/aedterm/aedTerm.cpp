@@ -154,7 +154,7 @@ static void passiveMotion(int x, int y)
 
 static void idle() {
     // Amortize by doing more CPU clocks per idle call
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 100000; i++) {
         cpu->cycle();
     }
     // TODO: automate this with a signal handler. Should operate at 60Hz.
@@ -188,6 +188,7 @@ void signalHandler(int) {
     );
     std::cerr << std::endl << line << std::endl;
     cpu->dump(std::cerr);
+    signal(SIGINT, 0);
 }
 
 int main(int argc, char **argv)
