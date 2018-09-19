@@ -95,6 +95,7 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
             [this](int offset) { return random(); },
             [this](int offset, uint8_t value) { std::cerr << "write 0x2a:" << (int) value << std::endl; },
             "hack_miscrd"));
+    _mapper.add(new Ram(0x8000, 0x300, "FOO"));
 #endif
     _mapper.add(_aedRegs = new AedRegs(0x00, 0x30, "aedregs"));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
