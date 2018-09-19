@@ -18,19 +18,20 @@ class Clock : public CLK {
         size_t _count;
 };
 
-void writeFrame(const std::string& path, int width, int height, const std::vector<uint8_t>& mem) {
+void writeFrame(const std::string& path, AedBus& bus) {
     NetPBM* pbm = createNetPBM();
     assert(path.size() > 0);
     int depth = 255;
+    int width = bus.getDisplayWidth();
+    int height = bus.getDisplayHeight();
     if (path.size() == 0 || !pbm->open(pbm, path.c_str(), &width, &height, &depth, NETPBM_WRITE)) {
        std::cerr << "Can't write image " <<  path << std::endl;
        return;
     }
     for (int h = height - 1; h >= 0; h--) {
        for (size_t w = 0; w < width; w++) {
-           unsigned char rgb[3];
-           // TODO: use CLUT
-           rgb[0] = rgb[1] = rgb[2] = mem[h*width + w] ? 0xff : 0;
+           uint32_t pixel = bus.getPixel(w, h);
+           uint8_t rgb[] = { uint8_t(pixel & 0xff), uint8_t((pixel >> 8) & 0xff), uint8_t((pixel >> 16) & 0xff) };
            pbm->write(pbm, rgb);
        }
     }
@@ -57,7 +58,7 @@ int main(int argc, char** argv)
             cpu.nmi();
             if (true) {
                 std::string path = "frame" + std::to_string(frameCount++);
-                writeFrame(path, bus.getDisplayWidth(), bus.getDisplayHeight(), bus.getVideoMemory());
+                writeFrame(path, bus);
             }
         }
         if (bus.doSerial()) {

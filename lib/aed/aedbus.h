@@ -52,8 +52,6 @@ class AedBus : public BUS {
 
         const size_t getDisplayHeight() const { return _aedRegs->getDisplayHeight(); }
 
-        const std::vector<uint8_t>& getVideoMemory() const { return _aedRegs->getVideoMemory(); }
-
         // Gets a pixel using the color map for the device
         uint32_t getPixel(int x, int y);
 
