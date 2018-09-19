@@ -24,7 +24,7 @@ class AedRegs: public Peripheral {
     public:
         AedRegs(int start, int size, const std::string& name="")
             : Peripheral(start, size, name), _storage(size, 0),
-              _videoMemory(DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(uint8_t), 0xff) {
+              _videoMemory(DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(uint8_t), 0x00) {
         }
         virtual ~AedRegs() = default;
 
@@ -48,6 +48,7 @@ class AedRegs: public Peripheral {
         const std::vector<uint8_t>& getVideoMemory() const { return _videoMemory; }
 
     private:
+        uint8_t& pixel(int x, int y);
         void doVideoUpdate(int dX, int dY, uint8_t color, uint16_t count);
         void dump(int offset, uint8_t value);
         std::vector<uint8_t> _storage;

@@ -10,85 +10,93 @@
 #include "aedregs.h"
 #include "io.h"
 
+// static const char* misc0bits[] = { "zrm", "yzs", "wob", "bw", "dma", "xup", "yup", "pxen" };
+
 // Reads peripheral register at offset
 uint8_t AedRegs::read(int offset) {
-    uint8_t result = _storage[offset];
-    //std::cerr << "read(" << offset << ")->" << (int) result << " ";
-    //dump(offset, result);
-    return result;
-}
-
-void AedRegs::doVideoUpdate(int dX, int dY, uint8_t color, uint16_t count) {
-    // TODO: This only works on a little endian machines!!!
-    uint16_t& x = *(uint16_t *) &_storage[capxl];
+    uint16_t& x = *(uint16_t *) &_storage[capxl]; // X and Y CAP
     uint16_t& y = *(uint16_t *) &_storage[capyl];
-    while (count--) {
-        x += dX;
-        y += dY;
-//        assert(x < DISPLAY_WIDTH);
-//        assert(y < DISPLAY_HEIGHT);
-//        std::cerr << "Write pixel (" << x << ", " << y << ") inc[" << dX << "," << dY << "]"
-//                " = " << (int) color << std::endl;
-        _videoMemory[y*DISPLAY_WIDTH + x] = color;
+    const int dX = (_storage[misc0] & X_UD) ? 1 : -1; // X and Y increments, if used
+    const int dY = (_storage[misc0] & Y_UD) ? 1 : -1;
+    uint8_t result;
+    switch (offset) {
+        case dmanoi:
+        case vmnoi:
+            result = pixel(x, y);
+        break;
+
+        case dmainx:
+        case vminx:
+            result = pixel(x, y);
+            x += dX;
+        break;
+
+        case dmainy:
+        case vminy:
+            result = pixel(x, y);
+            y += dY;
+        break;
+
+        case dmainxy:
+        case vminxy:
+            result = pixel(x, y);
+            x += dX;
+            y += dY;
+        break;
+
+        default:
+            result = _storage[offset];
+        break;
     }
+    return result;
 }
 
 // Writes peripheral register at offset
 void AedRegs::write(int offset, uint8_t value) {
-    _storage[offset] = value;
-//    std::cerr << "write(" << offset << ", " << (int) value << ")" << std::endl;
-    int dX = 0;
-    int dY = 0;
-    uint16_t pixcount = 1; // TODO: update for DMA
+    const uint16_t pixcount = 1; // TODO: update for DMA
+    int dX = (_storage[misc0] & X_UD) ? 1 : -1;
+    int dY = (_storage[misc0] & Y_UD) ? 1 : -1;
     switch (offset) {
-        case dmanoi: std::cerr << "*** DMANOI ***\n"; // TODO
-        break;
-
-        case dmainx: std::cerr << "*** DMAINX ***\n"; // TODO
-        break;
-
-        case dmainy: std::cerr << "*** DMAINY ***\n"; // TODO
-        break;
-
-        case dmainxy: std::cerr << "*** DMAINXY ***\n"; // TODO
-        break;
-
+        case dmanoi:
         case vmnoi:
-            dX = dY = 0;
-            doVideoUpdate(dX, dY, value, pixcount);
+            doVideoUpdate(0, 0, value, pixcount);
             break;
 
+        case dmainx:
         case vminx:
-            dX = (_storage[misc0] & X_UD) ? 1 : -1;
-            doVideoUpdate(dX, dY, value, pixcount);
+            doVideoUpdate(dX, 0, value, pixcount);
             break;
 
+        case dmainy:
         case vminy:
-            std::cerr << "vmin_y " << std::endl;
-            dY = (_storage[misc0] & Y_UD) ? 1 : -1;
-            doVideoUpdate(dX, dY, value, pixcount);
+            doVideoUpdate(0, dY, value, pixcount);
             break;
 
+        case dmainxy:
         case vminxy:
-            std::cerr << "vmin_xy " << std::endl;
-            dX = (_storage[misc0] & X_UD) ? 1 : -1;
-            dY = (_storage[misc0] & Y_UD) ? 1 : -1;
             doVideoUpdate(dX, dY, value, pixcount);
             break;
 
-        case misc0: {
-            static const char* bits[] = { "zrm", "yzs", "wob", "bw", "dma", "xup", "yup", "pxen" };
-            std::cerr << "misc0 [";
-            for (int i = 0; i < 8; i++) {
-                std::cerr << ((value & (1<<i)) ? " " : "!") << bits[i] << ", ";
-            }
-            std::cerr << "]\n";
-        }
+        default:
+            _storage[offset] = value;
         break;
-        case pxcntl:
-        case pxcnth:
-            std::cerr << "pxcnt=" << *(uint16_t*)&_storage[pxcntl] << std::endl;
-        break;
+    }
+}
+
+uint8_t& AedRegs::pixel(int x, int y) {
+    x &= DISPLAY_WIDTH-1;
+    y &= DISPLAY_HEIGHT-1;
+    return _videoMemory[y*DISPLAY_WIDTH + x];
+}
+
+void AedRegs::doVideoUpdate(int dX, int dY, uint8_t color, uint16_t count) {
+    uint16_t& x = *(uint16_t *) &_storage[capxl];  // TODO: Handle fix for big endian
+    uint16_t& y = *(uint16_t *) &_storage[capyl];
+    uint8_t mask = _storage[wrmsk];
+    while (count--) {
+        pixel(x,y) = color & mask;
+        x += dX;
+        y += dY;
     }
 }
 
