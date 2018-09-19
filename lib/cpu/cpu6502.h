@@ -20,6 +20,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <iostream>
+#include <unistd.h>
 #include "cpu.h"
 
 class CPU6502 : public CPU {
@@ -1483,6 +1484,7 @@ class CPU6502 : public CPU {
                 default:
                     printf("unhandled instruction %02X at %04X\n", inst, pc - 1);
                     fflush (stdout);
+                    while(1) sleep(1);
                     exit(1);
             }
             assert(cycles[inst] > 0);
