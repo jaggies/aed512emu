@@ -17,6 +17,7 @@
 
 #if defined(AED767) || defined(AED1024)
 #define SRAM_SIZE 2048
+#define CLUT_BASE 0x3c00
 static std::vector<std::string> roms = {
     "rom/767/890037-05_a325.bin",
     "rom/767/890037-04_a326.bin",
@@ -26,6 +27,7 @@ static std::vector<std::string> roms = {
 };
 #else
 #define SRAM_SIZE 1024
+#define CLUT_BASE 0x1c00
 static std::vector<std::string> roms = {
     "rom/512/aed_v86_c0.bin",
     "rom/512/aed_v86_c8.bin",
@@ -42,11 +44,10 @@ static const size_t RAM_SIZE = 5 * SRAM_SIZE; // RAM
 static const size_t ACAIK_BASE = RAM_SIZE; // AED 767/1024 only
 #endif
 static const size_t LED_BASE = 6 * SRAM_SIZE;
-static const size_t MAP_MEM_BASE = 7 * SRAM_SIZE; // LUT memory
 static const size_t RAM_START = 0x00; // TODO
-static const size_t CLUT_RED = MAP_MEM_BASE;
-static const size_t CLUT_GRN = MAP_MEM_BASE + 256;
-static const size_t CLUT_BLU = MAP_MEM_BASE + 512;
+static const size_t CLUT_RED = CLUT_BASE;
+static const size_t CLUT_GRN = CLUT_BASE + 256;
+static const size_t CLUT_BLU = CLUT_BASE + 512;
 static const size_t CPU_MEM = 64 * 1024; // Total address space
 static const uint8_t SW1 = ~0x10; // negate since open is 0
 static const uint8_t SW2 = ~0x7d;
@@ -76,14 +77,25 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
     _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", SW2));
     _mapper.add(_sio0 = new M68B50(sio0st, "SIO0"));
     _mapper.add(_sio1 = new M68B50(sio1st, "SIO1"));
+#if !defined(AED767) && !defined(AED1024)
     _mapper.add(new Generic(0xe9, 1,
-            [this](int offset) { return random(); },
-            [this](int offset, uint8_t value) { },
+            [this](int offset) { return 0x01; },
+            [this](int offset, uint8_t value) { std::cerr << "write 0xe9:" << (int) value << std::endl;  },
             "hack_0xe9"));
     _mapper.add(new Generic(miscrd, 1,
             [this](int offset) { return this->_hSync; },
-            [this](int offset, uint8_t value) { },
+            [this](int offset, uint8_t value) { std::cerr << "write 0x2a:" << (int) value << std::endl; },
             "hack_miscrd"));
+#else
+    _mapper.add(new Generic(0xe5, 1,
+            [this](int offset) { return random(); },
+            [this](int offset, uint8_t value) { std::cerr << "write 0xe5:" << (int) value << std::endl;  },
+            "hack_0xe5"));
+    _mapper.add(new Generic(miscrd, 1,
+            [this](int offset) { return random(); },
+            [this](int offset, uint8_t value) { std::cerr << "write 0x2a:" << (int) value << std::endl; },
+            "hack_miscrd"));
+#endif
     _mapper.add(_aedRegs = new AedRegs(0x00, 0x30, "aedregs"));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
     _mapper.add(new Ram(LED_BASE, SRAM_SIZE, "LED"));
@@ -139,4 +151,12 @@ AedBus::doSerial() {
    return _sio0->irqAsserted() || _sio1->irqAsserted();
 }
 
-
+uint32_t
+AedBus::getPixel(int x, int y)
+{
+    uint8_t idx = _aedRegs->pixel(x, y);
+    uint8_t red = _mapper.read((int) CLUT_RED + idx);
+    uint8_t grn = _mapper.read((int) CLUT_GRN + idx);
+    uint8_t blu = _mapper.read((int) CLUT_BLU + idx);
+    return 0xff000000 | (blu << 16) | (grn << 8) | red;
+}

@@ -9,8 +9,9 @@
 #include "bus.h"
 #include "rom.h"
 #include "ram.h"
+#include "config.h"
 
-#define CPU_MEM 65536
+#define CPU_MEM 65536 // This test uses entire address space
 
 const std::vector<std::string> roms = { "rom/6502_functional_test.bin" };
 
@@ -66,7 +67,7 @@ class System: public BUS {
 int main(int argc, char** argv) {
     Clock clock;
     System system;
-    mos6502 cpu([&system](int addr) { return system.read(addr); },
+    USE_CPU cpu([&system](int addr) { return system.read(addr); },
             [&system](int addr, uint8_t value) { system.write(addr, value); },
             [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
 
@@ -78,14 +79,13 @@ int main(int argc, char** argv) {
         cpu.cycle();
         if (lastpc == pc) {
             std::cerr << "Failed at pc: " << pc << std::endl;
+            int count;
+            std::tie(count, line) = disassemble_6502(pc,
+                [&system](int offset) { return system.read(offset); }
+            );
+            std::cerr << line << "\n";
             cpu.dump(std::cerr);
             break;
-        } else {
-//            int count;
-//            std::tie(count, line) = disassemble_6502(pc,
-//                [&system](int offset) { return system.read(offset); }
-//            );
-//            std::cerr << line << "\n";
         }
         lastpc = pc;
     }

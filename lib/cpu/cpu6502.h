@@ -26,7 +26,10 @@
 class CPU6502 : public CPU {
     public:
         CPU6502(Reader reader, Writer writer, Counter counter)
-        : CPU(reader, writer, counter), a(0), x(0), y(0), s(0), p(R|I|B) { }
+                : CPU(reader, writer, counter), a(0), x(0), y(0), s(0xFD), p(R|I|B), pc(0),
+                      pending_ex(PENDING_NONE) {
+            pc = read(0xFFFC) + read(0xFFFD) * 256;
+        }
 
         void irq() override {
             pending_ex |= PENDING_IRQ;
@@ -69,7 +72,7 @@ class CPU6502 : public CPU {
         static const unsigned char I = 0x04;
         static const unsigned char Z = 0x02;
         static const unsigned char C = 0x01;
-        int pc = 0;
+        int pc;
 
         static const unsigned char PENDING_NONE = 0;
         static const unsigned char PENDING_NMI = 1;

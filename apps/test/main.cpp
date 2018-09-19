@@ -5,6 +5,7 @@
 #include "bus.h"
 #include "aedbus.h"
 #include "netpbm.h"
+#include "config.h"
 
 class Clock : public CLK {
     public:
@@ -41,13 +42,10 @@ int main(int argc, char** argv)
 {
     Clock clock;
     AedBus bus;
-//    CPU6502 cpu([&bus](int addr) { return bus.read(addr); },
-//            [&bus](int addr, uint8_t value) { bus.write(addr, value); },
-//            [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
-    mos6502 cpu([&bus](int addr) { return bus.read(addr); },
+    USE_CPU cpu([&bus](int addr) { return bus.read(addr); },
                 [&bus](int addr, uint8_t value) { bus.write(addr, value); },
                 [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
-    cpu.reset();
+
     bus.send("Hello world!!!\n");
     int frameCount = 0;
     while (1) {

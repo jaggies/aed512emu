@@ -47,8 +47,9 @@ class AedRegs: public Peripheral {
 
         const std::vector<uint8_t>& getVideoMemory() const { return _videoMemory; }
 
-    private:
         uint8_t& pixel(int x, int y);
+
+    private:
         void doVideoUpdate(int dX, int dY, uint8_t color, uint16_t count);
         void dump(int offset, uint8_t value);
         std::vector<uint8_t> _storage;

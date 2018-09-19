@@ -14,9 +14,11 @@
 #include <iostream>
 #include "cpu6502.h"
 #include "mos6502.h"
+#include "dis6502.h"
 #include "clk.h"
 #include "bus.h"
 #include "aedbus.h"
+#include "config.h"
 
 static GLuint texName;
 static int imageWidth = 0;
@@ -159,15 +161,10 @@ static void idle() {
     if (bus->doVideo()) {
         cpu->nmi();
         // copy pixels to texture
-        const std::vector<uint8_t>& display = bus->getVideoMemory();
         for (int y = 0; y < bus->getDisplayHeight(); y++) {
-            size_t row = (bus->getDisplayHeight() - y - 1) * bus->getDisplayWidth();
+            int row = y * bus->getDisplayWidth();
             for (int x = 0; x < bus->getDisplayWidth(); x++) {
-                uint8_t idx = display[row + x];
-                uint8_t red = bus->read(0x1c00 + idx);
-                uint8_t grn = bus->read(0x1d00 + idx);
-                uint8_t blu = bus->read(0x1e00 + idx);
-                imageData[row + x]= 0xff000000 | (blu << 16) | (grn << 8) | red;
+                imageData[row + x] = bus->getPixel(x, y);
             }
         }
         updateTexture();
@@ -183,19 +180,26 @@ void mouseWheel(int button, int dir, int x, int y)
     //glutPostRedisplay();
 }
 
+void signalHandler(int) {
+    int count;
+    std::string line;
+    std::tie(count, line) = disassemble_6502(cpu->get_pc(),
+        [](int offset) { return ::bus->read(offset); }
+    );
+    std::cerr << std::endl << line << std::endl;
+    cpu->dump(std::cerr);
+}
+
 int main(int argc, char **argv)
 {
     Clock clock;
     AedBus aedbus;
     bus = &aedbus;
-    cpu = new CPU6502([](int addr) { return ::bus->read(addr); },
+    cpu = new USE_CPU([](int addr) { return ::bus->read(addr); },
                         [](int addr, uint8_t value) { ::bus->write(addr, value); },
                         [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
-//    cpu = new mos6502([](int addr) { return ::bus->read(addr); },
-//                    [](int addr, uint8_t value) { ::bus->write(addr, value); },
-//                    [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
-    cpu->reset();
 
+    signal(SIGINT, signalHandler);
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     //glutInitDisplayString("rgba stencil double samples=64 hidpi");

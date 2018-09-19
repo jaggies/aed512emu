@@ -54,6 +54,9 @@ class AedBus : public BUS {
 
         const std::vector<uint8_t>& getVideoMemory() const { return _aedRegs->getVideoMemory(); }
 
+        // Gets a pixel using the color map for the device
+        uint32_t getPixel(int x, int y);
+
     private:
         Mapper _mapper;
         M68B21 * _pia0;
