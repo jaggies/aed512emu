@@ -195,8 +195,8 @@ class CPU6502 : public CPU {
 
             switch (inst) {
                 case 0x00: { // BRK
-                    stack_push((pc) >> 8);
-                    stack_push((pc) & 0xFF);
+                    stack_push((pc - 1) >> 8);
+                    stack_push((pc - 1) & 0xFF);
                     stack_push(p | B); // | B says the Synertek 6502 reference
                     p |= I;
                     pc = read(0xFFFE) + read(0xFFFF) * 256;
@@ -1338,7 +1338,7 @@ class CPU6502 : public CPU {
                     p = R | stack_pull();
                     unsigned char pcl = stack_pull();
                     unsigned char pch = stack_pull();
-                    pc = pcl + pch * 256;
+                    pc = pcl + pch * 256 + 1;
                     break;
                 }
 

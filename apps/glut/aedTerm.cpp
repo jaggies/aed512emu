@@ -188,12 +188,12 @@ int main(int argc, char **argv)
     Clock clock;
     AedBus aedbus;
     bus = &aedbus;
-//    cpu = new CPU6502([&b](int addr) { return bus->read(addr); },
-//                        [&b](int addr, uint8_t value) { bus->write(addr, value); },
-//                        [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
-    cpu = new mos6502([](int addr) { return ::bus->read(addr); },
-                    [](int addr, uint8_t value) { ::bus->write(addr, value); },
-                    [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
+    cpu = new CPU6502([](int addr) { return ::bus->read(addr); },
+                        [](int addr, uint8_t value) { ::bus->write(addr, value); },
+                        [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
+//    cpu = new mos6502([](int addr) { return ::bus->read(addr); },
+//                    [](int addr, uint8_t value) { ::bus->write(addr, value); },
+//                    [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
     cpu->reset();
 
     glutInit(&argc, argv);
