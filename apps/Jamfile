@@ -1,4 +1,4 @@
 SubDir TOP apps ;
-SubInclude TOP apps glut ;
+SubInclude TOP apps aedterm ;
+SubInclude TOP apps checker ;
 SubInclude TOP apps test ;
-SubInclude TOP apps 6502tests ;

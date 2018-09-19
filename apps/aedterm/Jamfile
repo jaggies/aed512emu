@@ -1,4 +1,4 @@
-SubDir TOP apps glut ;
+SubDir TOP apps aedterm ;
 SubDirHdrs $(TOP) lib aed ;
 SubDirHdrs $(TOP) lib core ;
 SubDirHdrs $(TOP) lib cpu ;
@@ -8,8 +8,8 @@ SubDirHdrs $(TOP) lib mos6502 ;
 SubDirHdrs $(TOP) lib util ;
 SubDirHdrs /opt/local/include ;
 
-Depends aedTerm : libemu.a ;
+Depends aedterm : libemu.a ;
 INCLUDE += -I/opt/local/include ;
-LINKLIBS on aedTerm = $(LINKLIBS) -lemu -lglut -lglu -lgl ;
+LINKLIBS on aedterm = $(LINKLIBS) -lemu -lglut -lglu -lgl ;
 
-Main aedTerm : aedTerm.cpp ;
+Main aedterm : aedTerm.cpp ;

@@ -6,7 +6,7 @@ SubDirHdrs $(TOP) lib devices ;
 SubDirHdrs $(TOP) lib mos6502 ;
 SubDirHdrs $(TOP) lib util ;
 
-Depends aed512 : libemu.a ;
-LINKLIBS on aed512 = $(LINKLIBS) -lemu ;
+Depends test : libemu.a ;
+LINKLIBS on test = $(LINKLIBS) -lemu ;
 
-Main aed512 : main.cpp ;
+Main test : test.cpp ;
