@@ -54,7 +54,6 @@ static const uint8_t SW2 = ~0x7d;
 // Video timing
 static const uint64_t LINE_TIME = SECS2USECS(1L) / 15750;
 static const uint64_t FRAME_TIME = SECS2USECS(1L) / 60;
-static const uint64_t LINE_SYNC_TIME = LINE_TIME / 20; // TODO
 
 AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
         _sio0(0), _sio1(0), _aedRegs(0), _nextHsync(0), _nextVsync(0), _hSync(0), _vSync(0) {
@@ -77,10 +76,14 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
     _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", SW2));
     _mapper.add(_sio0 = new M68B50(sio0st, "SIO0"));
     _mapper.add(_sio1 = new M68B50(sio1st, "SIO1"));
+    _mapper.add(new Generic(0xe9, 1,
+            [this](int offset) { return random(); },
+            [this](int offset, uint8_t value) { },
+            "hack_0xe9"));
     _mapper.add(new Generic(miscrd, 1,
             [this](int offset) { return this->_hSync; },
             [this](int offset, uint8_t value) { },
-            "miscrd"));
+            "hack_miscrd"));
     _mapper.add(_aedRegs = new AedRegs(0x00, 0x30, "aedregs"));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
     _mapper.add(new Ram(LED_BASE, SRAM_SIZE, "LED"));
@@ -111,10 +114,8 @@ AedBus::doVideo() {
        _vSync = 0;
    }
    if (now > _nextHsync) {
-       _hSync = 1;
-       _nextHsync = now + LINE_TIME; // 15kHz
-   } else if (now > _nextHsync - LINE_SYNC_TIME) {
-       _hSync = 0;
+       _hSync = !_hSync;
+       _nextHsync = now + LINE_TIME/2; // Hack - toggle twice per 15kHz sync
    }
    _vSync ? _pia1->assertLine(M68B21::CB1) : _pia1->deassertLine(M68B21::CB1);
    return doIrq;

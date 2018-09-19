@@ -33,7 +33,7 @@ class _Ram: public Peripheral {
         void write(int offset, uint8_t value) override {
             assert(offset >= 0 && offset < _storage.size());
             if (debug) {
-                std::cerr << name() << "[0x" << std::hex << start() + offset << "] = "
+                std::cerr << name() << "[0x" << std::hex << start() + offset << "] write "
                         << (int) value << std::endl;
             }
             _storage[offset] = value;
