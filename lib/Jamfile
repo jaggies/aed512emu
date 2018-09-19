@@ -4,4 +4,5 @@ SubInclude TOP lib core ;
 SubInclude TOP lib cpu ;
 SubInclude TOP lib mos6502 ;
 SubInclude TOP lib devices ;
+SubInclude TOP lib dis6502 ;
 SubInclude TOP lib util ;
