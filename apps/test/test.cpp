@@ -7,16 +7,7 @@
 #include "netpbm.h"
 #include "config.h"
 
-class Clock : public CLK {
-    public:
-        Clock() : _count(0) { }
-        ~Clock() = default;
-        void add_cpu_cycles(size_t cycles) { _count += cycles; }
-        size_t getCount() const { return _count; }
-        void reset() { _count = 0; }
-    private:
-        size_t _count;
-};
+typedef CLK Clock;
 
 void writeFrame(const std::string& path, AedBus& bus) {
     NetPBM* pbm = createNetPBM();
@@ -41,7 +32,7 @@ void writeFrame(const std::string& path, AedBus& bus) {
 
 int main(int argc, char** argv)
 {
-    Clock clock;
+    Clock clock(1000000); // 1MHz system clock
     AedBus bus;
     USE_CPU cpu([&bus](int addr) { return bus.read(addr); },
                 [&bus](int addr, uint8_t value) { bus.write(addr, value); },
@@ -54,7 +45,7 @@ int main(int argc, char** argv)
             cpu.cycle();
         }
         // TODO: automate this with a signal handler. Should operate at 60Hz.
-        if (bus.doVideo()) {
+        if (bus.doVideo(clock.getCpuTime())) {
             cpu.nmi();
             if (true) {
                 std::string path = "frame" + std::to_string(frameCount++);

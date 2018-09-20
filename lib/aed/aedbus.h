@@ -29,8 +29,8 @@ class AedBus : public BUS {
         void write(int addr, unsigned char value) override { _mapper.write(addr, value); }
 
         // Handle video-related timing and return 'true' if IRQ needs to happen
-        // TODO: Handle this better. Maybe use SIGUSR interrupt.
-        bool doVideo();
+        // The time_us parameter is microseconds from the CPU perspective, not host time.
+        bool doVideo(uint64_t time_us);
 
         // Looks for data from serial ports. Returns true if IRQ needs to happen.
         // TODO: Have this automatically invoke serial callback when requested by CPU write

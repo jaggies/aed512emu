@@ -53,8 +53,8 @@ static const uint8_t SW1 = ~0x10; // negate since open is 0
 static const uint8_t SW2 = ~0x7d;
 
 // Video timing
-static const uint64_t LINE_TIME = SECS2USECS(1L) / 15750;
-static const uint64_t FRAME_TIME = SECS2USECS(1L) / 60;
+static const uint64_t LINE_TIME = SECS2USECS(1L) / 40000;
+static const uint64_t FRAME_TIME = 525*LINE_TIME;
 
 AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
         _sio0(0), _sio1(0), _aedRegs(0), _nextHsync(0), _nextVsync(0), _hSync(0), _vSync(0) {
@@ -82,21 +82,18 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
             [this](int offset) { return 0x01; },
             [this](int offset, uint8_t value) { std::cerr << "write 0xe9:" << (int) value << std::endl;  },
             "hack_0xe9"));
-    _mapper.add(new Generic(miscrd, 1,
-            [this](int offset) { return this->_hSync; },
-            [this](int offset, uint8_t value) { std::cerr << "write 0x2a:" << (int) value << std::endl; },
-            "hack_miscrd"));
+
 #else
     _mapper.add(new Generic(0xe5, 1,
-            [this](int offset) { return random(); },
+            [this](int offset) { return 0xff; },
             [this](int offset, uint8_t value) { std::cerr << "write 0xe5:" << (int) value << std::endl;  },
             "hack_0xe5"));
-    _mapper.add(new Generic(miscrd, 1,
-            [this](int offset) { return random(); },
-            [this](int offset, uint8_t value) { std::cerr << "write 0x2a:" << (int) value << std::endl; },
-            "hack_miscrd"));
     _mapper.add(new Ram(0x8000, 0x300, "FOO"));
 #endif
+    _mapper.add(new Generic(miscrd, 1,
+                [this](int offset) { return this->_hSync; },
+                [this](int offset, uint8_t value) { std::cerr << "write 0x2a:" << (int) value << std::endl; },
+                "hack_miscrd"));
     _mapper.add(_aedRegs = new AedRegs(0x00, 0x30, "aedregs"));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
     _mapper.add(new Ram(LED_BASE, SRAM_SIZE, "LED"));
@@ -114,21 +111,20 @@ AedBus::~AedBus() {
 }
 
 bool
-AedBus::doVideo() {
+AedBus::doVideo(uint64_t time_us) {
    bool doIrq = false;
    struct timeval tp = { 0 };
    gettimeofday(&tp, NULL);
-   uint64_t now = SECS2USECS(tp.tv_sec) + tp.tv_usec;
-   if (now > _nextVsync) {
+   if (time_us > _nextVsync) {
        _vSync = 1;
-       _nextVsync = now + FRAME_TIME; // 60Hz
+       _nextVsync = time_us + FRAME_TIME; // 60Hz
        doIrq = true;
-   } else if (now > _nextVsync - LINE_TIME) {
+   } else if (time_us > _nextVsync - LINE_TIME) {
        _vSync = 0;
    }
-   if (now > _nextHsync) {
+   if (time_us > _nextHsync) {
        _hSync = !_hSync;
-       _nextHsync = now + LINE_TIME/2; // Hack - toggle twice per 15kHz sync
+       _nextHsync = time_us + LINE_TIME/800; // Hack - toggle twice per 15kHz sync
    }
    _vSync ? _pia1->assertLine(M68B21::CB1) : _pia1->deassertLine(M68B21::CB1);
    return doIrq;

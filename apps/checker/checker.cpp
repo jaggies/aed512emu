@@ -15,22 +15,7 @@
 
 const std::vector<std::string> roms = { "rom/6502_functional_test.bin" };
 
-class Clock: public CLK {
-    public:
-        Clock() : _count(0) { }
-        ~Clock() = default;
-        void add_cpu_cycles(size_t cycles) {
-            _count += cycles;
-        }
-        size_t getCount() const {
-            return _count;
-        }
-        void reset() {
-            _count = 0;
-        }
-    private:
-        size_t _count;
-};
+typedef CLK Clock;
 
 class System: public BUS {
     public:
@@ -65,7 +50,7 @@ class System: public BUS {
 };
 
 int main(int argc, char** argv) {
-    Clock clock;
+    Clock clock(1000000); // 1MHz system clock
     System system;
     USE_CPU cpu([&system](int addr) { return system.read(addr); },
             [&system](int addr, uint8_t value) { system.write(addr, value); },

@@ -27,19 +27,11 @@ static int windowWidth = 512;
 static int windowHeight = 512;
 static std::vector<uint32_t> imageData;
 
-class Clock : public CLK {
-    public:
-        Clock() : _count(0) { }
-        ~Clock() = default;
-        void add_cpu_cycles(size_t cycles) { _count += cycles; }
-        size_t getCount() const { return _count; }
-        void reset() { _count = 0; }
-    private:
-        size_t _count;
-};
+typedef CLK Clock;
 
 static CPU* cpu;
 static AedBus* bus;
+static Clock* clk;
 
 static void checkGLError(const char* msg) {
     GLenum err;
@@ -64,13 +56,27 @@ displayString(float x, float y, char *string)
     }
 }
 
-static void updateTexture()
+bool doUpdate = false;
+
+static void maybeUpdateTexture()
 {
-    glBindTexture(GL_TEXTURE_2D, texName);
-    checkGLError("before glTexSubImage2D");
-    glTexSubImage2D(GL_TEXTURE_2D, 0,0,0, imageWidth, imageHeight, GL_RGBA,
-            GL_UNSIGNED_BYTE, &imageData[0]);
-    checkGLError("glTexSubImage2D");
+    // Copy image from CPU buffer. This could be a LOT more efficient
+    if (doUpdate) {
+        doUpdate = false;
+        for (int y = 0; y < bus->getDisplayHeight(); y++) {
+            int row = y * bus->getDisplayWidth();
+            for (int x = 0; x < bus->getDisplayWidth(); x++) {
+                imageData[row + x] = bus->getPixel(x, y);
+            }
+        }
+
+        // Copy to texture.
+        glBindTexture(GL_TEXTURE_2D, texName);
+        checkGLError("before glTexSubImage2D");
+        glTexSubImage2D(GL_TEXTURE_2D, 0,0,0, imageWidth, imageHeight, GL_RGBA,
+                GL_UNSIGNED_BYTE, &imageData[0]);
+        checkGLError("glTexSubImage2D");
+    }
 }
 
 static void init(int width, int height)
@@ -107,6 +113,8 @@ static void reshape(int w, int h)
 
 static void display(void)
 {
+    maybeUpdateTexture();
+
     checkGLError("before display()");
     glPushMatrix();
         // Compute (u,v) and (x,y) scaling factors to center the image on the screen
@@ -154,21 +162,20 @@ static void passiveMotion(int x, int y)
 
 static void idle() {
     // Amortize by doing more CPU clocks per idle call
-    for (int i = 0; i < 100000; i++) {
+    for (int i = 0; i < 200; i++) {
         cpu->cycle();
     }
     // TODO: automate this with a signal handler. Should operate at 60Hz.
-    if (bus->doVideo()) {
+    if (bus->doVideo(clk->getCpuTime())) {
+        static uint64_t last =  clk->getCpuTime();
+        uint64_t now = clk->getCpuTime();
+        std::cerr << "vsync " << (float) (now - last) / 1000.0f << "ms" << "\r";
+        last = now;
         cpu->nmi();
-        // copy pixels to texture
-        for (int y = 0; y < bus->getDisplayHeight(); y++) {
-            int row = y * bus->getDisplayWidth();
-            for (int x = 0; x < bus->getDisplayWidth(); x++) {
-                imageData[row + x] = bus->getPixel(x, y);
-            }
+        if (doUpdate == false) {
+            doUpdate = true;
+            glutPostRedisplay();
         }
-        updateTexture();
-        glutPostRedisplay();
     }
     if (bus->doSerial()) {
         cpu->irq();
@@ -193,9 +200,10 @@ void signalHandler(int) {
 
 int main(int argc, char **argv)
 {
-    Clock clock;
+    Clock clock(1000000); // TODO: what frequency?
     AedBus aedbus;
     bus = &aedbus;
+    clk = &clock;
     cpu = new USE_CPU([](int addr) { return ::bus->read(addr); },
                         [](int addr, uint8_t value) { ::bus->write(addr, value); },
                         [&clock](int cycles) { clock.add_cpu_cycles(cycles); });

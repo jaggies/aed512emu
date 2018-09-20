@@ -1,7 +1,7 @@
 # These defaults will be overwritten by target/$(TARGET)
 C++FLAGS += -std=c++11 ;
 LINK = c++ ;
-DEFINES += AED767 ;
+#DEFINES += AED767 ;
 #DEFINES += USE_CPU=mos6502 ;
 DEFINES += USE_CPU=CPU6502 ;
 CCFLAGS += -Wall ;
