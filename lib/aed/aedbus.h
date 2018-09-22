@@ -47,6 +47,11 @@ class AedBus : public BUS {
             _serialFifo.push(c);
         }
 
+        void key(char c) {
+            _pia1->setA(c);
+            _pia1->assertLine(M68B21::CA1);
+        }
+
         // Delegate functions.
         const size_t getDisplayWidth() const { return _aedRegs->getDisplayWidth(); }
 
