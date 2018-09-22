@@ -54,6 +54,14 @@ class AedBus : public BUS {
 
         // Gets a pixel using the color map for the device
         uint32_t getPixel(int x, int y);
+        const uint8_t& getRed(uint8_t index) const { return (*_redmap)[index]; }
+        const uint8_t& getGreen(uint8_t index) const { return (*_grnmap)[index]; }
+        const uint8_t& getBlue(uint8_t index) const { return (*_blumap)[index]; }
+        const std::vector<uint8_t>& getFrameBuffer(int* sizex, int* sizey) const {
+            *sizex = _aedRegs->getDisplayWidth();
+            *sizey = _aedRegs->getDisplayHeight();
+            return _aedRegs->getVideoMemory();
+        }
 
     private:
         Mapper _mapper;
@@ -67,6 +75,9 @@ class AedBus : public BUS {
         uint64_t _nextVsync;
         uint8_t _hSync;
         uint8_t _vSync;
+        Ram*    _redmap;
+        Ram*    _grnmap;
+        Ram*    _blumap;
         std::queue<uint8_t> _serialFifo;
 };
 

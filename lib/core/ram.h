@@ -41,6 +41,9 @@ class _Ram: public Peripheral {
 
         void reset() override { } // Typically RAM doesn't reset
 
+        // This bypasses the above read/write to allow host access to RAM
+        uint8_t& operator[](int index) { assert(index < _storage.size()); return _storage[index]; }
+
     protected:
         std::vector<uint8_t> _storage;
 };

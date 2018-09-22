@@ -86,23 +86,31 @@ static void showline(std::ostream& os) {
     cpu->dump(os);
 }
 
-static void maybeUpdateTexture()
-{
-    // Copy image from CPU buffer. This could be a LOT more efficient
+static void maybeUpdateTexture() {
     if (doUpdate) {
         doUpdate = false;
-        for (int y = 0; y < bus->getDisplayHeight(); y++) {
-            int row = y * bus->getDisplayWidth();
-            for (int x = 0; x < bus->getDisplayWidth(); x++) {
-                imageData[row + x] = bus->getPixel(x, y);
-            }
+
+        int width;
+        int height;
+        const std::vector<uint8_t>& frame = bus->getFrameBuffer(&width, &height);
+        assert(frame.size() == imageData.size());
+        assert(width*height == frame.size());
+
+        // Convert index to color using LUT. TODO: use OpenGL to do the final conversion
+        const uint8_t* red = &bus->getRed(0);
+        const uint8_t* grn = &bus->getGreen(0);
+        const uint8_t* blu = &bus->getBlue(0);
+        size_t index = width * height;
+        while (index--) {
+            uint8_t lut = frame[index];
+            imageData[index] = 0xff000000 | (blu[lut] << 16) | (grn[lut] << 8) | (red[lut]);
         }
 
         // Copy to texture.
         glBindTexture(GL_TEXTURE_2D, texName);
         checkGLError("before glTexSubImage2D");
-        glTexSubImage2D(GL_TEXTURE_2D, 0,0,0, imageWidth, imageHeight, GL_RGBA,
-                GL_UNSIGNED_BYTE, &imageData[0]);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, imageWidth, imageHeight, GL_RGBA,
+        GL_UNSIGNED_BYTE, &imageData[0]);
         checkGLError("glTexSubImage2D");
     }
 }

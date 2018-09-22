@@ -103,9 +103,9 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
     _mapper.add(new Ram(LED_BASE, SRAM_SIZE, "LED"));
     _mapper.add(new Ram(RAM_START, RAM_SIZE - RAM_START));
-    _mapper.add(new Ram(CLUT_RED, 0x100, "RED"));
-    _mapper.add(new Ram(CLUT_GRN, 0x100, "GRN"));
-    _mapper.add(new Ram(CLUT_BLU, 0x100, "BLU"));
+    _mapper.add(_redmap = new Ram(CLUT_RED, 0x100, "RED"));
+    _mapper.add(_grnmap = new Ram(CLUT_GRN, 0x100, "GRN"));
+    _mapper.add(_blumap = new Ram(CLUT_BLU, 0x100, "BLU"));
     _mapper.add(new RamDebug(0, CPU_MEM, "unmapped"));
 
     std::cerr << std::hex; // dump in hex
