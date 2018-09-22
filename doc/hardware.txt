@@ -99,3 +99,4 @@ stdvma (0x2b WRITE) ADRF#
 
 ---- Notes
 Useful macros: XYCTRS
+NLINES storage at 0x3e/3f; 768 lines is 0x02/0xff

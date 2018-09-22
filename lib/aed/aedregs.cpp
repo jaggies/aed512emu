@@ -89,8 +89,8 @@ void AedRegs::write(int offset, uint8_t value) {
 }
 
 uint8_t& AedRegs::pixel(int x, int y) {
-    x += _storage[xscrl];
-    y += _storage[yscrl];
+//    x += _storage[xscrl];
+//    y += _storage[yscrl];
     x &= DISPLAY_WIDTH-1;
     y &= DISPLAY_HEIGHT-1;
     return _videoMemory[y*DISPLAY_WIDTH + x];
