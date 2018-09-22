@@ -1,0 +1,504 @@
+
+                Colorware Instruction Set by Mnemonic
+
+OPN    CHR      OPN    CHR      OPN    CHR      OPN    CHR      OPN    CHR
+----------      ----------      ----------      ----------      ----------
+
+AAV+   +$       AED+   +.       BFL     B       BLG+   +%       BSO     g
+CAI+   ++       CHR+   +-       COP     )       DAI     r       DCA     p
+DCL     O       DFC     n       DFP     !       DFR     o       DJC     d
+DMV     m       DPA     &       DPK     N       DRL     =       DSF     7
+DSK     %       DSP+   +!       DTM     2       DVA     A       DVR     l
+ECU     5       EJC     U       ELP+   +"       EPA     h       ERS     ~
+ESC    ^[       ESF     9       ETC     3       ETP+   +'       FFD    ^L
+FRR     ,       GFL     $       GS     ^]       HOM     _       HSR     w
+IFL     I       JUS     ;       LAT+   +&       LMR     :       MAR+   +*
+MOV     Q       MVR     i       OFL     V       OPT     (       PEK+   +0
+POK+   +1       RCP     j       RCT+   +#       RDA     \       RHO     y
+RHR     a       RHS     t       RJP     q       ROT+   +,       RPX     Y
+RRD     @       RST     0       RTP     !       RVO     z       RZR+   +/
+SAC     {       SAP     ^       SAR     #       SBC     [       SBL     4
+SBR     b       SCC     c       SCD     *       SCP     ]       SCR     >
+SCS     `       SCT     K       SDA     ^[      SEC     C       SEN     G
+SHO     f       SIF     H       SKS     6       SLS     1       SPF     "
+SRM     M       SSE     }       STD     '       STP+   +(       STW+   +)
+SUB    ^Z       SUC     ?       SUP     -       SVO     e       SWM     L
+SZR     E       VSR     x       WDA     .       WHC     u       WHR     \
+WHS     X       WHU     s       WIP     v       WMP     k       WPX     T
+WRD     F       WSF     8       XCD     <       XTD     +       XXX    ^M
+
+
+
+                Colorware Instruction Set by Function
+
+        Mnemonics preceeded by '+' denote extended functions
+
+-----------------------(ALPHANUMERICS)
+
+                        HOM     _       home
+
+                        SAP     ^       set alphanumeric parameters
+                        sap <size><font><hspace><vspace><link>
+
+                        SAC     {       set alphanumeric cursor color
+                        sec <color>
+
+                        MAR+   +*       set left and right margins
+                        mar <left><right>
+
+                        CHR+   +-       set character size
+                        chr <font>
+
+------------------------(COLOR SETUP)
+
+Color Selection:        SEC     C       set current color (forground)
+                        sec <color>
+
+                        SBC     [       set current color (background)
+                        sbc <color>
+
+Color Lookup Tbl:       SCT     K       set color table
+                        sct <adr><n><r><g><b>
+
+                        RCT+   +#       read color table
+                        rct <stadr><cnt>
+
+                        LAT+   +&       ld clr tbl with anti aliasing ramp
+                        lat <stadr><v1>..<v16>
+
+Video Masking Regs:     SWM     L       set video memory write mask
+                        swm <val>
+
+                        SRM     M       set read mask
+                        srm <msk0><msk1><msk2><msk3>
+
+Blink:                  SBL     4       blink all pixels with specified color
+                        sbl <clr><r><g><b><on><off>
+
+------------------------(CURSOR)
+
+                        SCC     c       set cursor colors
+                        scc <clr1><clr2><blinktime>
+
+                        SCP     ]       set cursor parameters
+                        scp <shape><constraint><plane(s)>
+
+                        RCP     j       read cursor position
+
+                        DCA     p       erase cursor and redraw at new x,y
+                        dca <x><y>
+
+                        ECU     5       erase cursor unconditionaly
+
+
+
+------------------------(COMMUNICATIONS OPTIONS)
+
+                        SIF     H       select intf for returned options
+                        sif <type>
+
+                        SKS     6       send keystroke (parallel only)
+
+                        SCR     >       send carriage return
+
+                        SBR     b       set baud rate
+                        sbr <main><aux>
+
+                        STD     '       set turnaround delay
+                        std <delay>
+
+                        SCD     *       start cmd DMA
+
+                        XCD     <       exit  cmd DMA
+
+------------------------(DIRECT VIDEO MEMORY ACCESS)
+
+                        SUC     ?       set up counters for DVMA
+                        suc <byte>
+
+                        WRD     F       write raster direct
+                        wrd <count>
+
+                        RRD     @       read raster direct
+
+                        SDA    ^[       stop dir access read or write
+
+DMA Into Area of Int:   WDA     .       write direct into area of interest
+
+                        RDA     \       read direct from area of interest
+
+
+
+------------------------(GRAPHICS)
+
+Drawing Options:        AAV+   +$       anti-alias vector
+                        aav <status>
+
+Current Access Pos:     MOV     Q       set access position absolute
+                        mov <x><y>
+
+                        MVR     i       set access position relative
+                        mvr <dx><dy>
+
+Isolated Pixels:        WPX     T       write pixel
+                        wpx <color>
+
+                        WMP     k       write mult isolated pixels
+                        wmp <dx><dy>
+
+                        RPX     Y       read pixel
+
+Vector Drawing:         DVA     A       draw vec absolute
+                        dva <x><y>
+
+                        DVR     l       draw vec relative
+                        dvr <dx><dy>
+
+                        DMV     m       draw mult vectors
+                        dmv <dx1><dy1><dx2><dy2>...<0><0>
+
+                        SLS     1       set line style
+                        sls <pattern><scale>
+
+Incr Plotter Mode:      WIP     v       write incr plotter mode
+                        wip <n16><byte>
+
+Circle Drawing:         DCL     O       draw circle
+                        dcl <radius>
+
+                        DFC     n       draw fat circle
+                        dfc <radius>
+
+Elipse Drawing:         ELP+   +"       draw elipse
+                        elp <x><y><const>
+
+
+Filled Areas:           DFR     o       draw filled rectangle
+                        dfr <x><y>
+
+                        FRR     ,       filled rectange relative
+                        frr <dx><dy>
+
+                        DFP     !       draw filled polygon
+                        dfp<wc><cnt><x1><y1>..<xn><yn>
+
+                        GFL     $       general fill
+                        gfl <mask><bcolor>
+
+                        IFL     I       interior fill
+
+                        BFL     B       boundary fill
+                        bfl <color>
+
+                        OFL     V       overlay fill
+
+                        DSP+   +!       define stipple pattern used
+                                        for filling rectangles
+                        dsp <npat><pat1>..<pat8>
+
+                        SPF     "       select stipple pattern
+                        spf <pattern#>
+
+User Definable Symbols: DSF     7       define special font
+                        dsf <code><hsiz><vsiz><mask><byte1>..<byten><0>
+
+                        WSF     8       write special font
+                        wsf <code><dx><dy><0>
+
+                        ESF     9       erase special font
+                        esf <hsiz><vsiz><dx><dy>
+
+
+------------------------(GRID)
+
+                        BLG+   +%       turn grid on and off
+                        blg <0/1>
+
+------------------------(IMAGING)
+
+Area of Interest:       DAI     r       define area of interest
+                        dai <x><y>
+
+                        CAI+   ++       copy area of interest
+                        cai <x><y>
+
+                        ROT+   +,       rotate area of interest
+                        rot <count>
+
+Multiple Pixels:        WHS     X       write horz scan
+                        whs <byte1>...<byten>
+
+                        RHS     +       read  horz scan
+
+                        WHC     u       write horz scan (non-AOI)
+                        whc <count><byte1>..<byten>
+
+Run Length Encd Xfrs:   WHR     \       write horz runs
+                        whr <count><color><0>
+
+                        RHR     a       read  horz runs
+
+                        WHU     s       write horz runs (alt)
+                        whu <length><color>
+                        whu <255><n><color>
+                        whu <length><color><255><n><color> intermixed
+
+------------------------(INTERPRETER)
+
+                        SEN     G       set encoding
+                        sen <ftype><otype><rtype><ctype><ptype>
+
+                        XTD     +       extended command mode
+
+                        XXX    ^M       exit graphics interpreter
+                
+------------------------(JOYSTICK)
+
+                        EJC     U       enable cursor pos via joystick
+                        
+                        DJC     d       disable joystick cursor
+
+                        RJP     q       read joystick position
+
+
+
+------------------------(KEYBOARD AND CONSOLE)
+
+Prog Ftn Keys:          DPK     N       define pgm ftn key
+                        dpk <key><chr1>..<chr8>
+
+                        DSK     %       define soft key
+                        dsk <key><cnt><chr1>..<chrn>
+
+Prog Reg Disp:          DRL     =       set led display to VAL (old kbd only)
+                        drl <byte>
+
+Remote Setup of Cons:   SCS     `       set control status
+                        scs <byte>
+
+------------------------(MISC)
+
+                        ESC    ^[       ignored as function code
+
+                        RST     0       full terminal reset
+
+                        FFD    ^L       form feed
+
+                        ERS     ~       erase entire memory
+
+                        COP     )       make copy
+                        cop <dev><#copies>
+
+                        OPT     (       set programmable options
+                        opt <option><val>
+
+                        AED+   +.       show software version #
+
+------------------------(SUPEROAM SUPPORT)
+
+                        SUP     -       ena/dsb superoam (512 only)
+                        sup <0/1>
+
+                        SAR     #       set auto roam    (not impl)
+                        sar <xysign><xrate><yrate>
+
+
+
+------------------------(TABLET)
+
+                        DTM     2       define tablet mapping
+                        dtm <xorg><yorg><xscal><yscal>
+
+                        ETC     3       enable tablet cursor
+                        etc <idchr>
+
+                        STP+   +(       set tablet parameters
+                        stp <byte>
+
+                        ETP+   +'       enable tablet polling
+                        etp <byte>
+
+                        RTP     !       read tablet postion
+
+------------------------(TEKTRONIX EMULATION)
+
+                        SUB    ^Z       enter TEK graphics input (GIN) mode
+
+                        GS     ^]       enter TEK graphics output mode
+                        gs <cap><vector><cc>
+
+                        STW+   +)       set tektronix window
+                        stw <0/1>
+
+------------------------(USER FIRMWARE)
+
+                        LMR     :       load microprocessor ram
+                        lmr <adr><cnt><val1>..<valn>
+
+                        JUS     ;       jump user subroutine
+                        jus <adr>
+
+                        SSE     }       set stack end
+                        sse <adr>
+
+                        PEK+   +0       peek into 6502 memory
+                        pek <adr>
+
+                        POK+   +1       poke into 6502 memory
+                        pok <adr><val>
+
+
+
+------------------------(ZOOM, SCROLL, AND PAN)
+
+                        SHO     f       set horiz orig reg
+                        sho <val>
+
+                        HSR     w       horz scroll relative
+                        hsr <dx1>
+
+                        SVO     e       set vert orig
+                        svo <val>
+
+                        VSR     x       vert scroll relative
+                        vsr <dy1>
+
+                        BSO     g       set horz and vert orig regs
+                        bso <x><y>
+
+                        RHO     y       read horz origin
+
+                        RVO     z       read vert origin
+
+                        EPA     h       enable panning
+
+                        DPA     &       disable panning
+
+                        SZR     E       set zoom registers
+                        szr <xzoom><yzoom>
+
+                        RZR+   +/       read zoom registers
+
+
+
+
+                Colorware Instruction Set Sorted by OPCODE
+
+        ^L      FFD     12
+        ^M      XXX     13      /* in single char mode, this actually sends
+                CR      13
+        ^Z      SUB     26
+        ^[      ESC     27
+                SDA     27
+        ^]      GS      29
+        !       DFP     33              /*      NA 512  */
+                DSP*    33
+        "       ELP*    34              /*      NA 512  */
+                SPF     34
+        #       RCT*    35              /*      NA 512  */
+                SAR     35              /*      not impl*/
+        $       AAV*    36              /*      NA 512  */
+                GFL     36              /*      NA 512  */
+        %       BLG*    37              /*      NA 512  */
+                DSK     37              /*      NA 1024 */
+        &       DPA     38
+                LAT*    38              /*      NA 512  */
+        '       ETP*    39              /* bingo says 25 -- wrong */
+                STD     39
+        (       OPT     40
+                STP*    40
+        )       COP     41
+                STW*    41              /*      NA 512  */
+        *       MAR*    42              /* NA 512, manual says 58 -- wrong */
+                SCD     42      
+        +       CAI*    43              /*      1024 only       */
+                XTD     43
+        ,       FRR     44
+                ROT*    44              /*      1024 only       */
+        -       CHR*    45              /*      1024 only       */
+                SUP     45              /*       512 only       */
+        .       AED*    46
+                WDA     46
+        /       RDA     47
+                RZR*    47              /*      1024 only       */
+        0       PEK*    48              /* peek into term mem, 1024 only*/
+                RST     48
+        1       POK*    49              /* poke into term mem, 1024 only*/
+                SLS     49
+        2       DTM     50
+        3       ETC     51
+        4       SBL     52
+        5       ECU     53
+        6       SKS     54
+        7       DSF     55
+        8       WSF     56
+        9       ESF     57
+        :       LMR     58
+        ;       JUS     59
+        <       XCD     60
+        =       DRL     61              /*      NA 1024         */
+        >       SCR     62
+        ?       SUC     63
+        @       RRD     64
+        A       DVA     65
+        B       BFL     66
+        C       SEC     67
+        D       DEB     68      DEBUG MODE (undocumented)
+        E       SZR     69
+        F       WRD     70
+        G       SEN     71
+        H       SIF     72
+        I       IFL     73
+        J       ---     74
+        K       SCT     75
+        L       SWM     76
+        M       SRM     77
+        N       DPK     78              /*      NA 1024         */
+        O       DCL     79
+        P       ---     80
+        Q       MOV     81
+        R       ---     82
+        S       XZY     83      S**3DDDN mode (undocumented)
+        T       WPX     84
+        U       EJC     85
+        V       OFL     86
+        W       ---     87
+        X       WHS     88
+        Y       RPX     89
+        Z       ---     90
+        [       SBC     91
+        \       WHR     92
+        ]       SCP     93      
+        ^       SAP     94
+        _       HOM     95
+        `       SCS     96
+        a       RHR     97
+        b       SBR     98
+        c       SCC     99
+        d       DJC     100
+        e       SVO     101
+        f       SHO     102
+        g       BSO     103
+        h       EPA     104
+        i       MVR     105
+        j       RCP     106
+        k       WMP     107
+        l       DVR     108
+        m       DMV     109
+        n       DFC     110
+        o       DFR     111
+        p       DCA     112
+        q       RJP     113
+        r       DAI     114
+        s       WHU     115
+        t       RHS     116
+        u       WHC     117
+        v       WIP     118
+        w       HSR     119
+        x       VSR     120
+        y       RHO     121
+        z       RVO     122
+        {       SAC     123
+        |       RTP     124
+        }       SSE     125
+        ~       ERS     126
