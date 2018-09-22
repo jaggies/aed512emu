@@ -1,7 +1,7 @@
 #include "dis6502.h"
 using namespace std;
 
-tuple<int, string> disassemble_6502(int address, const std::function<uint8_t(int offset)>& read)
+tuple<int, string> disassemble_6502(int* address, const std::function<uint8_t(int offset)>& read)
 {
     static char cstr[512];
     int bytelength;
@@ -59,12 +59,12 @@ tuple<int, string> disassemble_6502(int address, const std::function<uint8_t(int
     paramcount = 0;
     int stored = 0;
 
-    const int baseAddress = address;
+    const int baseAddress = *address;
     for (int i = 0; i < 4; ++i) {                                 //Start proccessing loop.
         previousbyte = currentbyte;
         currentbyte = read(baseAddress + i);
         if (paramcount == 0) {
-            sprintf(p, "%04X   %n", address, &stored);                             //Display current address at beginning of line
+            sprintf(p, "%04X   %n", *address, &stored);                             //Display current address at beginning of line
             p += stored;
             paramcount = opcode_props[currentbyte][0];              //Get instruction length
             bytelength = paramcount;
@@ -73,7 +73,7 @@ tuple<int, string> disassemble_6502(int address, const std::function<uint8_t(int
             pre = modes[addrmode][0];                               //Look up pre-operand formatting text
             post = modes[addrmode][1];                              //Look up post-operand formatting text
             pad = padding[(paramcount - 1)];                        //Calculate correct padding for output alignment
-            address = address + paramcount;                         //Increment address
+            *address += paramcount;                         //Increment address
         }
         if (paramcount != 0)                                        //Keep track of possition within instruction
             paramcount = paramcount - 1;
@@ -87,7 +87,7 @@ tuple<int, string> disassemble_6502(int address, const std::function<uint8_t(int
                     sprintf(p, "$%02X%n", currentbyte, &stored);                   //...display operand
                     p += stored;
                 } else {                                            //Addressing mode is relative...
-                    sprintf(p, "$%02X%n", (address + ((currentbyte < 128) ? currentbyte : currentbyte - 256)), &stored); //...display relative address.
+                    sprintf(p, "$%02X%n", (*address + ((currentbyte < 128) ? currentbyte : currentbyte - 256)), &stored); //...display relative address.
                     p += stored;
                 }
             }

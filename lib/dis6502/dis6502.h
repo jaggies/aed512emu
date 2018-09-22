@@ -6,6 +6,6 @@
 #include <cstdint>
 #include <functional>
 
-std::tuple<int, std::string> disassemble_6502(int address, const std::function<uint8_t(int offset)>& read);
+std::tuple<int, std::string> disassemble_6502(int* address, const std::function<uint8_t(int offset)>& read);
 
 #endif // DIS6502_H

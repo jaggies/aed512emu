@@ -187,12 +187,11 @@ public:
 
     int get_pc() const override { return pc; }
 
-    virtual void dump(std::ostream& os) override {
-        os << "pc=" << pc << " status=" << (int) status;
-        os << " a=" << (int) A << " x=" << (int) X << " y=" << (int) Y;
-        os << " sp=" << (int) sp << std::endl;
+    void dump(std::ostream& os) override {
+        os << "PC:" << pc;
+        os << " A:" << (int) A << " X:" << (int) X << " Y:" << (int) Y;
+        os << " S:" << (int) sp << " STATUS:" << (int) status << std::endl;
     }
-    ;
 
     // For debug/testing only
     virtual void set_pc(int pc_) override { pc = pc_; }

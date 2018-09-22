@@ -55,9 +55,9 @@ class CPU6502 : public CPU {
         void set_pc(int pc_) override { pc = pc_; }
 
         void dump(std::ostream& os) override {
-            os << "pc=" << pc << " p=" << (int) p;
-            os << " a=" << (int) a << " x=" << (int) x << " y=" << (int) y;
-            os << " s=" << (int) s << std::endl;
+            os << "PC:" << pc;
+            os << " A:" << (int) a << " X:" << (int) x << " Y:" << (int) y;
+            os << " S:" << (int) s << " STATUS:" << (int) p << std::endl;
         }
 
     private:

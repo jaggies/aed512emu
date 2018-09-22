@@ -8,6 +8,13 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <cerrno>
+#include <poll.h>
+#include <fcntl.h>
 #include <GL/gl.h>
 #include <GL/glut.h>
 #include <GL/glu.h>
@@ -32,6 +39,9 @@ typedef CLK Clock;
 static CPU* cpu;
 static AedBus* bus;
 static Clock* clk;
+static bool debugger = false;
+static bool doUpdate = false;
+static struct pollfd fds[] = {{ 0, POLLIN, 0 }};
 
 static void checkGLError(const char* msg) {
     GLenum err;
@@ -56,7 +66,25 @@ displayString(float x, float y, char *string)
     }
 }
 
-bool doUpdate = false;
+void showprompt() {
+    std::cout << "> " << std::flush;
+}
+
+static void dasm(int pc, std::ostream& os, int nlines) {
+    int count;
+    std::string line;
+    while (nlines--) {
+        std::tie(count, line) = disassemble_6502(&pc,
+                [](int offset) { return ::bus->read(offset); });
+        os << line << std::endl;
+    }
+}
+
+static void showline(std::ostream& os) {
+    os << std::hex;
+    dasm(cpu->get_pc(), os, 1);
+    cpu->dump(os);
+}
 
 static void maybeUpdateTexture()
 {
@@ -161,13 +189,9 @@ static void passiveMotion(int x, int y)
 }
 
 static void idle() {
-    // Amortize by doing more CPU clocks per idle call
-    for (int i = 0; i < 200; i++) {
-        cpu->cycle();
-    }
     // TODO: automate this with a signal handler. Should operate at 60Hz.
     if (bus->doVideo(clk->getCpuTime())) {
-        static uint64_t last =  clk->getCpuTime();
+        static uint64_t last = clk->getCpuTime();
         uint64_t now = clk->getCpuTime();
         std::cerr << "vsync " << (float) (now - last) / 1000.0f << "ms" << "\r";
         last = now;
@@ -180,6 +204,56 @@ static void idle() {
     if (bus->doSerial()) {
         cpu->irq();
     }
+
+    if (debugger) {
+        static std::string cmd;
+        while (poll(fds, sizeof(fds) / sizeof(fds[0]), 1) > 0) {
+            char c;
+            if (read(0, &c, 1) > 0) {
+                cmd += c;
+                if (c == '\n') {
+                    switch(cmd[0]) {
+                        case 'l':
+                            dasm(cpu->get_pc(), std::cout, 10);
+                        break;
+
+                        case 'r':
+                            cpu->dump(std::cout);
+                        break;
+                        case 's':
+                            cpu->cycle();
+                            showline(std::cout);
+                        break;
+                        case 'c':
+                            debugger = false;
+                        break;
+                        case 'q':
+                            exit(0);
+                        break;
+                        case '?':
+                        case 'h':
+                            std::cout << "(l)ist\n(r)egisters\n(s)tep\n(c)ontinue\n(q)uit\n";
+                        break;
+                    }
+                    if (debugger) { // ignore if 'c' is issued above
+                        showprompt();
+                    }
+                    cmd = "";
+                }
+            }
+        }
+    } else { // running
+        // Amortize by doing more CPU clocks per idle call
+        for (int i = 0; i < 200; i++) {
+            cpu->cycle();
+        }
+        if (poll(fds, sizeof(fds) / sizeof(fds[0]), 1) > 0) {
+            char c;
+            if (read(0, &c, 1) > 0) {
+                bus->send(c);
+            }
+        }
+    }
 }
 
 void mouseWheel(int button, int dir, int x, int y)
@@ -188,14 +262,16 @@ void mouseWheel(int button, int dir, int x, int y)
 }
 
 void signalHandler(int) {
-    int count;
-    std::string line;
-    std::tie(count, line) = disassemble_6502(cpu->get_pc(),
-        [](int offset) { return ::bus->read(offset); }
-    );
-    std::cerr << std::endl << line << std::endl;
-    cpu->dump(std::cerr);
-    signal(SIGINT, 0);
+    if (debugger) {
+        // 2nd <ctrl><c> exits
+        std::cout << "Bye!\n";
+        exit(0);
+    } else {
+        debugger = true;
+        std::cout << std::endl << "Entering debugger" << std::endl;
+        showline(std::cout);
+        showprompt();
+    }
 }
 
 int main(int argc, char **argv)
@@ -207,6 +283,7 @@ int main(int argc, char **argv)
     cpu = new USE_CPU([](int addr) { return ::bus->read(addr); },
                         [](int addr, uint8_t value) { ::bus->write(addr, value); },
                         [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
+
 
     signal(SIGINT, signalHandler);
     glutInit(&argc, argv);

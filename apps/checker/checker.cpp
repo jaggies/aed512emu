@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
         if (lastpc == pc) {
             std::cerr << "Failed at pc: " << pc << std::endl;
             int count;
-            std::tie(count, line) = disassemble_6502(pc,
+            std::tie(count, line) = disassemble_6502(&pc,
                 [&system](int offset) { return system.read(offset); }
             );
             std::cerr << line << "\n";
