@@ -254,9 +254,15 @@ static void idle() {
                         case 'q':
                             exit(0);
                         break;
+                        case 'R':
+                            std::cerr << "Resetting CPU" << std::endl;
+                            cpu->reset();
+                            bus->reset();
+                            debugger = false;
+                        break;
                         case '?':
                         case 'h':
-                            std::cout << "(l)ist\n(r)egisters\n(s)tep\n(c)ontinue\n(q)uit\n";
+                            std::cout << "(l)ist\n(r)egisters\n(s)tep\n(c)ontinue\n(R)eset\n(q)uit\n";
                         break;
                     }
                     if (debugger) { // ignore if 'c' is issued above

@@ -28,6 +28,10 @@ class AedBus : public BUS {
         uint8_t read(int addr) override { return _mapper.read(addr); }
         void write(int addr, unsigned char value) override { _mapper.write(addr, value); }
 
+        void reset() {
+            _mapper.reset();
+        }
+
         // Handle video-related timing and return 'true' if IRQ needs to happen
         // The time_us parameter is microseconds from the CPU perspective, not host time.
         bool doVideo(uint64_t time_us);
@@ -48,6 +52,7 @@ class AedBus : public BUS {
         }
 
         void key(char c) {
+            // TODO: also handle CTRL, SHIFT, REPEAT, BREAK from sheet 14
             _pia1->setA(c);
             _pia1->assertLine(M68B21::CA1);
         }
