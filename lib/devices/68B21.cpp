@@ -9,8 +9,7 @@
 #include <cassert>
 #include "68B21.h"
 
-const int CRA2 = (1 << 2);
-const int CRB2 = (1 << 2);
+static bool debug = false;
 
 uint8_t M68B21::read(int offset) {
     assert(offset < 4);
@@ -26,6 +25,7 @@ uint8_t M68B21::read(int offset) {
             break;
         case 1: // CRA
             result = CRA;
+            if (debug) std::cerr << name() << ":CRA read -> " << (int) result << std::endl;
             break;
         case 2: // PRB or DDRB
             if (CRB & CRB2) {
@@ -37,7 +37,7 @@ uint8_t M68B21::read(int offset) {
             break;
         case 3: // CRB
             result = CRB;
-            //std::cerr << name() << "[CRB] read -> " << (int) result << std::endl;
+            if (debug) std::cerr << name() << ":CRB read -> " << (int) result << std::endl;
             break;
     }
     return result;
@@ -53,8 +53,16 @@ void M68B21::write(int offset, uint8_t value) {
                 DDRA = value;
             }
         break;
-        case 1: // CRA
+        case 1: { // CRA
+            uint8_t changed = (CRA ^ value);
+            if (debug && (changed & CRA5)) {
+                std::cerr << name() << ":CA2 is " << ((value & CRA5) ? "output" : "input") << std::endl;
+            }
+            if (debug && (changed & CRA4)) { // output mode
+                std::cerr << name() << ":CA2 = " << ((value & CRA3) ? "1" : "0") << std::endl;
+            }
             CRA = (CRA & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
+        }
         break;
         case 2: // PRB or DDRB
             if (CRB & CRB2) {
@@ -63,8 +71,16 @@ void M68B21::write(int offset, uint8_t value) {
                 DDRB = value;
             }
         break;
-        case 3: // CRB
+        case 3: { // CRB
+            uint8_t changed = (CRB ^ value);
+            if (debug && (changed & CRB5)) {
+                std::cerr << name() << ":CB2 is " << ((value & CRB5) ? "output" : "input") << std::endl;
+            }
+            if (debug && (changed & CRB4)) { // output mode
+                std::cerr << name() << ":CB2 = " << ((value & CRB3) ? "1" : "0") << std::endl;
+            }
             CRB = (CRB & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
+        }
         break;
     }
 }

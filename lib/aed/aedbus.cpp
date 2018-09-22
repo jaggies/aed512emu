@@ -15,6 +15,8 @@
 #include "generic.h"
 #include "io.h"
 
+static bool debug = false;
+
 #if defined(AED767) || defined(AED1024)
 #define SRAM_SIZE 2048
 #define CLUT_BASE 0x3c00
@@ -87,19 +89,24 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
 #if !defined(AED767) && !defined(AED1024)
     _mapper.add(new Generic(0xe9, 1,
             [this](int offset) { return 0x01; },
-            [this](int offset, uint8_t value) { std::cerr << "write 0xe9:" << (int) value << std::endl;  },
+            [this](int offset, uint8_t value) {
+                if (debug) std::cerr << "write 0xe9:" << (int) value << std::endl;
+            },
             "hack_0xe9"));
-
 #else
     _mapper.add(new Generic(0xe5, 1,
             [this](int offset) { return 0xff; },
-            [this](int offset, uint8_t value) { std::cerr << "write 0xe5:" << (int) value << std::endl;  },
+            [this](int offset, uint8_t value) {
+                if (debug) std::cerr << "write 0xe5:" << (int) value << std::endl;
+            },
             "hack_0xe5"));
     _mapper.add(new Generic(0x3e, 2,
-                [this](int offset) { return offset ? 0x02 : 0xff; },
-                [this](int offset, uint8_t value) { std::cerr << "write " << (int)(offset + 0x3e) << ":" << (int) value << std::endl;  },
-                "hack_lines"));
-    _mapper.add(new Ram(0x8000, 0x300, "FOO"));
+            [this](int offset) { return offset ? 0x02 : 0xff; },
+            [this](int offset, uint8_t value) {
+                if (debug) std::cerr << "write " << (int)(offset + 0x3e) << ":" << (int) value << std::endl;
+            },
+            "hack_lines"));
+    _mapper.add(new Ram(0x8000, 0x300, "hack_0x8000"));
     _mapper.add(new RamDebug(ACAIK_BASE, SRAM_SIZE, "ACAIK"));
 #endif
     _mapper.add(new Generic(miscrd, 1,

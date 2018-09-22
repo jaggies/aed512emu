@@ -42,6 +42,7 @@ static Clock* clk;
 static bool debugger = false;
 static bool doUpdate = false;
 static struct pollfd fds[] = {{ 0, POLLIN, 0 }};
+static bool debug = false;
 
 static void checkGLError(const char* msg) {
     GLenum err;
@@ -217,7 +218,9 @@ static void idle() {
     if (bus->doVideo(clk->getCpuTime())) {
         static uint64_t last = clk->getCpuTime();
         uint64_t now = clk->getCpuTime();
-        std::cerr << "vsync " << (float) (now - last) / 1000.0f << "ms" << "\r";
+        if (debug) {
+            std::cerr << "vsync " << (float) (now - last) / 1000.0f << "ms" << "\r";
+        }
         last = now;
         cpu->nmi();
         if (doUpdate == false) {

@@ -12,6 +12,8 @@
 
 // static const char* misc0bits[] = { "zrm", "yzs", "wob", "bw", "dma", "xup", "yup", "pxen" };
 
+static bool debug = false;
+
 // Reads peripheral register at offset
 uint8_t AedRegs::read(int offset) {
     uint16_t& x = *(uint16_t *) &_storage[capxl]; // X and Y CAP
@@ -80,7 +82,9 @@ void AedRegs::write(int offset, uint8_t value) {
         case xscrl:
         case yscrl:
             _storage[offset] = value;
-            std::cerr << "scroll(" << (int) _storage[xscrl] << "," << (int) _storage[yscrl] << ")" << std::endl;
+            if (debug) {
+                std::cerr << "scroll(" << (int) _storage[xscrl] << "," << (int) _storage[yscrl] << ")" << std::endl;
+            }
         break;
         default:
             _storage[offset] = value;

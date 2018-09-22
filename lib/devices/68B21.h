@@ -65,6 +65,24 @@ class M68B21 : public Peripheral {
         uint8_t CRB; // Control Register B
         uint8_t inA; // Read-only input value, port A
         uint8_t inB; // Read-only input value, port B
+        enum ControlBits {
+            CRA0 = 1<<0,
+            CRA1 = 1<<1,
+            CRA2 = 1<<2,
+            CRA3 = 1<<3,
+            CRA4 = 1<<4,
+            CRA5 = 1<<5,
+            CRA6 = 1<<6,
+            CRA7 = 1<<7,
+            CRB0 = 1<<0,
+            CRB1 = 1<<1,
+            CRB2 = 1<<2,
+            CRB3 = 1<<3,
+            CRB4 = 1<<4,
+            CRB5 = 1<<5,
+            CRB6 = 1<<6,
+            CRB7 = 1<<7,
+        };
 };
 
 #endif /* M68B21_H_ */
