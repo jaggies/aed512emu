@@ -61,7 +61,14 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
     // Open all ROM files and copy to ROM location in romBuffer
     std::vector<uint8_t> romBuffer;
     size_t offset = 0;
-    for(const std::string& romFileName : roms) {
+    std::vector<std::string> files;
+    if (char* path = getenv("ROMFILE")) {
+        std::cerr << "Reading ROM from " << path << std::endl;
+        files.push_back(path);
+    } else {
+        files = roms;
+    }
+    for(const std::string& romFileName : files) {
         std::ifstream file(romFileName, std::ios::binary | std::ios::ate);
         std::streamsize size = file.tellg();
         file.seekg(0, std::ios::beg);
