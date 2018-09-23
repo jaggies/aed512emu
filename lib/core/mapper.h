@@ -11,21 +11,30 @@
 #include <vector>
 #include "peripheral.h"
 
+#define ENABLE_CACHE
+
 //
 // Maps an address to one or more devices. This allows peripherals to overlap,
 // which can be used to have backing store for all registers.
 //
 class Mapper: public Peripheral {
     public:
-        Mapper(int start, int size, const std::string& name="") : Peripheral(start, size, name) { }
+        Mapper(int start, int size, const std::string& name="") : Peripheral(start, size, name) {
+            #ifdef ENABLE_CACHE
+            add(NULL); // first item is cached peripheral
+            #endif
+        }
         virtual ~Mapper() = default;
 
         // Reads first peripheral register at offset
         uint8_t read(int offset) override {
             for (Peripheral* p : _peripherals) {
-                if (offset >= p->start() && offset < p->end()) {
+                if (p && offset >= p->start() && offset < p->end()) {
                     const int relativeAddr = offset - p->start();
                     uint8_t result = p->read(relativeAddr);
+                    #ifdef ENABLE_CACHE
+                    _peripherals[0] = p; // cache it
+                    #endif
                     return result; // always return the first one
                 }
             }
@@ -38,6 +47,9 @@ class Mapper: public Peripheral {
                 if (offset >= p->start() && offset < p->end()) {
                     const int relativeAddr = offset - p->start();
                     p->write(relativeAddr, value);
+                    #ifdef ENABLE_CACHE
+                    _peripherals[0] = p; // cache it
+                    #endif
                     break; // Only write the first one we find
                 }
             }
@@ -46,6 +58,9 @@ class Mapper: public Peripheral {
         // Resets all peripherals
         void reset() override {
             for (Peripheral* p : _peripherals) {
+                #ifdef ENABLE_CACHE
+                _peripherals[0] = 0;
+                #endif
                 p->reset();
             }
         }

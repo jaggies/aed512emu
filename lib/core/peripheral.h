@@ -17,9 +17,19 @@ class Peripheral {
             : _start(start), _size(size), _name(name) { }
         virtual ~Peripheral() = default;
 
+        // Returns the start address of this peripheral
         int start() const { return _start; }
+
+        // Returns the end address of this peripheral
         int end() const { return _start + _size; }
+
+        // Returns the size of this peripheral in bytes
         int size() const { return _size; }
+
+        // Returns true of the offset maps to this device
+        inline bool maps(int offset) const {
+           return offset >= _start && offset < _start + _size;
+        }
 
         // Reads peripheral register at offset
         virtual uint8_t read(int offset) = 0;
@@ -31,6 +41,7 @@ class Peripheral {
         virtual void reset() = 0;
 
         const std::string& name() const { return _name; }
+
     private:
         int _start;
         int _size;
