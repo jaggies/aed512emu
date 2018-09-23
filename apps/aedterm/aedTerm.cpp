@@ -43,6 +43,7 @@ static bool debugger = false;
 static bool doUpdate = false;
 static struct pollfd fds[] = {{ 0, POLLIN, 0 }};
 static bool debug = false;
+static const std::string DEFAULT_IMAGE_PATH = "aed.ppm";
 
 static void checkGLError(const char* msg) {
     GLenum err;
@@ -243,7 +244,6 @@ static void idle() {
                         case 'l':
                             dasm(cpu->get_pc(), std::cout, 10);
                         break;
-
                         case 'r':
                             cpu->dump(std::cout);
                         break;
@@ -263,9 +263,13 @@ static void idle() {
                             bus->reset();
                             debugger = false;
                         break;
+                        case 'w':
+                            std::cerr << "Saving file to " << DEFAULT_IMAGE_PATH << std::endl;
+                            bus->saveFrame(DEFAULT_IMAGE_PATH);
+                        break;
                         case '?':
                         case 'h':
-                            std::cout << "(l)ist\n(r)egisters\n(s)tep\n(c)ontinue\n(R)eset\n(q)uit\n";
+                            std::cout << "(l)ist\n(r)egisters\n(s)tep\n(c)ontinue\n(R)eset\n(w)rite image\n(q)uit\n";
                         break;
                     }
                     if (debugger) { // ignore if 'c' is issued above

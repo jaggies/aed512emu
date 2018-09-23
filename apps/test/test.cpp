@@ -4,31 +4,9 @@
 #include "clk.h"
 #include "bus.h"
 #include "aedbus.h"
-#include "netpbm.h"
 #include "config.h"
 
 typedef CLK Clock;
-
-void writeFrame(const std::string& path, AedBus& bus) {
-    NetPBM* pbm = createNetPBM();
-    assert(path.size() > 0);
-    int depth = 255;
-    int width = bus.getDisplayWidth();
-    int height = bus.getDisplayHeight();
-    if (path.size() == 0 || !pbm->open(pbm, path.c_str(), &width, &height, &depth, NETPBM_WRITE)) {
-       std::cerr << "Can't write image " <<  path << std::endl;
-       return;
-    }
-    for (int h = height - 1; h >= 0; h--) {
-       for (size_t w = 0; w < width; w++) {
-           uint32_t pixel = bus.getPixel(w, h);
-           uint8_t rgb[] = { uint8_t(pixel & 0xff), uint8_t((pixel >> 8) & 0xff), uint8_t((pixel >> 16) & 0xff) };
-           pbm->write(pbm, rgb);
-       }
-    }
-    pbm->close(pbm);
-    free(pbm); // TODO: cleanup
-}
 
 int main(int argc, char** argv)
 {
@@ -49,7 +27,7 @@ int main(int argc, char** argv)
             cpu.nmi();
             if (true) {
                 std::string path = "frame" + std::to_string(frameCount++);
-                writeFrame(path, bus);
+                bus.saveFrame(path);
             }
         }
         if (bus.doSerial()) {

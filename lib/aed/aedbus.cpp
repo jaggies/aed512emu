@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <vector>
 #include <string>
+#include "netpbm.h"
 #include "aedbus.h"
 #include "ram.h"
 #include "generic.h"
@@ -176,3 +177,28 @@ AedBus::getPixel(int x, int y)
     uint8_t blu = _mapper.read((int) CLUT_BLU + idx);
     return 0xff000000 | (blu << 16) | (grn << 8) | red;
 }
+
+void
+AedBus::saveFrame(const std::string& path) {
+    NetPBM* pbm = createNetPBM();
+    assert(path.size() > 0);
+    int depth = 255;
+    int width = getDisplayWidth();
+    int height = getDisplayHeight();
+    if (path.size() == 0
+            || !pbm->open(pbm, path.c_str(), &width, &height, &depth, NETPBM_WRITE)) {
+        std::cerr << "Can't write image " << path << std::endl;
+        return;
+    }
+    for (int h = height - 1; h >= 0; h--) {
+        for (size_t w = 0; w < width; w++) {
+            uint32_t pixel = getPixel(w, h);
+            uint8_t rgb[] = { uint8_t(pixel & 0xff), uint8_t((pixel >> 8) & 0xff), uint8_t(
+                    (pixel >> 16) & 0xff) };
+            pbm->write(pbm, rgb);
+        }
+    }
+    pbm->close(pbm);
+    free(pbm); // TODO: cleanup
+}
+

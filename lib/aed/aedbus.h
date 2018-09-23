@@ -57,6 +57,8 @@ class AedBus : public BUS {
             _pia1->assertLine(M68B21::CA1);
         }
 
+        void saveFrame(const std::string& path);
+
         // Delegate functions.
         const size_t getDisplayWidth() const { return _aedRegs->getDisplayWidth(); }
 

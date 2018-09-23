@@ -2,6 +2,7 @@ SubDir TOP lib aed ;
 SubDirHdrs $(TOP) lib core ;
 SubDirHdrs $(TOP) lib cpu ;
 SubDirHdrs $(TOP) lib devices ;
+SubDirHdrs $(TOP) lib util ;
 
 Library libemu :
 	aedbus.cpp
