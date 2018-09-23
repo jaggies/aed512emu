@@ -720,11 +720,13 @@ void mos6502::nmi()
 	return;
 }
 
-void mos6502::cycle(uint32_t n)
+void mos6502::do_cycle()
 {
 	uint32_t start = cycles;
 	uint8_t opcode;
 	Instr instr;
+
+	const int n = 1;
 
 	while(start + n > cycles && !illegalOpcode)
 	{

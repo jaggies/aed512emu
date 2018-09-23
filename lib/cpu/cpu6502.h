@@ -26,7 +26,7 @@
 
 class CPU6502 : public CPU {
     public:
-        CPU6502(Reader reader, Writer writer, Counter counter, Exception exception = [](ExceptionType) { })
+        CPU6502(Reader reader, Writer writer, Counter counter, Exception exception = [](ExceptionType, int) { })
                 : CPU(reader, writer, counter, exception), a(0), x(0), y(0), s(0xFD), p(R|I|B), pc(0),
                       pending_ex(PENDING_NONE) {
             pc = read(0xFFFC) + read(0xFFFD) * 256;
@@ -44,10 +44,6 @@ class CPU6502 : public CPU {
 
         void reset() override {
             pending_ex |= PENDING_RESET;
-        }
-
-        void cycle() override {
-            do_cycle();
         }
 
         int get_pc() const override { return pc; }
@@ -180,7 +176,7 @@ class CPU6502 : public CPU {
             count(6);
         }
 
-        void do_cycle() {
+        void do_cycle() override {
             unsigned char m;
 
             // Reset always happens, regardless of whether we're currently in an exception

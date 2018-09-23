@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -226,37 +227,113 @@ static void idle() {
             if (read(0, &c, 1) > 0) {
                 cmd += c;
                 if (c == '\n') {
-                    switch(cmd[0]) {
-                        case 'l':
-                            dasm(cpu->get_pc(), std::cout, 10);
-                        break;
-                        case 'r':
-                            cpu->dump(std::cout);
-                        break;
-                        case 's':
-                            cpu->cycle();
-                            showline(std::cout);
-                        break;
-                        case 'c':
-                            debugger = false;
-                        break;
-                        case 'q':
-                            exit(0);
-                        break;
-                        case 'R':
-                            std::cerr << "Resetting CPU" << std::endl;
-                            cpu->reset();
-                            bus->reset();
-                            debugger = false;
-                        break;
-                        case 'W':
-                            std::cerr << "Saving file to " << DEFAULT_IMAGE_PATH << std::endl;
-                            bus->saveFrame(DEFAULT_IMAGE_PATH);
-                        break;
-                        case '?':
-                        case 'h':
-                            std::cout << "(l)ist\n(r)egisters\n(s)tep\n(c)ontinue\n(R)eset\n(W)rite image\n(q)uit\n";
-                        break;
+                    stringstream tokenizer(cmd);
+                    std::vector<std::string> tokens;
+                    do {
+                        string token;
+                        tokenizer >> token;
+                        if (token.size() > 0) {
+                            tokens.push_back(token);
+                        }
+                    } while (!tokenizer.eof());
+
+                    if (tokens.size() > 0) {
+                        switch(tokens[0][0]) {
+                            case 'd':
+                                if (tokens.size() < 2) {
+                                    std::cout << "Usage d <addr> <count>" << std::endl;
+                                } else {
+                                    int n = tokens.size() > 2 ? std::stoi(tokens[2], NULL, 10) : 1;
+                                    int base = std::stoi(tokens[1], NULL, 16);
+                                    for (int addr = base; addr < base + n; addr++) {
+                                        uint8_t data = cpu->read_mem(addr);
+                                        std::cout << "\t0x" << addr << " 0x" << (int) data;
+                                        if (isprint(data)) {
+                                            std::cout << " '" << data << "'";
+                                        }
+                                        std::cout << std::endl;
+                                    }
+                                }
+                                break;
+                            case 'l':
+                                if (tokens.size() < 2) {
+                                    dasm(cpu->get_pc(), std::cout, 10);
+                                } else {
+                                    int pc = std::stoi(tokens[1], NULL, 16);
+                                    dasm(pc, std::cout, 10);
+                                }
+                            break;
+                            case 'r':
+                                cout << std::hex;
+                                cpu->dump(std::cout);
+                            break;
+                            case 's':
+                                if (tokens.size() < 2) {
+                                    cpu->cycle();
+                                } else {
+                                    int count = std::stoi(tokens[1], NULL, 10);
+                                    cpu->cycle(count);
+                                }
+                                showline(std::cout);
+                            break;
+                            case 'b':
+                                if (tokens.size() < 2) {
+                                    std::cout << "Breakpoints:" << std::endl;
+                                    for(const uint32_t& addr : cpu->getBreakpoints()) {
+                                        std::cout << "\t0x" << addr << std::endl;
+                                    }
+                                } else {
+                                    int pc = std::stoi(tokens[1], NULL, 16);
+                                    cpu->addBreak(pc);
+                                    std::cout << "Breakpoint set at 0x" << pc << std::endl;
+                                }
+                            break;
+                            case 'w':
+                                if (tokens.size() < 2) {
+                                    std::cout << "Watchpoints:" << std::endl;
+                                    for(const uint32_t& addr : cpu->getWatchpoints()) {
+                                        std::cout << "\t0x" << addr << std::endl;
+                                    }
+                                } else {
+                                    int addr = std::stoi(tokens[1], NULL, 16);
+                                    cpu->addWatch(addr);
+                                    std::cout << "Watchpoint set at 0x" << addr << std::endl;
+                                }
+                            break;
+                            case 'c':
+                                debugger = false;
+                            break;
+                            case 'q':
+                                exit(0);
+                            break;
+                            case 'R':
+                                std::cerr << "Resetting CPU" << std::endl;
+                                cpu->reset();
+                                bus->reset();
+                                debugger = false;
+                            break;
+                            case 'W':
+                                if (tokens.size() < 2) {
+                                    std::cout << "Usage: W <imagefilename>\n";
+                                } else {
+                                    std::cerr << "Saving file to " << tokens[1] << std::endl;
+                                    bus->saveFrame(tokens[1]);
+                                }
+                            break;
+                            case '?':
+                            case 'h':
+                                std::cout << "(d)ump <addr>\tDumps display memory at addr]\n"
+                                        "(l)ist <addr>\tDisassembles address\n"
+                                        "(r)egisters\tDisplay CPU registers\n"
+                                        "(s)tep <n>\tStep n instructions\n"
+                                        "(b)reak <addr>\tSets a breakpoint at address\n"
+                                        "(w)atch <addr>\tSets a watch point at address\n"
+                                        "(c)ontinue\n"
+                                        "(R)eset\n"
+                                        "(W)rite image\n"
+                                        "(q)uit\n";
+                            break;
+                        }
                     }
                     if (debugger) { // ignore if 'c' is issued above
                         showprompt();
@@ -285,11 +362,7 @@ void mouseWheel(int button, int dir, int x, int y)
 }
 
 void signalHandler(int) {
-    if (debugger) {
-        // 2nd <ctrl><c> exits
-        std::cout << "Bye!\n";
-        exit(0);
-    } else {
+    if (!debugger) {
         debugger = true;
         std::cout << std::endl << "Entering debugger" << std::endl;
         showline(std::cout);
@@ -304,12 +377,30 @@ int main(int argc, char **argv)
     bus = &aedbus;
     clk = &clock;
     cpu = new USE_CPU([](int addr) { return ::bus->read(addr); },
-                        [](int addr, uint8_t value) { ::bus->write(addr, value); },
-                        [&clock](int cycles) { clock.add_cpu_cycles(cycles); },
-                        [](CPU::ExceptionType ex) {
-                            std::cout << "CPU exception " << ex << std::endl;
-                            ::debugger = true;
-                            ::showprompt(); });
+            [](int addr, uint8_t value) { ::bus->write(addr, value); },
+            [&clock](int cycles) { clock.add_cpu_cycles(cycles); },
+            [](CPU::ExceptionType ex, int pc) {
+                std::cout << std::hex;
+                switch (ex) {
+                    case CPU::ILLEGAL_INSTRUCTION:
+                        std::cout << "Illegal instruction at PC = " << pc << std::endl;
+                        dasm(pc, std::cout, 1);
+                    break;
+                    case CPU::WATCH_POINT:
+                        std::cout << "Watchpoint at PC = " << pc << std::endl;
+                        dasm(pc, std::cout, 1);
+                    break;
+                    case CPU::BREAK_POINT:
+                        std::cout << "Break point at PC = " << pc << std::endl;
+                        dasm(pc, std::cout, 1);
+                    break;
+                    default:
+                        std::cout << "Unknown exception at PC = " << pc << ", ex=" << ex << std::endl;
+                        dasm(pc, std::cout, 1);
+                }
+                ::debugger = true;
+                ::showprompt();
+            });
 
     signal(SIGINT, signalHandler);
     glutInit(&argc, argv);

@@ -174,17 +174,16 @@ private:
 	inline void StackPush(uint8_t byte);
 	inline uint8_t StackPop();
 
-	void cycle(uint32_t n);
+	void do_cycle() override;
 
 public:
 	mos6502(Reader reader, Writer writer, Counter counter,
-	        Exception exception = [](ExceptionType) { });
+	        Exception exception = [](ExceptionType, int) { });
 
 	// CPU methods
 	void nmi() override;
     void irq() override;
     void reset() override;
-    void cycle() override { cycle(1); }
 
     int get_pc() const override { return pc; }
 
