@@ -11,6 +11,7 @@
 #include <vector>
 #include <iostream>
 #include "peripheral.h"
+#include "io.h"
 
 class AedRegs: public Peripheral {
     #if defined(AED767) || defined(AED1024)
@@ -49,6 +50,9 @@ class AedRegs: public Peripheral {
         const size_t getDisplayHeight() const { return DISPLAY_HEIGHT; }
 
         const std::vector<uint8_t>& getVideoMemory() const { return _videoMemory; }
+
+        const uint8_t getScrollX() const { return _storage[xscrl]; }
+        const uint8_t getScrollY() const { return _storage[yscrl]; }
 
         uint8_t& pixel(int x, int y);
 

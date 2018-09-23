@@ -179,9 +179,9 @@ AedBus::getPixel(int x, int y)
 }
 
 void
-AedBus::getFrame(std::vector<uint32_t>& frame, int* width, int *height) {
-    *width = _aedRegs->getDisplayWidth();
-    *height = _aedRegs->getDisplayHeight();
+AedBus::getFrame(std::vector<uint32_t>& frame, int* w, int *h) {
+    int width = *w = _aedRegs->getDisplayWidth();
+    int height = *h = _aedRegs->getDisplayHeight();
     const std::vector<uint8_t>& raw = _aedRegs->getVideoMemory();
     if (frame.size() != raw.size()) {
         frame.resize(raw.size());
@@ -190,12 +190,16 @@ AedBus::getFrame(std::vector<uint32_t>& frame, int* width, int *height) {
     const uint8_t* red = &getRed(0);
     const uint8_t* grn = &getGreen(0);
     const uint8_t* blu = &getBlue(0);
-    size_t index = (*width) * (*height);
 
-    // TODO: introduce scrolling and zoom...
-    while (index--) {
-        uint8_t lut = raw[index];
-        frame[index] = 0xff000000 | (blu[lut] << 16) | (grn[lut] << 8) | (red[lut]);
+    const int scrollx = 0; // _aedRegs->getScrollX();
+    const int scrolly = 0; // _aedRegs->getScrollY();
+    for (size_t j = 0; j < height; j++) {
+        for (size_t i = 0; i < width; i++) {
+            const size_t x = (i + scrollx) % width;
+            const size_t y = (j + scrolly) % height;
+            const uint8_t lut = raw[y * width + x];
+            frame[j * width + i] = 0xff000000 | (blu[lut] << 16) | (grn[lut] << 8) | (red[lut]);
+        }
     }
 }
 
