@@ -92,21 +92,7 @@ static void maybeUpdateTexture() {
     if (doUpdate) {
         doUpdate = false;
 
-        int width;
-        int height;
-        const std::vector<uint8_t>& frame = bus->getFrameBuffer(&width, &height);
-        assert(frame.size() == imageData.size());
-        assert(width*height == frame.size());
-
-        // Convert index to color using LUT. TODO: use OpenGL to do the final conversion
-        const uint8_t* red = &bus->getRed(0);
-        const uint8_t* grn = &bus->getGreen(0);
-        const uint8_t* blu = &bus->getBlue(0);
-        size_t index = width * height;
-        while (index--) {
-            uint8_t lut = frame[index];
-            imageData[index] = 0xff000000 | (blu[lut] << 16) | (grn[lut] << 8) | (red[lut]);
-        }
+        bus->getFrame(imageData, &imageWidth, &imageHeight);
 
         // Copy to texture.
         glBindTexture(GL_TEXTURE_2D, texName);
@@ -117,7 +103,7 @@ static void maybeUpdateTexture() {
     }
 }
 
-static void init(int width, int height)
+static void init(int initialWidth, int initialHeight)
 {
     glClearColor (0.0, 0.0, 0.0, 0.0);
     glShadeModel(GL_FLAT);
@@ -128,8 +114,8 @@ static void init(int width, int height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    imageWidth = width;
-    imageHeight = height;
+    imageWidth = initialWidth;
+    imageHeight = initialHeight;
     imageData.resize(imageWidth * imageHeight);
     checkGLError("before glTexImage2d");
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE,
@@ -263,13 +249,13 @@ static void idle() {
                             bus->reset();
                             debugger = false;
                         break;
-                        case 'w':
+                        case 'W':
                             std::cerr << "Saving file to " << DEFAULT_IMAGE_PATH << std::endl;
                             bus->saveFrame(DEFAULT_IMAGE_PATH);
                         break;
                         case '?':
                         case 'h':
-                            std::cout << "(l)ist\n(r)egisters\n(s)tep\n(c)ontinue\n(R)eset\n(w)rite image\n(q)uit\n";
+                            std::cout << "(l)ist\n(r)egisters\n(s)tep\n(c)ontinue\n(R)eset\n(W)rite image\n(q)uit\n";
                         break;
                     }
                     if (debugger) { // ignore if 'c' is issued above

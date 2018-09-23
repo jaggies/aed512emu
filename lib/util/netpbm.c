@@ -82,7 +82,7 @@ static void closeNetPBM(NetPBM* pbm) {
     }
 }
 
-static void writeNetPBM(NetPBM* pbm, unsigned char color[3]) {
+static void writeNetPBM(NetPBM* pbm, const unsigned char color[3]) {
     fputc(color[0], pbm->fp);
     fputc(color[1], pbm->fp);
     fputc(color[2], pbm->fp);

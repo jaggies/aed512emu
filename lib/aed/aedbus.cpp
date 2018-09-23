@@ -179,26 +179,50 @@ AedBus::getPixel(int x, int y)
 }
 
 void
+AedBus::getFrame(std::vector<uint32_t>& frame, int* width, int *height) {
+    *width = _aedRegs->getDisplayWidth();
+    *height = _aedRegs->getDisplayHeight();
+    const std::vector<uint8_t>& raw = _aedRegs->getVideoMemory();
+    if (frame.size() != raw.size()) {
+        frame.resize(raw.size());
+    }
+    // Convert index to color using LUT. TODO: use OpenGL to do the final conversion
+    const uint8_t* red = &getRed(0);
+    const uint8_t* grn = &getGreen(0);
+    const uint8_t* blu = &getBlue(0);
+    size_t index = (*width) * (*height);
+
+    // TODO: introduce scrolling and zoom...
+    while (index--) {
+        uint8_t lut = raw[index];
+        frame[index] = 0xff000000 | (blu[lut] << 16) | (grn[lut] << 8) | (red[lut]);
+    }
+}
+
+void
 AedBus::saveFrame(const std::string& path) {
     NetPBM* pbm = createNetPBM();
     assert(path.size() > 0);
     int depth = 255;
-    int width = getDisplayWidth();
-    int height = getDisplayHeight();
-    if (path.size() == 0
-            || !pbm->open(pbm, path.c_str(), &width, &height, &depth, NETPBM_WRITE)) {
+    int width = 0;
+    int height = 0;
+    std::vector<uint32_t> frame;
+    getFrame(frame, &width, &height);
+
+    if (path.size() == 0 || !pbm->open(pbm, path.c_str(), &width, &height, &depth, NETPBM_WRITE)) {
         std::cerr << "Can't write image " << path << std::endl;
         return;
     }
-    for (int h = height - 1; h >= 0; h--) {
-        for (size_t w = 0; w < width; w++) {
-            uint32_t pixel = getPixel(w, h);
-            uint8_t rgb[] = { uint8_t(pixel & 0xff), uint8_t((pixel >> 8) & 0xff), uint8_t(
+
+    for (size_t j = 0; j < height; j++) {
+        for (size_t i = 0; i < width; i++) {
+            uint32_t pixel = frame[(height - j - 1)*width + i];
+            const uint8_t rgb[] = { uint8_t(pixel & 0xff), uint8_t((pixel >> 8) & 0xff), uint8_t(
                     (pixel >> 16) & 0xff) };
             pbm->write(pbm, rgb);
         }
     }
     pbm->close(pbm);
-    free(pbm); // TODO: cleanup
+    free(pbm);
 }
 

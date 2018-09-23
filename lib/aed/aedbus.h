@@ -57,7 +57,13 @@ class AedBus : public BUS {
             _pia1->assertLine(M68B21::CA1);
         }
 
+        // Saves the current frame to a file in NetPBM format.
         void saveFrame(const std::string& path);
+
+        // Gets the current frame from video memory, performing conversion from the
+        // raw index format of the frame buffer to 24-bit color. Returned pixels are
+        // in ABGR format.
+        void getFrame(std::vector<uint32_t>& frame, int* width, int *height);
 
         // Delegate functions.
         const size_t getDisplayWidth() const { return _aedRegs->getDisplayWidth(); }
@@ -66,16 +72,12 @@ class AedBus : public BUS {
 
         // Gets a pixel using the color map for the device
         uint32_t getPixel(int x, int y);
+
+    private:
         const uint8_t& getRed(uint8_t index) const { return (*_redmap)[index]; }
         const uint8_t& getGreen(uint8_t index) const { return (*_grnmap)[index]; }
         const uint8_t& getBlue(uint8_t index) const { return (*_blumap)[index]; }
-        const std::vector<uint8_t>& getFrameBuffer(int* sizex, int* sizey) const {
-            *sizex = _aedRegs->getDisplayWidth();
-            *sizey = _aedRegs->getDisplayHeight();
-            return _aedRegs->getVideoMemory();
-        }
 
-    private:
         Mapper _mapper;
         M68B21 * _pia0;
         M68B21 * _pia1;
