@@ -1,8 +1,8 @@
 
 #include "mos6502.h"
 
-mos6502::mos6502(Reader reader, Writer writer, Counter counter)
-        : CPU(reader, writer, counter)
+mos6502::mos6502(Reader reader, Writer writer, Counter counter, Exception exception)
+        : CPU(reader, writer, counter, exception)
 {
 	Instr instr;
 
@@ -751,6 +751,7 @@ void mos6502::Exec(Instr i)
 void mos6502::Op_ILLEGAL(uint16_t src)
 {
 	illegalOpcode = true;
+	exception(CPU::ILLEGAL_INSTRUCTION);
 }
 
 

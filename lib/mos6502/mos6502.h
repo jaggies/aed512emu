@@ -177,7 +177,8 @@ private:
 	void cycle(uint32_t n);
 
 public:
-	mos6502(Reader reader, Writer writer, Counter counter);
+	mos6502(Reader reader, Writer writer, Counter counter,
+	        Exception exception = [](ExceptionType) { });
 
 	// CPU methods
 	void nmi() override;

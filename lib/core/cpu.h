@@ -15,12 +15,14 @@
 //
 class CPU {
     public:
+        enum ExceptionType { NONE = 0, ILLEGAL_INSTRUCTION };
         typedef std::function<uint8_t(int)> Reader;
         typedef std::function<void(int offset, uint8_t value)> Writer;
         typedef std::function<void(int cycles)> Counter;
+        typedef std::function<void(ExceptionType ex)> Exception;
 
-        CPU(Reader reader, Writer writer, Counter counter)
-                : _reader(reader), _writer(writer), _counter(counter) { }
+        CPU(Reader reader, Writer writer, Counter counter, Exception exception)
+                : _reader(reader), _writer(writer), _counter(counter), _exception(exception) { }
         virtual ~CPU() = default;
 
         virtual void irq() = 0;
@@ -39,10 +41,14 @@ class CPU {
         void write(int address, uint8_t value) { _writer(address, value); }
         void count(int cycles) { _counter(cycles); }
 
+        // Tell the host there was an exception
+        virtual void exception(ExceptionType ex) { _exception(ex); }
+
     private:
         Reader _reader;
         Writer _writer;
         Counter _counter;
+        Exception _exception;
 };
 
 #endif /* LIB_CORE_CPU_H_ */

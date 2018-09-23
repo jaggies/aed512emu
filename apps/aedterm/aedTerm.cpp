@@ -277,7 +277,7 @@ static void idle() {
         }
     } else { // running
         // Amortize by doing more CPU clocks per idle call
-        for (int i = 0; i < 200; i++) {
+        for (int i = 0; !debugger && i < 1000; i++) {
             cpu->cycle();
         }
         if (poll(fds, sizeof(fds) / sizeof(fds[0]), 1) > 0) {
@@ -315,8 +315,11 @@ int main(int argc, char **argv)
     clk = &clock;
     cpu = new USE_CPU([](int addr) { return ::bus->read(addr); },
                         [](int addr, uint8_t value) { ::bus->write(addr, value); },
-                        [&clock](int cycles) { clock.add_cpu_cycles(cycles); });
-
+                        [&clock](int cycles) { clock.add_cpu_cycles(cycles); },
+                        [](CPU::ExceptionType ex) {
+                            std::cout << "CPU exception " << ex << std::endl;
+                            ::debugger = true;
+                            ::showprompt(); });
 
     signal(SIGINT, signalHandler);
     glutInit(&argc, argv);

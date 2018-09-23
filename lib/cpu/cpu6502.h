@@ -21,12 +21,13 @@
 #include <cassert>
 #include <iostream>
 #include <unistd.h>
+#include <csignal>
 #include "cpu.h"
 
 class CPU6502 : public CPU {
     public:
-        CPU6502(Reader reader, Writer writer, Counter counter)
-                : CPU(reader, writer, counter), a(0), x(0), y(0), s(0xFD), p(R|I|B), pc(0),
+        CPU6502(Reader reader, Writer writer, Counter counter, Exception exception = [](ExceptionType) { })
+                : CPU(reader, writer, counter, exception), a(0), x(0), y(0), s(0xFD), p(R|I|B), pc(0),
                       pending_ex(PENDING_NONE) {
             pc = read(0xFFFC) + read(0xFFFD) * 256;
         }
@@ -1485,12 +1486,11 @@ class CPU6502 : public CPU {
                 }
 
                 default:
-                    printf("unhandled instruction %02X at %04X\n", inst, pc - 1);
-                    fflush (stdout);
-                    while(1) sleep(1);
-                    exit(1);
+                    pc = pc - 1;
+                    std::cerr << "Unhandled instruction " << (int) inst << " at " << pc << std::endl;
+                    exception(ILLEGAL_INSTRUCTION);
             }
-            assert(cycles[inst] > 0);
+            //assert(cycles[inst] > 0);
             count(cycles[inst]);
         }
 };
