@@ -1,3 +1,13 @@
+/*
+ * checker.cpp
+ *
+ *  Created on: September 19, 2018
+ *      Author: jmiller
+ *
+ *  A wrapper program to run the test suite from
+ *  https://github.com/Klaus2m5/6502_65C02_functional_tests
+ */
+
 #include <iostream>
 #include <fstream>
 #include <tuple>
@@ -12,6 +22,8 @@
 #include "config.h"
 
 #define CPU_MEM 65536 // This test uses entire address space
+
+#define FUNCTIONAL_PASS_PC 0x3469 // Will spin on this address if passed, otherwise somewhere else.
 
 const std::vector<std::string> roms = { "rom/6502_functional_test.bin" };
 
@@ -63,13 +75,17 @@ int main(int argc, char** argv) {
         int pc = cpu.get_pc();
         cpu.cycle();
         if (lastpc == pc) {
-            std::cerr << "Failed at pc: " << pc << std::endl;
-            int count;
-            std::tie(count, line) = disassemble_6502(&pc,
-                [&system](int offset) { return system.read(offset); }
-            );
-            std::cerr << line << "\n";
-            cpu.dump(std::cerr);
+            if (pc == FUNCTIONAL_PASS_PC) {
+                std::cerr << "All tests passed!\n";
+            } else {
+                std::cerr << "Failed at pc: " << pc << std::endl;
+                int count;
+                std::tie(count, line) = disassemble_6502(&pc,
+                    [&system](int offset) { return system.read(offset); }
+                );
+                std::cerr << line << "\n";
+                cpu.dump(std::cerr);
+            }
             break;
         }
         lastpc = pc;
