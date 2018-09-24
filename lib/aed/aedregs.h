@@ -26,9 +26,7 @@ class AedRegs: public Peripheral {
         AedRegs(int start, int size, const std::string& name="")
             : Peripheral(start, size, name), _storage(size, 0),
               _videoMemory(DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(uint8_t), 0x00) {
-            for (size_t i = 0; i < _videoMemory.size(); i++) {
-                _videoMemory[i] = random();
-            }
+            reset();
         }
         virtual ~AedRegs() = default;
 

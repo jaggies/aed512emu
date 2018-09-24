@@ -239,6 +239,15 @@ static void idle() {
 
                     if (tokens.size() > 0) {
                         switch(tokens[0][0]) {
+                            case 'a':
+                                if (tokens.size() < 3) {
+                                    std::cout << "Usage a <address> <content>" << std::endl;
+                                } else {
+                                    int addr = std::stoi(tokens[1], NULL, 16);
+                                    int data = std::stoi(tokens[2], NULL, 16);
+                                    cpu->write_mem(addr, data);
+                                }
+                            break;
                             case 'd':
                                 if (tokens.size() < 2) {
                                     std::cout << "Usage d <addr> <count>" << std::endl;
@@ -307,7 +316,7 @@ static void idle() {
                                 exit(0);
                             break;
                             case 'R':
-                                std::cerr << "Resetting CPU" << std::endl;
+                                std::cerr << "Resetting Machine" << std::endl;
                                 cpu->reset();
                                 bus->reset();
                                 debugger = false;
@@ -322,7 +331,9 @@ static void idle() {
                             break;
                             case '?':
                             case 'h':
-                                std::cout << "(d)ump <addr>\tDumps display memory at addr]\n"
+                                std::cout <<
+                                        "(a)ssign <addr> <data>\tSets byte at addr to data\n"
+                                        "(d)ump <addr>\tDumps display memory at addr]\n"
                                         "(l)ist <addr>\tDisassembles address\n"
                                         "(r)egisters\tDisplay CPU registers\n"
                                         "(s)tep <n>\tStep n instructions\n"
@@ -366,8 +377,10 @@ void signalHandler(int) {
         debugger = true;
         std::cout << std::endl << "Entering debugger" << std::endl;
         showline(std::cout);
-        showprompt();
+    } else {
+        std::cout << std::endl;
     }
+    showprompt();
 }
 
 int main(int argc, char **argv)

@@ -65,6 +65,9 @@ class CPU {
         virtual uint8_t read_mem(int addr) {
             return read(addr);
         }
+        virtual void write_mem(int addr, uint8_t data) {
+            write(addr, data);
+        }
 
     protected:
         virtual void do_cycle() = 0;
