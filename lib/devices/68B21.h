@@ -39,6 +39,17 @@ class M68B21 : public Peripheral {
             DDRA = DDRB = CRA = CRB = 0;
         }
 
+        // Check if the line is asserted
+        bool isAssertedLine(Line line) {
+            switch(line) {
+                case CA1: return CRA & 0x80; break;
+                case CA2: return CRA & 0x40; break;
+                case CB1: return CRB & 0x80; break;
+                case CB2: return CRB & 0x40; break;
+                default: return false;
+            }
+        }
+
         // Assert IRQ line
         void assertLine(Line line) {
             switch(line) {
@@ -51,10 +62,10 @@ class M68B21 : public Peripheral {
         // Assert IRQ line
         void deassertLine(Line line) {
             switch(line) {
-                case CA1: CRA &= 0x80; break;
-                case CA2: CRA &= 0x40; break;
-                case CB1: CRB &= 0x80; break;
-                case CB2: CRB &= 0x40; break;
+                case CA1: CRA &= ~0x80; break;
+                case CA2: CRA &= ~0x40; break;
+                case CB1: CRB &= ~0x80; break;
+                case CB2: CRB &= ~0x40; break;
             }
         }
 

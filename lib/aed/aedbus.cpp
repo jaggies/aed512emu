@@ -56,11 +56,11 @@ static const uint8_t SW1 = ~0x10; // negate since open is 0
 static const uint8_t SW2 = ~0x7d;
 
 // Video timing
-static const uint64_t LINE_TIME = SECS2USECS(1L) / 40000;
-static const uint64_t FRAME_TIME = 525*LINE_TIME;
+static const uint64_t LINE_TIME = SECS2USECS(1L) / 15750;
+static const uint64_t FRAME_TIME = 525*LINE_TIME/2;
 
-AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
-        _sio0(0), _sio1(0), _aedRegs(0), _nextHsync(0), _nextVsync(0), _hSync(0), _vSync(0) {
+AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _pia0(0),
+        _pia1(0), _pia2(0), _sio0(0), _sio1(0), _aedRegs(0) {
     // Open all ROM files and copy to ROM location in romBuffer
     std::vector<uint8_t> romBuffer;
     size_t offset = 0;
@@ -110,10 +110,6 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
     _mapper.add(new Ram(0x8000, 0x300, "hack_0x8000"));
     _mapper.add(new RamDebug(ACAIK_BASE, SRAM_SIZE, "ACAIK"));
 #endif
-    _mapper.add(new Generic(miscrd, 1,
-                [this](int offset) { return this->_hSync; },
-                [this](int offset, uint8_t value) { std::cerr << "write 0x2a:" << (int) value << std::endl; },
-                "hack_miscrd"));
     _mapper.add(_aedRegs = new AedRegs(0x00, 0x30, "aedregs"));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
     _mapper.add(new Ram(LED_BASE, SRAM_SIZE, "LED"));
@@ -123,31 +119,48 @@ AedBus::AedBus() : _mapper(0, CPU_MEM), _pia0(0), _pia1(0), _pia2(0),
     _mapper.add(_blumap = new Ram(CLUT_BLU, 0x100, "BLU"));
     _mapper.add(new RamDebug(0, CPU_MEM, "unmapped"));
 
+    // Kick off VSYNC
+    _eventQueue.push(Event(HSYNC, LINE_TIME));
+    _eventQueue.push(Event(VSYNC, FRAME_TIME));
+
     std::cerr << std::hex; // dump in hex
     std::cerr << _mapper;
 }
 
 AedBus::~AedBus() {
+    std::cerr << __func__ << std::endl;
 }
 
-bool
-AedBus::doVideo(uint64_t time_us) {
-   bool doIrq = false;
-   struct timeval tp = { 0 };
-   gettimeofday(&tp, NULL);
-   if (time_us > _nextVsync) {
-       _vSync = 1;
-       _nextVsync = time_us + FRAME_TIME; // 60Hz
-       doIrq = true;
-   } else if (time_us > _nextVsync - LINE_TIME) {
-       _vSync = 0;
-   }
-   if (time_us > _nextHsync) {
-       _hSync = !_hSync;
-       _nextHsync = time_us + LINE_TIME/800; // Hack - toggle twice per 15kHz sync
-   }
-   _vSync ? _pia1->assertLine(M68B21::CB1) : _pia1->deassertLine(M68B21::CB1);
-   return doIrq;
+void AedBus::handleEvents(uint64_t now) {
+    while (now > _eventQueue.top().time) {
+        const Event event = _eventQueue.top();
+        _eventQueue.pop();
+        switch (event.type) {
+            case HSYNC: {
+                _eventQueue.push(Event(HSYNC, now + LINE_TIME));
+                uint8_t mrd = _aedRegs->read(miscrd);
+                _aedRegs->write(miscrd, (mrd & 1) ? (mrd & 0xfe) : (mrd | 0x01));
+            }
+            break;
+
+            case VSYNC:
+                //std::cerr << "VSYNC at " << event.time << std::endl;
+                _eventQueue.push(Event(VSYNC, now + FRAME_TIME));
+                if (_pia1->isAssertedLine(M68B21::CB1)) {
+                    _pia1->deassertLine(M68B21::CB1);
+                } else {
+                    _pia1->assertLine(M68B21::CB1);
+                    if (_nmi != nullptr) {
+                        _nmi();
+                    }
+                }
+            break;
+        }
+    }
+    // TODO: make this event-based
+    if (_irq != nullptr && doSerial()) {
+        _irq();
+    }
 }
 
 // Handles serial ports. Returns true if IRQ was generated

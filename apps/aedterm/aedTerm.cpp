@@ -41,10 +41,7 @@ static CPU* cpu;
 static AedBus* bus;
 static Clock* clk;
 static bool debugger = false;
-static bool doUpdate = false;
 static struct pollfd fds[] = {{ 0, POLLIN, 0 }};
-static bool debug = false;
-static const std::string DEFAULT_IMAGE_PATH = "aed.ppm";
 
 static void checkGLError(const char* msg) {
     GLenum err;
@@ -90,18 +87,14 @@ static void showline(std::ostream& os) {
 }
 
 static void maybeUpdateTexture() {
-    if (doUpdate) {
-        doUpdate = false;
+    bus->getFrame(imageData, &imageWidth, &imageHeight);
 
-        bus->getFrame(imageData, &imageWidth, &imageHeight);
-
-        // Copy to texture.
-        glBindTexture(GL_TEXTURE_2D, texName);
-        checkGLError("before glTexSubImage2D");
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, imageWidth, imageHeight, GL_RGBA,
-        GL_UNSIGNED_BYTE, &imageData[0]);
-        checkGLError("glTexSubImage2D");
-    }
+    // Copy to texture.
+    glBindTexture(GL_TEXTURE_2D, texName);
+    checkGLError("before glTexSubImage2D");
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, imageWidth, imageHeight, GL_RGBA,
+    GL_UNSIGNED_BYTE, &imageData[0]);
+    checkGLError("glTexSubImage2D");
 }
 
 static void init(int initialWidth, int initialHeight)
@@ -202,24 +195,6 @@ static void passiveMotion(int x, int y)
 }
 
 static void idle() {
-    // TODO: automate this with a signal handler. Should operate at 60Hz.
-    if (bus->doVideo(clk->getCpuTime())) {
-        static uint64_t last = clk->getCpuTime();
-        uint64_t now = clk->getCpuTime();
-        if (debug) {
-            std::cerr << "vsync " << (float) (now - last) / 1000.0f << "ms" << "\r";
-        }
-        last = now;
-        cpu->nmi();
-        if (doUpdate == false) {
-            doUpdate = true;
-            glutPostRedisplay();
-        }
-    }
-    if (bus->doSerial()) {
-        cpu->irq();
-    }
-
     if (debugger) {
         static std::string cmd;
         while (poll(fds, sizeof(fds) / sizeof(fds[0]), 1) > 0) {
@@ -356,14 +331,16 @@ static void idle() {
     } else { // running
         // Amortize by doing more CPU clocks per idle call
         if (!debugger) {
-            cpu->cycle(1000);
+            cpu->cycle(100);
         }
+
         if (poll(fds, sizeof(fds) / sizeof(fds[0]), 1) > 0) {
             char c;
             if (read(0, &c, 1) > 0) {
                 bus->send(c);
             }
         }
+        bus->handleEvents(clk->getCpuTime());
     }
 }
 
@@ -383,37 +360,38 @@ void signalHandler(int) {
     showprompt();
 }
 
+void handleException(CPU::ExceptionType ex, int pc) {
+    std::cout << std::hex;
+    switch (ex) {
+        case CPU::ILLEGAL_INSTRUCTION:
+            std::cout << "Illegal instruction at PC = " << pc << std::endl;
+            dasm(pc, std::cout, 1);
+        break;
+        case CPU::WATCH_POINT:
+            std::cout << "Watchpoint at PC = " << pc << std::endl;
+            dasm(pc, std::cout, 1);
+        break;
+        case CPU::BREAK_POINT:
+            std::cout << "Break point at PC = " << pc << std::endl;
+            dasm(pc, std::cout, 1);
+        break;
+        default:
+            std::cout << "Unknown exception at PC = " << pc << ", ex=" << ex << std::endl;
+            dasm(pc, std::cout, 1);
+    }
+    debugger = true;
+    showprompt();
+}
+
 int main(int argc, char **argv)
 {
-    Clock clock(1000000); // TODO: what frequency?
-    AedBus aedbus;
-    bus = &aedbus;
-    clk = &clock;
-    cpu = new USE_CPU([](int addr) { return ::bus->read(addr); },
+    clk = new Clock(1000000); // TODO: what frequency?
+    bus = new AedBus([]() { ::cpu->irq(); }, []() { ::cpu->nmi(); ::glutPostRedisplay(); });
+    cpu = new USE_CPU(
+            [](int addr) { return ::bus->read(addr); },
             [](int addr, uint8_t value) { ::bus->write(addr, value); },
-            [&clock](int cycles) { clock.add_cpu_cycles(cycles); },
-            [](CPU::ExceptionType ex, int pc) {
-                std::cout << std::hex;
-                switch (ex) {
-                    case CPU::ILLEGAL_INSTRUCTION:
-                        std::cout << "Illegal instruction at PC = " << pc << std::endl;
-                        dasm(pc, std::cout, 1);
-                    break;
-                    case CPU::WATCH_POINT:
-                        std::cout << "Watchpoint at PC = " << pc << std::endl;
-                        dasm(pc, std::cout, 1);
-                    break;
-                    case CPU::BREAK_POINT:
-                        std::cout << "Break point at PC = " << pc << std::endl;
-                        dasm(pc, std::cout, 1);
-                    break;
-                    default:
-                        std::cout << "Unknown exception at PC = " << pc << ", ex=" << ex << std::endl;
-                        dasm(pc, std::cout, 1);
-                }
-                ::debugger = true;
-                ::showprompt();
-            });
+            [](int cycles) { ::clk->add_cpu_cycles(cycles); },
+            [](CPU::ExceptionType ex, int pc) { ::handleException(ex, pc); });
 
     signal(SIGINT, signalHandler);
     glutInit(&argc, argv);

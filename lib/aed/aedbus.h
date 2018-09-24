@@ -22,8 +22,22 @@
 
 class AedBus : public BUS {
     #define SECS2USECS(a) ((a)*1000000)
+    // Events in PriorityQueue
+    enum EventType { HSYNC, VSYNC, JOYX, JOYY, FIELD };
+    struct Event {
+        Event(EventType type_, uint64_t time_) : type(type_), time(time_) { }
+        EventType type;
+        uint64_t time; // time we want the event to happen, in microseconds
+    };
+    struct EventCompare {
+        bool operator()(const Event& lhs, const Event& rhs) const {
+            return (lhs.time > rhs.time); // stored in reverse
+        }
+    };
+    typedef std::function<void(void)> IRQ;
+    typedef std::function<void(void)> NMI;
     public:
-        AedBus();
+        AedBus(IRQ irq, NMI nmi);
         virtual ~AedBus();
         uint8_t read(int addr) override { return _mapper.read(addr); }
         void write(int addr, unsigned char value) override { _mapper.write(addr, value); }
@@ -33,9 +47,8 @@ class AedBus : public BUS {
             _aedRegs->reset();
         }
 
-        // Handle video-related timing and return 'true' if IRQ needs to happen
-        // The time_us parameter is microseconds from the CPU perspective, not host time.
-        bool doVideo(uint64_t time_us);
+        // Handles events in the priority queue based on current CPU time.
+        void handleEvents(uint64_t time_us);
 
         // Looks for data from serial ports. Returns true if IRQ needs to happen.
         // TODO: Have this automatically invoke serial callback when requested by CPU write
@@ -79,6 +92,9 @@ class AedBus : public BUS {
         const uint8_t& getGreen(uint8_t index) const { return (*_grnmap)[index]; }
         const uint8_t& getBlue(uint8_t index) const { return (*_blumap)[index]; }
 
+        IRQ     _irq;
+        NMI     _nmi;
+
         Mapper _mapper;
         M68B21 * _pia0;
         M68B21 * _pia1;
@@ -86,14 +102,11 @@ class AedBus : public BUS {
         M68B50 * _sio0;
         M68B50 * _sio1;
         AedRegs* _aedRegs;
-        uint64_t _nextHsync;
-        uint64_t _nextVsync;
-        uint8_t _hSync;
-        uint8_t _vSync;
         Ram*    _redmap;
         Ram*    _grnmap;
         Ram*    _blumap;
         std::queue<uint8_t> _serialFifo;
+        std::priority_queue<Event, std::vector<Event>, EventCompare> _eventQueue;
 };
 
 #endif // AEDBUS_H
