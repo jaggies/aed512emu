@@ -101,12 +101,12 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _p
                 if (debug) std::cerr << "write 0xe5:" << (int) value << std::endl;
             },
             "hack_0xe5"));
-    _mapper.add(new Generic(0x3e, 2,
-            [this](int offset) { return offset ? 0x02 : 0xff; },
-            [this](int offset, uint8_t value) {
-                if (debug) std::cerr << "write " << (int)(offset + 0x3e) << ":" << (int) value << std::endl;
-            },
-            "hack_lines"));
+//    _mapper.add(new Generic(0x3e, 2,
+//            [this](int offset) { return offset ? 0x02 : 0xff; },
+//            [this](int offset, uint8_t value) {
+//                if (debug) std::cerr << "write " << (int)(offset + 0x3e) << ":" << (int) value << std::endl;
+//            },
+//            "hack_lines"));
     _mapper.add(new Ram(0x8000, 0x300, "hack_0x8000"));
     _mapper.add(new RamDebug(ACAIK_BASE, SRAM_SIZE, "ACAIK"));
 #endif
@@ -144,7 +144,6 @@ void AedBus::handleEvents(uint64_t now) {
             break;
 
             case VSYNC:
-                //std::cerr << "VSYNC at " << event.time << std::endl;
                 _eventQueue.push(Event(VSYNC, now + FRAME_TIME));
                 if (_pia1->isAssertedLine(M68B21::CB1)) {
                     _pia1->deassertLine(M68B21::CB1);
@@ -204,8 +203,8 @@ AedBus::getFrame(std::vector<uint32_t>& frame, int* w, int *h) {
     const uint8_t* grn = &getGreen(0);
     const uint8_t* blu = &getBlue(0);
 
-    const int scrollx = 0; // _aedRegs->getScrollX();
-    const int scrolly = 0; // _aedRegs->getScrollY();
+    const int scrollx = _aedRegs->getScrollX();
+    const int scrolly = _aedRegs->getScrollY();
     for (size_t j = 0; j < height; j++) {
         for (size_t i = 0; i < width; i++) {
             const size_t x = (i + scrollx) % width;
