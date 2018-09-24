@@ -48,6 +48,9 @@ void M68B21::write(int offset, uint8_t value) {
     switch (offset) {
         case 0: // PRA or DDRA
             if (CRA & CRA2) {
+                if (cbA != nullptr && (PRA ^ value)) {
+                    cbA(value);
+                }
                 PRA = value;
             } else {
                 DDRA = value;
@@ -66,6 +69,9 @@ void M68B21::write(int offset, uint8_t value) {
         break;
         case 2: // PRB or DDRB
             if (CRB & CRB2) {
+                if (cbB != nullptr && (PRB ^ value)) {
+                    cbB(value);
+                }
                 PRB = value;
             } else {
                 DDRB = value;

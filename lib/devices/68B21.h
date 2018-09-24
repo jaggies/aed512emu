@@ -16,9 +16,14 @@ class M68B21 : public Peripheral {
         enum Line {
             CA1, CA2, CB1, CB2
         };
-        M68B21(int start, const std::string& name = "68B21", uint8_t aInit = 0, uint8_t bInit = 0)
+        typedef std::function<void(int newValue)> Callback;
+
+        M68B21(int start, const std::string& name = "68B21", uint8_t aInit = 0, uint8_t bInit = 0,
+                Callback aChanged = nullptr, Callback bChanged = nullptr)
                 : Peripheral(start, 4, name),
-                  PRA(0), DDRA(0), CRA(0), PRB(0), DDRB(0), CRB(0), inA(aInit), inB(bInit) { }
+                  PRA(0), DDRA(0), CRA(0), PRB(0), DDRB(0), CRB(0), inA(aInit), inB(bInit),
+                  cbA(aChanged), cbB(bChanged)
+        { }
         virtual ~M68B21() = default;
 
         // Reads peripheral register at offset
@@ -55,6 +60,8 @@ class M68B21 : public Peripheral {
 
         void setA(uint8_t data) { inA = data; }
         void setB(uint8_t data) { inB = data; }
+        uint8_t getA() const { return inA; }
+        uint8_t getB() const { return inB; }
 
     private:
         uint8_t PRA; // Peripheral Register A (when CRA2 is set)
@@ -65,6 +72,8 @@ class M68B21 : public Peripheral {
         uint8_t CRB; // Control Register B
         uint8_t inA; // Read-only input value, port A
         uint8_t inB; // Read-only input value, port B
+        Callback cbA; // Callback invoked when port A output changes
+        Callback cbB; // Callback invoked when port B output changes
         enum ControlBits {
             CRA0 = 1<<0,
             CRA1 = 1<<1,
