@@ -120,7 +120,6 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _p
     _mapper.add(new RamDebug(0, CPU_MEM, "unmapped"));
 
     // Kick off VSYNC
-    _eventQueue.push(Event(HSYNC, LINE_TIME));
     _eventQueue.push(Event(VSYNC, FRAME_TIME));
 
     std::cerr << std::hex; // dump in hex
@@ -144,6 +143,7 @@ void AedBus::handleEvents(uint64_t now) {
             break;
 
             case VSYNC:
+                _eventQueue.push(Event(HSYNC, LINE_TIME));
                 _eventQueue.push(Event(VSYNC, now + FRAME_TIME));
                 if (_pia1->isAssertedLine(M68B21::CB1)) {
                     _pia1->deassertLine(M68B21::CB1);
