@@ -1,0 +1,7 @@
+Joystick hardware controlled by portB on PIA1.
+
+PB0	ADCCH0 (output)	Controls MUX to choose source
+PB1 ADCCH1 (output) "
+PB2 REFS   (output) Enable various references
+PB3 JSTK   (outout) Enable X&Y joystic connections
+PB7 INT2.5 (input)	Input from comparator (Integrator?) Shifted into CC for testing in tight loop

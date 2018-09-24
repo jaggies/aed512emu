@@ -1,0 +1,14 @@
+Implement hardware erase 
+	This appears to be controlled by the ERASE line from PIA1.
+	It appears to use capnoic color to erase the frame during a frame.
+
+Implement x/y scrolling
+	It isn't clear from the hardware how this register interacts with memory or zoom.
+	This is required for proper text scrolling.
+
+	See CURC in listing.
+
+Implement x/y zoom
+
+Figure out parallel interface (hstctl 0x25)
+
