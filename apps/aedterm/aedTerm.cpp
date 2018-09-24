@@ -43,6 +43,9 @@ static Clock* clk;
 static bool debugger = false;
 static struct pollfd fds[] = {{ 0, POLLIN, 0 }};
 
+// Small numbers can be used for more accuracy, but lesser performance.
+static size_t CYCLES_PER_CALL = 1;
+
 static void checkGLError(const char* msg) {
     GLenum err;
     if ((err = glGetError()) != GL_NO_ERROR) {
@@ -331,10 +334,10 @@ static void idle() {
     } else { // running
         // Amortize by doing more CPU clocks per idle call
         if (!debugger) {
-            cpu->cycle(100);
+            cpu->cycle(CYCLES_PER_CALL);
         }
 
-        if (poll(fds, sizeof(fds) / sizeof(fds[0]), 1) > 0) {
+        if (poll(fds, sizeof(fds) / sizeof(fds[0]), 0) > 0) {
             char c;
             if (read(0, &c, 1) > 0) {
                 bus->send(c);
