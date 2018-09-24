@@ -30,6 +30,7 @@ class AedBus : public BUS {
 
         void reset() {
             _mapper.reset();
+            _aedRegs->reset();
         }
 
         // Handle video-related timing and return 'true' if IRQ needs to happen

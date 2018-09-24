@@ -43,6 +43,9 @@ class AedRegs: public Peripheral {
             for (size_t i = 0; i < _storage.size(); i++) {
                 _storage[i] = 0;
             }
+            for (size_t i = 0; i < _videoMemory.size(); i++) {
+                _videoMemory[i] = random();
+            }
         }
 
         const size_t getDisplayWidth() const { return DISPLAY_WIDTH; }

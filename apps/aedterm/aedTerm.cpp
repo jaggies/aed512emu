@@ -344,8 +344,8 @@ static void idle() {
         }
     } else { // running
         // Amortize by doing more CPU clocks per idle call
-        for (int i = 0; !debugger && i < 1000; i++) {
-            cpu->cycle();
+        if (!debugger) {
+            cpu->cycle(1000);
         }
         if (poll(fds, sizeof(fds) / sizeof(fds[0]), 1) > 0) {
             char c;
