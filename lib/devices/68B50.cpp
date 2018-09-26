@@ -43,17 +43,18 @@ M68B50::write(int offset, uint8_t value) {
 // Input to serial port. Returns true if byte can be received.
 bool
 M68B50::receive(uint8_t byte) {
-    const uint8_t IRQ_ENABLED = CR7;
     if (status & RDRF) {
         return false; // receiver data register full
     }
-
-    rxdata = byte;
-    status |= RDRF; // something is now in the receive buffer
-    if (control & IRQ_ENABLED) {
-        status |= IRQ; // IRQ enabled
+    if (status & CTS) {
+        rxdata = byte;
+        status |= RDRF; // something is now in the receive buffer
+        if (control & CR7) {
+            status |= IRQ; // IRQ enabled
+        }
+        return true;
     }
-    return true;
+    return false;
 }
 
 // Output from serial port. Returns true if data was available
