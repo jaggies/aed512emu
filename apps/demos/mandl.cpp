@@ -13,6 +13,25 @@ const int xres = 512;
 const int yres = 480;
 const int maxCount = 256;
 
+const int RBITS = 3;
+const int GBITS = 3;
+const int BBITS = 2;
+
+void initLut() {
+    AedSequence seq;
+    for (int b = 0; b < (1 << BBITS); b++) {
+        for (int g = 0; g < (1 << GBITS); g++) {
+            for (int r = 0; r < (1 << RBITS); r++) {
+                int idx = (b << (RBITS + GBITS)) | (g << RBITS) | r;
+                int red = r << (8-RBITS);
+                int grn = g << (8-GBITS);
+                int blu = b << (8-BBITS);
+                seq.setlut(idx, red, grn, blu).send();
+            }
+        }
+    }
+}
+
 void mandel(double xmin, double xmax, double ymin, double ymax) {
     float cr_delta = (xmax - xmin)/(xres-1);
     float ci_delta = (ymax - ymin)/(yres-1);
@@ -42,5 +61,6 @@ void mandel(double xmin, double xmax, double ymin, double ymax) {
 
 int main(int argc, char **argv)
 {
+    initLut();
     mandel(-2.0, 1.0, -1.25, 1.25);
 }
