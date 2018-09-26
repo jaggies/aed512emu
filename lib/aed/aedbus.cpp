@@ -59,8 +59,11 @@ static const uint8_t SW2 = ~0x7d;
 static const uint64_t LINE_TIME = SECS2USECS(1L) / 15750;
 static const uint64_t FRAME_TIME = 525*LINE_TIME/2;
 
+// Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
+static const uint64_t SERIAL_HOLDOFF = 0;
+
 AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _pia0(0),
-        _pia1(0), _pia2(0), _sio0(0), _sio1(0), _aedRegs(0) {
+        _pia1(0), _pia2(0), _sio0(0), _sio1(0), _aedRegs(0), _xon(true) {
     // Open all ROM files and copy to ROM location in romBuffer
     std::vector<uint8_t> romBuffer;
     size_t offset = 0;
@@ -130,8 +133,6 @@ AedBus::~AedBus() {
     std::cerr << __func__ << std::endl;
 }
 
-bool holdoff = false;
-
 void AedBus::handleEvents(uint64_t now) {
     while (now > _eventQueue.top().time) {
         const Event event = _eventQueue.top();
@@ -158,7 +159,7 @@ void AedBus::handleEvents(uint64_t now) {
             break;
 
             case SERIAL:
-                holdoff = false;
+                _xon = true;
             break;
         }
     }
@@ -178,11 +179,16 @@ AedBus::doSerial(uint64_t now) {
 
    if (_sio1->transmit(&byte)) {
        std::cout << "SIO1: " << (int) byte << std::endl;
+       if (byte == 19) { // XOFF
+           _xon = false;
+       } else if (byte == 17) { // XON
+           _xon = true;
+       }
    }
 
-   if (!holdoff && !_serialFifo.empty() && _sio1->receive(_serialFifo.front())) {
-       _eventQueue.push(Event(SERIAL, now + 2000));
-       holdoff = true;
+   if (_xon && !_serialFifo.empty() && _sio1->receive(_serialFifo.front())) {
+       _xon = false;
+       _eventQueue.push(Event(SERIAL, now + SERIAL_HOLDOFF));
        _serialFifo.pop();
    }
    return _sio1->irqAsserted();

@@ -45,6 +45,7 @@ class AedBus : public BUS {
         void reset() {
             _mapper.reset();
             _aedRegs->reset();
+            _xon = true;
         }
 
         // Handles events in the priority queue based on current CPU time.
@@ -105,6 +106,7 @@ class AedBus : public BUS {
         Ram*    _redmap;
         Ram*    _grnmap;
         Ram*    _blumap;
+        bool    _xon; // XON/XOFF protocol
         std::queue<uint8_t> _serialFifo;
         std::priority_queue<Event, std::vector<Event>, EventCompare> _eventQueue;
 };

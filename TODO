@@ -1,3 +1,7 @@
+Better implementation of XON/XOFF protocol
+	Looks like the device is properly sending XOFF(19) when the buffer is full,
+	but the code is ignoring it. Might solve the buffer overrun.
+
 Implement hardware erase 
 	This appears to be controlled by the ERASE line from PIA1.
 	It appears to use capnoic color to erase the frame during a frame.
