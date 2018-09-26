@@ -37,15 +37,12 @@ void initLut() {
 
 int main(int argc, char **argv) {
     AedSequence seq;
-    seq.setlut(0, 0, 0, 255);
-    seq.setlut(1, 255, 255, 255);
-    seq.mov(256,256);
-    seq.circle(100);
-    seq.send();
+    initLut();
     int n = 1000;
     while(n--) {
         seq.mov(random() % xres, random() % yres);
         seq.circle(random(), true);
+        seq.color(random() % 256);
         seq.send();
     }
 }

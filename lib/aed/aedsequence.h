@@ -23,6 +23,12 @@ class AedSequence {
             return *this;
         }
 
+        AedSequence& color(uint8_t clr) {
+            _sequence.push_back(SEC);
+            _sequence.push_back(clr);
+            return *this;
+        }
+
         AedSequence& mov(uint16_t x, uint16_t y) {
             _sequence.push_back(MOV);
             _sequence.push_back(((x & 0xf00) >> 4) | (y >> 8));
