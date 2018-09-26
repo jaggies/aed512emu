@@ -739,6 +739,9 @@ void mos6502::do_cycle()
 		// execute
 		Exec(instr);
 
+		// count cycles.. TODO: use accurate cycle count
+		count(3);
+
 		cycles++;
 	}
 }
