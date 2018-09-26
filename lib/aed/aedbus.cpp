@@ -143,7 +143,7 @@ void AedBus::handleEvents(uint64_t now) {
             break;
 
             case VSYNC:
-                _eventQueue.push(Event(HSYNC, LINE_TIME));
+                _eventQueue.push(Event(HSYNC, now + LINE_TIME));
                 _eventQueue.push(Event(VSYNC, now + FRAME_TIME));
                 if (_pia1->isAssertedLine(M68B21::CB1)) {
                     _pia1->deassertLine(M68B21::CB1);
