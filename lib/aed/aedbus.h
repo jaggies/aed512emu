@@ -23,7 +23,7 @@
 class AedBus : public BUS {
     #define SECS2USECS(a) ((a)*1000000)
     // Events in PriorityQueue
-    enum EventType { HSYNC, VSYNC, JOYX, JOYY, FIELD };
+    enum EventType { HSYNC, VSYNC, SERIAL };
     struct Event {
         Event(EventType type_, uint64_t time_) : type(type_), time(time_) { }
         EventType type;
@@ -52,7 +52,7 @@ class AedBus : public BUS {
 
         // Looks for data from serial ports. Returns true if IRQ needs to happen.
         // TODO: Have this automatically invoke serial callback when requested by CPU write
-        bool doSerial();
+        bool doSerial(uint64_t now);
 
         // Copies string to FIFO for handling in doSerial()
         void send(const std::string& string) {

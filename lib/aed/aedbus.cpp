@@ -130,6 +130,8 @@ AedBus::~AedBus() {
     std::cerr << __func__ << std::endl;
 }
 
+bool holdoff = false;
+
 void AedBus::handleEvents(uint64_t now) {
     while (now > _eventQueue.top().time) {
         const Event event = _eventQueue.top();
@@ -154,17 +156,21 @@ void AedBus::handleEvents(uint64_t now) {
                     }
                 }
             break;
+
+            case SERIAL:
+                holdoff = false;
+            break;
         }
     }
     // TODO: make this event-based
-    if (_irq != nullptr && doSerial()) {
+    if (_irq != nullptr && doSerial(now)) {
         _irq();
     }
 }
 
 // Handles serial ports. Returns true if IRQ was generated
 bool
-AedBus::doSerial() {
+AedBus::doSerial(uint64_t now) {
    uint8_t byte;
    if (_sio0->transmit(&byte)) {
        std::cout << "SIO0: " << (int) byte << std::endl;
@@ -174,10 +180,12 @@ AedBus::doSerial() {
        std::cout << "SIO1: " << (int) byte << std::endl;
    }
 
-   if (!_serialFifo.empty() && _sio1->receive(_serialFifo.front())) {
+   if (!holdoff && !_serialFifo.empty() && _sio1->receive(_serialFifo.front())) {
+       _eventQueue.push(Event(SERIAL, now + 10000));
+       holdoff = true;
        _serialFifo.pop();
    }
-   return _sio0->irqAsserted() || _sio1->irqAsserted();
+   return _sio1->irqAsserted();
 }
 
 uint32_t

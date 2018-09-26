@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     seq.mov(256,256);
     seq.circle(100);
     seq.send();
-    int n = 20;
+    int n = 1000;
     while(n--) {
         seq.mov(random() % xres, random() % yres);
         seq.circle(random(), true);
