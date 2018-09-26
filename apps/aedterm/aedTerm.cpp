@@ -42,7 +42,8 @@ static CPU* cpu;
 static AedBus* bus;
 static Clock* clk;
 static bool debugger = false;
-static struct pollfd fds[] = {{ 0, POLLIN, 0 }};
+static struct pollfd filedesc[5] = {{ 0, POLLIN | POLLPRI, 0 }};
+static int nfds = 0;
 
 // Small numbers can be used for more accuracy, but lesser performance.
 static size_t CYCLES_PER_CALL = 1;
@@ -218,8 +219,11 @@ static void passiveMotion(int x, int y)
 static void idle() {
     if (debugger) {
         static std::string cmd;
-        while (poll(fds, sizeof(fds) / sizeof(fds[0]), 1) > 0) {
+        int n = poll(filedesc, nfds, 0);
+        if (n > 0 && (filedesc[0].revents & POLLIN)) {
             char c;
+            std::cerr << "READING in DEBUG\n";
+
             if (read(0, &c, 1) > 0) {
                 cmd += c;
                 if (c == '\n') {
@@ -355,10 +359,14 @@ static void idle() {
             cpu->cycle(CYCLES_PER_CALL);
         }
 
-        if (poll(fds, sizeof(fds) / sizeof(fds[0]), 0) > 0) {
-            char c;
-            if (read(0, &c, 1) > 0) {
-                bus->send(c);
+        if (poll(&filedesc[0], nfds, 0) > 0) {
+            for (int n = 0; n < nfds; n++) {
+                char c;
+                if (filedesc[n].revents & POLLIN) {
+                    if (read(filedesc[n].fd, &c, 1) > 0) {
+                        bus->send(c);
+                    }
+                }
             }
         }
         bus->handleEvents(clk->getCpuTime());
@@ -413,6 +421,17 @@ int main(int argc, char **argv)
             [](int addr, uint8_t value) { ::bus->write(addr, value); },
             [](int cycles) { ::clk->add_cpu_cycles(cycles); },
             [](CPU::ExceptionType ex, int pc) { ::handleException(ex, pc); });
+
+    // Add various file descriptors
+    filedesc[nfds] = {0, POLLIN, 0 }; nfds++;
+
+    std::cerr << "Opening additional file descs\n";
+    if (int fd = open("input", O_RDONLY | O_NONBLOCK)) {
+        if (fd > 0) {
+            std::cerr << "Adding input file at descriptor " << fd << std::endl;
+            filedesc[nfds] = {fd, POLLIN | POLLPRI, 0 }; nfds++;
+        }
+    }
 
     signal(SIGINT, signalHandler);
     glutInit(&argc, argv);
