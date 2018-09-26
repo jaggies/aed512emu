@@ -54,13 +54,7 @@ static void drawCircle() {
     .setlut(0, 0x00, 0x00, 0x80)
     .setlut(1, 0xff, 0xff, 0xff)
     .circle(0x70)
-    .send([](uint8_t value) {
-        bus->send(value);
-        if (bus->doSerial()) {
-            cpu->irq();
-        }
-        cpu->cycle(100);
-    });
+    .send([](uint8_t value) { bus->send(value); });
     return;
 }
 
