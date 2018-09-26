@@ -9,6 +9,7 @@
 #define LIB_AED_AEDSEQUENCE_H_
 #include <vector>
 #include <functional>
+#include <iostream>
 #include "aedcmds.h"
 
 class AedSequence {
@@ -46,7 +47,8 @@ class AedSequence {
             return *this;
         }
 
-        AedSequence& send(std::function<void(uint8_t)> snd) {
+        AedSequence& send(std::function<void(uint8_t)> snd
+                = [](uint8_t value) { std::cout << value; }) {
             snd(ESC); // enter command mode
             for (uint8_t c : _sequence) {
                 snd(c);

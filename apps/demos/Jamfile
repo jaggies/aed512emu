@@ -8,6 +8,9 @@ SubDirHdrs $(TOP) lib util ;
 SubDirHdrs $(TOP) lib aed ;
 
 Depends mandl : libemu.a ;
-LINKLIBS on checker = $(LINKLIBS) -lemu ;
-
+LINKLIBS on mandl = $(LINKLIBS) -lemu ;
 Main mandl : mandl.cpp ;
+
+Depends circles : libemu.a ;
+LINKLIBS on circles = $(LINKLIBS) -lemu ;
+Main circles : circles.cpp ;
