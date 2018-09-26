@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     int n = 20;
     while(n--) {
         seq.mov(random() % xres, random() % yres);
-        seq.circle(random());
+        seq.circle(random(), true);
         seq.send();
     }
 }
