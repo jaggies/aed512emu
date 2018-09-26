@@ -27,6 +27,7 @@
 #include "bus.h"
 #include "aedbus.h"
 #include "config.h"
+#include "aedsequence.h"
 
 static GLuint texName;
 static int imageWidth = 0;
@@ -45,6 +46,22 @@ static struct pollfd fds[] = {{ 0, POLLIN, 0 }};
 
 // Small numbers can be used for more accuracy, but lesser performance.
 static size_t CYCLES_PER_CALL = 1;
+
+static void drawCircle() {
+    AedSequence seq;
+    seq.mov(256, 256)
+    .setlut(0, 0x00, 0x00, 0x80)
+    .setlut(1, 0xff, 0xff, 0xff)
+    .circle(0x70)
+    .send([](uint8_t value) {
+        bus->send(value);
+        if (bus->doSerial()) {
+            cpu->irq();
+        }
+        cpu->cycle(100);
+    });
+    return;
+}
 
 static void checkGLError(const char* msg) {
     GLenum err;
@@ -187,6 +204,7 @@ static void keyboard(unsigned char key, int x, int y)
 
 static void mouse(int button, int state, int x, int y)
 {
+    drawCircle();
 }
 
 static void motion(int x, int y)
