@@ -49,11 +49,11 @@ class AedSequence {
 
         AedSequence& send(std::function<void(uint8_t)> snd
                 = [](uint8_t value) { std::cout << value; }) {
-            snd(ESC); // enter command mode
+            snd(ESC); // enter interpreter
             for (uint8_t c : _sequence) {
                 snd(c);
             }
-            snd('\n'); // Leave command mode
+            snd(XXX); // leave interpreter
             _sequence.clear();
             return *this;
         }
