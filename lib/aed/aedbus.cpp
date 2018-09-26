@@ -181,7 +181,7 @@ AedBus::doSerial(uint64_t now) {
    }
 
    if (!holdoff && !_serialFifo.empty() && _sio1->receive(_serialFifo.front())) {
-       _eventQueue.push(Event(SERIAL, now + 10000));
+       _eventQueue.push(Event(SERIAL, now + 2000));
        holdoff = true;
        _serialFifo.pop();
    }

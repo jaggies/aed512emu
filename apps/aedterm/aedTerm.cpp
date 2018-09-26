@@ -46,7 +46,7 @@ static struct pollfd filedesc[5] = {{ 0, POLLIN | POLLPRI, 0 }};
 static int nfds = 0;
 
 // Small numbers can be used for more accuracy, but lesser performance.
-static size_t CYCLES_PER_CALL = 1;
+static size_t CYCLES_PER_CALL = 100;
 
 static void drawCircle() {
     AedSequence seq;
