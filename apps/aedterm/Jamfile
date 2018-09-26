@@ -10,6 +10,6 @@ SubDirHdrs /opt/local/include ;
 
 Depends aedterm : libemu.a ;
 INCLUDE += -I/opt/local/include ;
-LINKLIBS on aedterm = $(LINKLIBS) -lemu -lglut -lglu -lgl -lcurses ;
+LINKLIBS on aedterm = $(LINKLIBS) -lemu -lglut -lglu -lgl ;
 
 Main aedterm : aedTerm.cpp ;

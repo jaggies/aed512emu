@@ -1,0 +1,13 @@
+SubDir TOP apps demos ;
+SubDirHdrs $(TOP) lib core ;
+SubDirHdrs $(TOP) lib cpu ;
+SubDirHdrs $(TOP) lib devices ;
+SubDirHdrs $(TOP) lib mos6502 ;
+SubDirHdrs $(TOP) lib dis6502 ;
+SubDirHdrs $(TOP) lib util ;
+SubDirHdrs $(TOP) lib aed ;
+
+Depends mandl : libemu.a ;
+LINKLIBS on checker = $(LINKLIBS) -lemu ;
+
+Main mandl : mandl.cpp ;
