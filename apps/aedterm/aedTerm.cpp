@@ -219,11 +219,8 @@ static void passiveMotion(int x, int y)
 static void idle() {
     if (debugger) {
         static std::string cmd;
-        int n = poll(filedesc, nfds, 0);
-        if (n > 0 && (filedesc[0].revents & POLLIN)) {
+        if (poll(&filedesc[0], nfds, 0) > 0 && (filedesc[0].revents & POLLIN)) { // Only read stdin
             char c;
-            std::cerr << "READING in DEBUG\n";
-
             if (read(0, &c, 1) > 0) {
                 cmd += c;
                 if (c == '\n') {
