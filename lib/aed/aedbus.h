@@ -42,11 +42,7 @@ class AedBus : public BUS {
         uint8_t read(int addr) override { return _mapper.read(addr); }
         void write(int addr, unsigned char value) override { _mapper.write(addr, value); }
 
-        void reset() {
-            _mapper.reset();
-            _aedRegs->reset();
-            _xon = true;
-        }
+        void reset();
 
         // Handles events in the priority queue based on current CPU time.
         void handleEvents(uint64_t time_us);
@@ -69,7 +65,7 @@ class AedBus : public BUS {
         void key(char c) {
             // TODO: also handle CTRL, SHIFT, REPEAT, BREAK from sheet 14
             _pia1->set(M68B21::PortA, c);
-            _pia1->assertLine(M68B21::CA1);
+            _pia1->set(M68B21::IrqStatusA, M68B21::CA1);
         }
 
         // Saves the current frame to a file in NetPBM format.

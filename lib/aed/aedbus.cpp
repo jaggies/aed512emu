@@ -56,7 +56,7 @@ static const uint8_t SW1 = ~0x10; // negate since open is 0
 static const uint8_t SW2 = ~0x7d;
 
 // Video timing
-static const size_t VLINES = 483 + 1; // should be 483i mode
+static const size_t VLINES = 483; // should be 483i mode
 static const uint64_t LINE_TIME = SECS2USECS(1L) / 15750;
 static const uint64_t FRAME_TIME = VLINES * LINE_TIME;
 static const uint64_t FIELD_TIME = FRAME_TIME / 2;
@@ -87,9 +87,11 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _p
     }
 
     // Add peripherals. Earlier peripherals are favored when addresses overlap.
-    _mapper.add(_pia0 = new M68B21(pio0da, "PIA0", SW1));
-    _mapper.add(_pia1 = new M68B21(pio1da, "PIA1"));
-    _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", SW2));
+    _mapper.add(_pia0 = new M68B21(pio0da, "PIA0"));
+    _mapper.add(_pia1 = new M68B21(pio1da, "PIA1",
+            [this](int) { std::cerr << "Woot! NMI!\n"; _nmi(); },
+            [this](int) { std::cerr << "Woot! IRQ!\n"; _irq(); } ));
+    _mapper.add(_pia2 = new M68B21(pio2da, "PIA2"));
     _mapper.add(_sio0 = new M68B50(sio0st, "SIO0"));
     _mapper.add(_sio1 = new M68B50(sio1st, "SIO1"));
 #if !defined(AED767) && !defined(AED1024)
@@ -125,7 +127,7 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _p
     _mapper.add(new RamDebug(0, CPU_MEM, "unmapped"));
 
     // Kick off VSYNC
-    _eventQueue.push(Event(VSYNC, FIELD_TIME));
+    _eventQueue.push(Event(FIELD, FIELD_TIME));
 
     std::cerr << std::hex; // dump in hex
     std::cerr << _mapper;
@@ -134,6 +136,19 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _p
 AedBus::~AedBus() {
     std::cerr << __func__ << std::endl;
 }
+
+void
+AedBus::reset() {
+   _mapper.reset();
+   _aedRegs->reset();
+   _pia0->set(M68B21::PortA, SW1);
+   _pia2->set(M68B21::PortA, SW2);
+   _xon = true;
+}
+
+// PIA1 Signal pins
+const int VERTBLANK_SIGNAL = M68B21::CB1;
+const int FIELD_SIGNAL = M68B21::PB6;
 
 void AedBus::handleEvents(uint64_t now) {
     // TODO: when swapping this with an if statement, the video timing is correct, but
@@ -144,32 +159,27 @@ void AedBus::handleEvents(uint64_t now) {
             case HSYNC: {
                 uint8_t mrd = _aedRegs->read(miscrd);
                 _aedRegs->write(miscrd, (mrd & 1) ? (mrd & 0xfe) : (mrd | 0x01));
-                // Clear VSYNC line
-                _pia1->deassertLine(M68B21::CB1);
+                _pia1->set(M68B21::IrqStatusB, VERTBLANK_SIGNAL);
             }
+            break;
+
+            case VSYNC: // handled by FIELD
             break;
 
             case FIELD: {
-                if (_pia1->isSet(M68B21::PortB, M68B21::PB6)) {
-                    _pia1->reset(M68B21::PortB, M68B21::PB6);
+                _pia1->reset(M68B21::IrqStatusB, VERTBLANK_SIGNAL);
+                // FIELD alternates every VSYNC pulse
+                if (_pia1->isSet(M68B21::PortB, FIELD_SIGNAL)) {
+                    _pia1->reset(M68B21::PortB, FIELD_SIGNAL);
                 } else {
-                    _pia1->set(M68B21::PortB, M68B21::PB6);
+                    _pia1->set(M68B21::PortB, FIELD_SIGNAL);
                 }
-            }
-            break;
-
-            case VSYNC:
-                for (size_t i = 0; i < VLINES; i++) {
+                // Add this field's HSYNC events
+                for (size_t i = 0; i < VLINES/2; i++) {
                     _eventQueue.push(Event(HSYNC, now + i * LINE_TIME));
                 }
                 _eventQueue.push(Event(FIELD, now + FIELD_TIME));
-                _eventQueue.push(Event(VSYNC, now + FRAME_TIME));
-                _pia1->assertLine(M68B21::CB1);
-                // TODO: this should be done by 6821 when the line is asserted/deasserted
-                // according to the polarity bit.
-                if (_nmi != nullptr) {
-                    _nmi();
-                }
+            }
             break;
 
             case SERIAL:
