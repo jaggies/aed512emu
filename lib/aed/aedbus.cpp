@@ -56,8 +56,10 @@ static const uint8_t SW1 = ~0x10; // negate since open is 0
 static const uint8_t SW2 = ~0x7d;
 
 // Video timing
+static const size_t VLINES = 483 + 1; // should be 483i mode
 static const uint64_t LINE_TIME = SECS2USECS(1L) / 15750;
-static const uint64_t FRAME_TIME = 525*LINE_TIME/2;
+static const uint64_t FRAME_TIME = VLINES * LINE_TIME;
+static const uint64_t FIELD_TIME = FRAME_TIME / 2;
 
 // Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
 static const uint64_t SERIAL_HOLDOFF = 0;
@@ -123,7 +125,7 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _p
     _mapper.add(new RamDebug(0, CPU_MEM, "unmapped"));
 
     // Kick off VSYNC
-    _eventQueue.push(Event(VSYNC, FRAME_TIME));
+    _eventQueue.push(Event(VSYNC, FIELD_TIME));
 
     std::cerr << std::hex; // dump in hex
     std::cerr << _mapper;
@@ -140,22 +142,33 @@ void AedBus::handleEvents(uint64_t now) {
         const Event& event = _eventQueue.top();
         switch (event.type) {
             case HSYNC: {
-                _eventQueue.push(Event(HSYNC, now + LINE_TIME));
                 uint8_t mrd = _aedRegs->read(miscrd);
                 _aedRegs->write(miscrd, (mrd & 1) ? (mrd & 0xfe) : (mrd | 0x01));
+                // Clear VSYNC line
+                _pia1->deassertLine(M68B21::CB1);
+            }
+            break;
+
+            case FIELD: {
+                if (_pia1->isSet(M68B21::PortB, M68B21::PB6)) {
+                    _pia1->reset(M68B21::PortB, M68B21::PB6);
+                } else {
+                    _pia1->set(M68B21::PortB, M68B21::PB6);
+                }
             }
             break;
 
             case VSYNC:
-                _eventQueue.push(Event(HSYNC, now + LINE_TIME));
+                for (size_t i = 0; i < VLINES; i++) {
+                    _eventQueue.push(Event(HSYNC, now + i * LINE_TIME));
+                }
+                _eventQueue.push(Event(FIELD, now + FIELD_TIME));
                 _eventQueue.push(Event(VSYNC, now + FRAME_TIME));
-                if (_pia1->isAssertedLine(M68B21::CB1)) {
-                    _pia1->deassertLine(M68B21::CB1);
-                } else {
-                    _pia1->assertLine(M68B21::CB1);
-                    if (_nmi != nullptr) {
-                        _nmi();
-                    }
+                _pia1->assertLine(M68B21::CB1);
+                // TODO: this should be done by 6821 when the line is asserted/deasserted
+                // according to the polarity bit.
+                if (_nmi != nullptr) {
+                    _nmi();
                 }
             break;
 

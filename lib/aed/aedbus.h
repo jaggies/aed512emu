@@ -23,7 +23,7 @@
 class AedBus : public BUS {
     #define SECS2USECS(a) ((a)*1000000)
     // Events in PriorityQueue
-    enum EventType { HSYNC, VSYNC, SERIAL };
+    enum EventType { HSYNC, VSYNC, FIELD, SERIAL };
     struct Event {
         Event(EventType type_, uint64_t time_) : type(type_), time(time_) { }
         EventType type;
@@ -68,7 +68,7 @@ class AedBus : public BUS {
 
         void key(char c) {
             // TODO: also handle CTRL, SHIFT, REPEAT, BREAK from sheet 14
-            _pia1->setA(c);
+            _pia1->set(M68B21::PortA, c);
             _pia1->assertLine(M68B21::CA1);
         }
 

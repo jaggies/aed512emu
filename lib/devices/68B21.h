@@ -13,10 +13,21 @@
 
 class M68B21 : public Peripheral {
     public:
-        enum Line {
-            CA1, CA2, CB1, CB2
-        };
         typedef std::function<void(int newValue)> Callback;
+        enum PortBits {
+            PA7 = (1 << 7), PA6 = (1 << 6), PA5 = (1 << 5), PA4 = (1 << 4),
+            PA3 = (1 << 3), PA2 = (1 << 2), PA1 = (1 << 1), PA0 = (1 << 0),
+            PB7 = (1 << 7), PB6 = (1 << 6), PB5 = (1 << 5), PB4 = (1 << 4),
+            PB3 = (1 << 3), PB2 = (1 << 2), PB1 = (1 << 1), PB0 = (1 << 0),
+        };
+        enum ControlBits {
+            CRA0 = 1<<0, CRA1 = 1<<1, CRA2 = 1<<2, CRA3 = 1<<3,
+            CRA4 = 1<<4, CRA5 = 1<<5, CRA6 = 1<<6, CRA7 = 1<<7,
+            CRB0 = 1<<0, CRB1 = 1<<1, CRB2 = 1<<2, CRB3 = 1<<3,
+            CRB4 = 1<<4, CRB5 = 1<<5, CRB6 = 1<<6, CRB7 = 1<<7,
+        };
+        enum Line { CA1, CA2, CB1, CB2 };
+        enum Port { PortA = 0, PortB };
 
         M68B21(int start, const std::string& name = "68B21", uint8_t aInit = 0, uint8_t bInit = 0,
                 Callback aChanged = nullptr, Callback bChanged = nullptr)
@@ -69,40 +80,40 @@ class M68B21 : public Peripheral {
             }
         }
 
-        void setA(uint8_t data) { inA = data; }
-        void setB(uint8_t data) { inB = data; }
-        uint8_t getA() const { return inA; }
-        uint8_t getB() const { return inB; }
+        bool isSet(Port port, uint8_t data) {
+            return port == PortA ? (inA & data) : (inB & data);
+        }
+
+        // Sets all bits in data to 1
+        void set(Port port, uint8_t data) {
+            if (port == PortA) {
+                inA |= data;
+            } else {
+                inB |= data;
+            }
+        }
+
+        // Resets all 1 bits in data
+        void reset(Port port, uint8_t data) {
+            if (port == PortA) {
+                inA &= ~data;
+            } else {
+                inB &= ~data;
+            }
+        }
 
     private:
-        uint8_t PRA; // Peripheral Register A (when CRA2 is set)
-        uint8_t DDRA; // Data Direction Register A. A bit value of 0 = input, 1 = output
-        uint8_t CRA; // Control Register A
-        uint8_t PRB; // Peripheral Register A (when CRB2 is set)
-        uint8_t DDRB; // Data Direction Register B. A bit value of 0 = input, 1 = output
-        uint8_t CRB; // Control Register B
-        uint8_t inA; // Read-only input value, port A
-        uint8_t inB; // Read-only input value, port B
-        Callback cbA; // Callback invoked when port A output changes
-        Callback cbB; // Callback invoked when port B output changes
-        enum ControlBits {
-            CRA0 = 1<<0,
-            CRA1 = 1<<1,
-            CRA2 = 1<<2,
-            CRA3 = 1<<3,
-            CRA4 = 1<<4,
-            CRA5 = 1<<5,
-            CRA6 = 1<<6,
-            CRA7 = 1<<7,
-            CRB0 = 1<<0,
-            CRB1 = 1<<1,
-            CRB2 = 1<<2,
-            CRB3 = 1<<3,
-            CRB4 = 1<<4,
-            CRB5 = 1<<5,
-            CRB6 = 1<<6,
-            CRB7 = 1<<7,
-        };
+        uint8_t get(Port port) const { return port == PortA ? inA : inB; }
+        uint8_t PRA; // Peripheral Register PortA (when CRA2 is set)
+        uint8_t DDRA; // Data Direction Register PortA. PortA bit value of 0 = input, 1 = output
+        uint8_t CRA; // Control Register PortA
+        uint8_t PRB; // Peripheral Register PortA (when CRB2 is set)
+        uint8_t DDRB; // Data Direction Register PortB. PortA bit value of 0 = input, 1 = output
+        uint8_t CRB; // Control Register PortB
+        uint8_t inA; // Read-only input value, port PortA
+        uint8_t inB; // Read-only input value, port PortB
+        Callback cbA; // Callback invoked when port PortA output changes
+        Callback cbB; // Callback invoked when port PortB output changes
 };
 
 #endif /* M68B21_H_ */
