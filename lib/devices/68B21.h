@@ -9,6 +9,7 @@
 #define M68B21_H_
 
 #include <vector>
+#include <functional>
 #include "peripheral.h"
 
 class M68B21 : public Peripheral {
@@ -33,6 +34,7 @@ class M68B21 : public Peripheral {
         enum IrqStatusA { CA1 = 0x80, CA2 = 0x40 };
         enum IrqStatusB { CB1 = 0x80, CB2 = 0x40 };
         enum Port { PortA, PortB, ControlA, ControlB, IrqStatusA, IrqStatusB };
+        enum Registers { PRA = 0, DDRA = 0, CRA = 1, PRB = 2, DDRB = 2, CRB = 3 };
 
         M68B21(int start, const std::string& name = "68B21",
                 Callback irqA = nullptr, Callback irqB = nullptr,

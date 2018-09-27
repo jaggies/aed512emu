@@ -15,28 +15,28 @@ uint8_t M68B21::read(int offset) {
     assert(offset < 4);
     uint8_t result = 0;
     switch (offset) {
-        case 0: // _prA or _ddrA
+        case PRA: // PRA or DDRA
             if (_crA & CRA2) {
                 result = (_inA & ~_ddrA) | (_prA & _ddrA);
-                _crA &= 0x3f; // read of peripheral register resets IRQ bits
+                _incA &= 0x3f; // read of peripheral register resets IRQ bits
             } else {
                 result = _ddrA;
             }
             break;
-        case 1: // _crA
-            result = _crA;
+        case CRA: // CRA
+            result = (_crA & 0x3f) | (_incA & 0xc0);
             if (debug) std::cerr << name() << ":CRA read -> " << (int) result << std::endl;
             break;
-        case 2: // _prB or _ddrB
+        case PRB: // PRB or DDRB
             if (_crB & CRB2) {
                 result = (_inB & ~_ddrB) | (_prB & _ddrB);
-                _crB &= 0x3f; // read of peripheral register resets IRQ bits
+                _incB &= 0x3f; // read of peripheral register resets IRQ bits
             } else {
                 result = _ddrB;
             }
             break;
-        case 3: // _crB
-            result = _crB;
+        case CRB: // CRB
+            result = (_crB & 0x3f) | (_incB & 0xc0);
             if (debug) std::cerr << name() << ":CRB read -> " << (int) result << std::endl;
             break;
     }
@@ -46,7 +46,7 @@ uint8_t M68B21::read(int offset) {
 void M68B21::write(int offset, uint8_t value) {
     assert(offset < 4);
     switch (offset) {
-        case 0: // _prA or _ddrA
+        case PRA: // PRA or DDRA
             if (_crA & CRA2) {
                 if (_cbA != nullptr && (_prA ^ value)) {
                     _cbA(value);
@@ -56,7 +56,7 @@ void M68B21::write(int offset, uint8_t value) {
                 _ddrA = value;
             }
         break;
-        case 1: { // _crA
+        case CRA: { // CRA
             uint8_t changed = (_crA ^ value);
             if (debug && (changed & CRA5)) {
                 std::cerr << name() << ":CA2 is " << ((value & CRA5) ? "output" : "input") << std::endl;
@@ -67,7 +67,7 @@ void M68B21::write(int offset, uint8_t value) {
             _crA = (_crA & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
         }
         break;
-        case 2: // _prB or _ddrB
+        case PRB: // PRB or DDRB
             if (_crB & CRB2) {
                 if (_cbB != nullptr && (_prB ^ value)) {
                     _cbB(value);
@@ -77,7 +77,7 @@ void M68B21::write(int offset, uint8_t value) {
                 _ddrB = value;
             }
         break;
-        case 3: { // _crB
+        case CRB: { // CRB
             uint8_t changed = (_crB ^ value);
             if (debug && (changed & CRB5)) {
                 std::cerr << name() << ":CB2 is " << ((value & CRB5) ? "output" : "input") << std::endl;
@@ -107,44 +107,47 @@ void M68B21::set(Port port, uint8_t data) {
         case PortB:
             _inB |= data;
         break;
-        case IrqStatusA: {
+        case IrqStatusA:
             assert((_crA & CRA5) == 0); // E clock config not supported
             data &= (CA1 | CA2); // Only CA1 and CA2 bits can be set
-            if (_crA & CRA0) { // CA1 IRQ enabled
+            if ((data & CA1) && (_crA & CRA0)) { // CA1 IRQ enabled
                 const bool checkRising = _crA & CRA1;
                 if (checkRising && rising(_incA, data, CA1)) { // Falling is done in reset()
-                    _crA |= CRA7;
+                    _incA |= CA1;
                     _irqA(data);
                 }
             }
-            if (_crA & CRA3) { // CA2 IRQ enabled
+            if ((data & CA2) && (_crA & CRA3)) { // CA2 IRQ enabled
                 const bool checkRising = _crA & CRA4;
                 if (checkRising && rising(_incA, data, CA2)) { // Falling is done in reset()
-                    _crA |= CRA6;
+                    _incA |= CA2;
                     _irqA(data);
                 }
             }
-            _incA |= data;
-        }
+            if (debug) {
+                std::cout << name() << " set statusA " << (int) data << " result = " << (int) _incA << std::endl;
+            }
         break;
         case IrqStatusB:
             assert((_crA & CRA5) == 0); // E clock config not supported
             data &= (CB1 | CB2); // Only CA1 and CA2 bits can be set
-            if (_crB & CRB0) { // CA1 IRQ enabled
+            if ((data & CB1) && (_crB & CRB0)) { // CA1 IRQ enabled
                 const bool checkRising = _crB & CRB1;
                 if (checkRising && rising(_incB, data, CB1)) { // Falling is done in reset()
-                    _crB |= CRB7;
+                    _incB |= CB1;
                     _irqB(data);
                 }
             }
-            if (_crB & CRB3) { // CA2 IRQ enabled
+            if ((data & CB2) && (_crB & CRB3)) { // CA2 IRQ enabled
                 const bool checkRising = _crB & CRB4;
                 if (checkRising && rising(_incB, data, CB2)) { // Falling is done in reset()
-                    _crB |= CRB6;
+                    _incB |= CB2;
                     _irqB(data);
                 }
             }
-            _incB |= data;
+            if (debug) {
+                std::cout << name() << " set statusB " << (int) data << " result = " << (int) _incB << std::endl;
+            }
         break;
         default:
             // Oops.
@@ -160,7 +163,7 @@ void M68B21::reset(Port port, uint8_t data) {
         case PortB:
             _inB &= ~data;
         break;
-        case IrqStatusA: {
+        case IrqStatusA:
             assert((_crA & CRA5) == 0); // E clock config not supported
             data &= (CA1 | CA2); // Only CA1 and CA2 bits can be set
             data = ~data; // invert the bits so we can simply AND them to clear
@@ -179,7 +182,9 @@ void M68B21::reset(Port port, uint8_t data) {
                 }
             }
             _incA &= data;
-        }
+            if (debug) {
+                std::cout << name() << " reset statusA " << (int) ~data << " result = " << (int) _incA << std::endl;
+            }
         break;
         case IrqStatusB:
             assert((_crA & CRA5) == 0); // E clock config not supported
@@ -200,6 +205,9 @@ void M68B21::reset(Port port, uint8_t data) {
                 }
             }
             _incB &= data;
+            if (debug) {
+                std::cout << name() << " reset statusB " << (int) ~data << " result = " << (int) _incB << std::endl;
+            }
         break;
         default:
             // Oops.

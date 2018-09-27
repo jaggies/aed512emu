@@ -8,5 +8,8 @@ SubDirHdrs $(TOP) lib util ;
 
 Depends test : libemu.a ;
 LINKLIBS on test = $(LINKLIBS) -lemu ;
-
 Main test : test.cpp ;
+
+Depends checkpia : libemu.a ;
+LINKLIBS on checkpia = $(LINKLIBS) -lemu ;
+Main checkpia : checkpia.cpp ;
