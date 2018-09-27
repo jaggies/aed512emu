@@ -88,9 +88,7 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _p
 
     // Add peripherals. Earlier peripherals are favored when addresses overlap.
     _mapper.add(_pia0 = new M68B21(pio0da, "PIA0"));
-    _mapper.add(_pia1 = new M68B21(pio1da, "PIA1",
-            [this](int) { std::cerr << "Woot! NMI!\n"; _nmi(); },
-            [this](int) { std::cerr << "Woot! IRQ!\n"; _irq(); } ));
+    _mapper.add(_pia1 = new M68B21(pio1da, "PIA1", [this](int) { _irq(); }, [this](int) {_nmi(); } ));
     _mapper.add(_pia2 = new M68B21(pio2da, "PIA2"));
     _mapper.add(_sio0 = new M68B50(sio0st, "SIO0"));
     _mapper.add(_sio1 = new M68B50(sio1st, "SIO1"));
