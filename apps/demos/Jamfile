@@ -14,3 +14,7 @@ Main mandl : mandl.cpp ;
 Depends circles : libemu.a ;
 LINKLIBS on circles = $(LINKLIBS) -lemu ;
 Main circles : circles.cpp ;
+
+Depends rectangles : libemu.a ;
+LINKLIBS on rectangles = $(LINKLIBS) -lemu ;
+Main rectangles : rectangles.cpp ;

@@ -29,17 +29,27 @@ class AedSequence {
             return *this;
         }
 
+        AedSequence& fill(uint8_t clr) {
+            _sequence.push_back(IFL);
+            _sequence.push_back(clr);
+            return *this;
+        }
+
         AedSequence& mov(uint16_t x, uint16_t y) {
             _sequence.push_back(MOV);
-            _sequence.push_back(((x & 0xf00) >> 4) | (y >> 8));
-            _sequence.push_back(x & 0xff);
-            _sequence.push_back(y & 0xff);
+            coordinate(x, y);
             return *this;
         }
 
         AedSequence& pixel(uint8_t color) {
             _sequence.push_back(WPX);
             _sequence.push_back(color);
+            return *this;
+        }
+
+        AedSequence& rectangle(uint16_t x, uint16_t y) {
+            _sequence.push_back(DFR);
+            coordinate(x,y);
             return *this;
         }
 
@@ -65,6 +75,11 @@ class AedSequence {
         }
 
     private:
+        void coordinate(uint16_t x, uint16_t y) {
+            _sequence.push_back(((x & 0xf00) >> 4) | (y >> 8));
+            _sequence.push_back(x & 0xff);
+            _sequence.push_back(y & 0xff);
+        }
         std::vector<uint8_t>    _sequence;
 };
 
