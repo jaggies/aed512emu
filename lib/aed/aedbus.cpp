@@ -134,9 +134,10 @@ AedBus::~AedBus() {
 }
 
 void AedBus::handleEvents(uint64_t now) {
+    // TODO: when swapping this with an if statement, the video timing is correct, but
+    // the device buffer overflows because it never emits XOFF.
     while (now > _eventQueue.top().time) {
-        const Event event = _eventQueue.top();
-        _eventQueue.pop();
+        const Event& event = _eventQueue.top();
         switch (event.type) {
             case HSYNC: {
                 _eventQueue.push(Event(HSYNC, now + LINE_TIME));
@@ -162,6 +163,7 @@ void AedBus::handleEvents(uint64_t now) {
                 _xon = true;
             break;
         }
+        _eventQueue.pop();
     }
     // TODO: make this event-based
     if (_irq != nullptr && doSerial(now)) {
