@@ -39,6 +39,8 @@ void mandel(double xmin, double xmax, double ymin, double ymax) {
     float ci = ymin;
     AedSequence seq;
 
+    uint8_t buffer[xres];
+
     for (int j = 0; j < yres; j++, ci += ci_delta) {
         float cr = xmin;
         for (int i = 0; i < xres; i++, cr += cr_delta) {
@@ -53,8 +55,9 @@ void mandel(double xmin, double xmax, double ymin, double ymax) {
                 zr = tr + cr;
                 zi = ti + ci;
             } while ((count++ < maxCount) && (zr*zr + zi*zi) < 4.0f);
-            seq.mov(i,j).pixel(count).send([](int c) { fputc(c, stdout); });
+            buffer[i] = count;
         }
+        seq.mov(0, j).write_horizontal_runs(buffer, xres).send();
     }
 }
 

@@ -74,6 +74,21 @@ class AedSequence {
             return *this;
         }
 
+        AedSequence& write_horizontal_runs(const uint8_t* buffer, int n) {
+            while (n > 0) {
+                int count = std::min(255, n);
+                n -= count;
+                _sequence.push_back(WHU);
+                _sequence.push_back(255); // buffer of unique pixels
+                _sequence.push_back(count);
+                while (count--) {
+                    _sequence.push_back(*buffer++);
+                }
+                _sequence.push_back(0);
+            }
+            return *this;
+        }
+
     private:
         void coordinate(uint16_t x, uint16_t y) {
             _sequence.push_back(((x & 0xf00) >> 4) | (y >> 8));

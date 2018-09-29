@@ -62,16 +62,16 @@
 #define RCP   'j'   // read cursor position
 #define RCT   "+#"  // read color table (rct <stadr><cnt>)
 #define RDA   '\\'  // read direct from area of interest
-#define RHO   'y'   // read horz origin
-#define RHR   'a'   // read  horz runs
-#define RHS   't'   // read  horz scan
+#define RHO   'y'   // read horizontal origin
+#define RHR   'a'   // read horizontal runs
+#define RHS   't'   // read horizontal scan
 #define RJP   'q'   // read joystick position
 #define ROT   "+,"  // rotate area of interest (rot <count>)
 #define RPX   'Y'   // read pixel
 #define RRD   '@'   // read raster direct
 #define RST   '0'   // full terminal reset
 #define RTP   '!'   // read tablet postion
-#define RVO   'z'   // read vert origin
+#define RVO   'z'   // read vertical origin
 #define RZR   "+/"  // read zoom registers
 #define SAC   '{'   // set alphanumeric cursor color (sec <color>)
 #define SAP   '^'   // set alphanumeric parameters (sap <size><font><hspace><vspace><link>)
@@ -88,7 +88,7 @@
 #define SDA   ^[    // stop dir access read or write
 #define SEC   'C'   // set current color (foreground) (sec <color>)
 #define SEN   'G'   // set encoding (sen <ftype><otype><rtype><ctype><ptype>)
-#define SHO   'f'   // set horiz orig reg (sho <val>)
+#define SHO   'f'   // set horizontal orig reg (sho <val>)
 #define SIF   'H'   // select intf for returned options (sif <type>)
 #define SKS   '6'   // send keystroke (parallel only)
 #define SLS   '1'   // set line style (sls <pattern><scale>)
@@ -101,22 +101,24 @@
 #define SUB   26    // enter TEK graphics input (GIN) mode
 #define SUC   '?'   // set up counters for DVMA suc <byte>
 #define SUP   '-'   // ena/dsb superoam (512 only) (sup <0/1>)
-#define SVO   'e'   // set vert orig (svo <val>)
+#define SVO   'e'   // set vertical orig (svo <val>)
 #define SWM   'L'   // set video memory write mask (swm <val>)
 #define SZR   'E'   // set zoom registers (szr <xzoom><yzoom>)
-#define VSR   'x'   // vert scroll relative (vsr <dy1>)
+#define VSR   'x'   // vertical scroll relative (vsr <dy1>)
 #define WDA   '.'   // write direct into area of interest
-#define WHC   'u'   // write horz scan (non-AOI) (whc <count><byte1>..<byten>)
-#define WHR   '\\'  // write horz runs (whr <count><color><0>)
-#define WHS   'X'   // write horz scan (whs <byte1>...<byten>)
-#define WHU   's'   // write horz runs (alt) (whu <length><color> /  whu <255><n><color>
+#define WHC   'u'   // write horizontal scan (non-AOI) (whc <count><byte1>..<byten>)
+#define WHR   '\\'  // write horizontal runs (whr <count><color><0>)
+#define WHS   'X'   // write horizontal scan (whs <byte1>...<byten>)
+#define WHU   's'   // write horizontal runs (alt)
+                    // whu <length><color>
+                    // whu <255><n><color>
                     // whu <length><color><255><n><color> intermixed)
 #define WIP   'v'   // write incr plotter mode (wip <n16><byte>)
 #define WMP   'k'   // write mult isolated pixels (wmp <dx><dy>)
 #define WPX   'T'   // write pixel (wpx <color>)
 #define WRD   'F'   // write raster direct (wrd <count>)
 #define WSF   '8'   // write special font wsf <code><dx><dy><0>
-#define XCD   '<'   // exit  cmd DMA
+#define XCD   '<'   // exit cmd DMA
 #define XTD   '+'   // extended command mode
 #define XXX   13    // exit graphics interpreter
 
