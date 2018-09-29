@@ -47,7 +47,8 @@ static struct pollfd filedesc[5] = {{ 0, POLLIN | POLLPRI, 0 }};
 static int nfds = 0;
 
 // Small numbers can be used for more accuracy, but lesser performance.
-static size_t CYCLES_PER_CALL = 100;
+static size_t CPU_MHZ = 1000000;
+static size_t CYCLES_PER_CALL = 10;
 
 static void drawCircle() {
     AedSequence seq;
@@ -348,7 +349,10 @@ static void idle() {
     } else { // running
         // Amortize by doing more CPU clocks per idle call
         if (!debugger) {
-            cpu->cycle(CYCLES_PER_CALL);
+            int timeUntilNextEvent = bus->getNextEvent().time - clk->getCpuTime();
+            assert(timeUntilNextEvent >= 0);
+            size_t cyclesUntilNextEvent = timeUntilNextEvent * clk->getFrequency() / SECS2USECS(1);
+            cpu->cycle(std::min(CYCLES_PER_CALL, cyclesUntilNextEvent));
         }
 
         if (poll(&filedesc[0], nfds, 0) > 0) {
@@ -406,7 +410,7 @@ void handleException(CPU::ExceptionType ex, int pc) {
 
 int main(int argc, char **argv)
 {
-    clk = new Clock(1000000); // TODO: what frequency?
+    clk = new Clock(CPU_MHZ); // TODO: what frequency?
     bus = new AedBus([]() { ::cpu->irq(); }, []() { ::cpu->nmi(); ::glutPostRedisplay(); });
     cpu = new USE_CPU(
             [](int addr) { return ::bus->read(addr); },

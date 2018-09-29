@@ -51,6 +51,9 @@ class AedBus : public BUS {
         // Handles events in the priority queue based on current CPU time.
         void handleEvents(uint64_t time_us);
 
+        // Gets next event from queue
+        const Event& getNextEvent() const { return _eventQueue.top(); }
+
         // Looks for data from serial ports. Returns true if IRQ needs to happen.
         // TODO: Have this automatically invoke serial callback when requested by CPU write
         bool doSerial(uint64_t now);

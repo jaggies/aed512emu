@@ -18,9 +18,10 @@ class CLK {
         virtual void add_cpu_cycles(size_t cycles) { _cycleCount += cycles; }
         virtual size_t getCycleCount() const { return _cycleCount; }
         virtual void reset() { _cycleCount = 0; }
+        virtual uint32_t getFrequency() const { return _hz; }
         // Returns CPU time in microseconds (us)
         virtual uint64_t getCpuTime() const {
-            return 1000000 * _cycleCount / _hz;
+            return _hz * _cycleCount / _hz;
         }
     private:
         const uint32_t _hz;

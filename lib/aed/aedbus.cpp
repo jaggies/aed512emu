@@ -136,7 +136,7 @@ AedBus::~AedBus() {
 void AedBus::handleEvents(uint64_t now) {
     // TODO: when swapping this with an if statement, the video timing is correct, but
     // the device buffer overflows because it never emits XOFF.
-    while (now > _eventQueue.top().time) {
+    while (now >= _eventQueue.top().time) {
         const Event& event = _eventQueue.top();
         switch (event.type) {
             case HSYNC: {
