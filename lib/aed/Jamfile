@@ -7,4 +7,5 @@ SubDirHdrs $(TOP) lib util ;
 Library libemu :
 	aedbus.cpp
 	aedregs.cpp
+	aedsequence.cpp
 	;

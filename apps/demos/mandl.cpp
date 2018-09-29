@@ -10,7 +10,7 @@
 #include "aedsequence.h"
 
 const int xres = 512;
-const int yres = 480;
+const int yres = 512;
 const int maxCount = 256;
 
 const int RBITS = 3;
