@@ -55,7 +55,6 @@ void mandel(double xmin, double xmax, double ymin, double ymax) {
             } while ((count++ < maxCount) && (zr*zr + zi*zi) < 4.0f);
             seq.mov(i,j).pixel(count).send([](int c) { fputc(c, stdout); });
         }
-        fputc('\n', stdout);
     }
 }
 
