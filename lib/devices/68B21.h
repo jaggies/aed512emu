@@ -9,6 +9,7 @@
 #define M68B21_H_
 
 #include <vector>
+#include <functional>
 #include "peripheral.h"
 
 class M68B21 : public Peripheral {

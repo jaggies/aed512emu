@@ -21,7 +21,7 @@ class _Ram: public Peripheral {
         virtual ~_Ram() = default;
 
         uint8_t read(int offset) override {
-            assert(offset >= 0 && offset < _storage.size());
+            assert(offset >= 0 && (size_t) offset < _storage.size());
             uint8_t result = _storage[offset];
             if (debug) {
                 std::cerr << name() << "[0x" << std::hex << start() + offset << "] read "
@@ -31,7 +31,7 @@ class _Ram: public Peripheral {
         }
 
         void write(int offset, uint8_t value) override {
-            assert(offset >= 0 && offset < _storage.size());
+            assert(offset >= 0 && (size_t) offset < _storage.size());
             if (debug) {
                 std::cerr << name() << "[0x" << std::hex << start() + offset << "] write "
                         << (int) value << std::endl;
@@ -42,7 +42,7 @@ class _Ram: public Peripheral {
         void reset() override { } // Typically RAM doesn't reset
 
         // This bypasses the above read/write to allow host access to RAM
-        uint8_t& operator[](int index) { assert(index < _storage.size()); return _storage[index]; }
+        uint8_t& operator[](size_t index) { assert(index < _storage.size()); return _storage[index]; }
 
     protected:
         std::vector<uint8_t> _storage;

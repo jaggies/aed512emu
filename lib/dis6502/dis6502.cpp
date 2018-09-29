@@ -1,4 +1,6 @@
+#include <cstring>
 #include "dis6502.h"
+
 using namespace std;
 
 tuple<int, string> disassemble_6502(int* address, const std::function<uint8_t(int offset)>& read)

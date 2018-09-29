@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <cerrno>
+#include <cstring>
 #include <poll.h>
 #include <fcntl.h>
 #include <GL/gl.h>

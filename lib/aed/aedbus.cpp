@@ -221,8 +221,8 @@ AedBus::getFrame(std::vector<uint32_t>& frame, int* w, int *h) {
 
     const int scrollx = _aedRegs->getScrollX();
     const int scrolly = _aedRegs->getScrollY();
-    for (size_t j = 0; j < height; j++) {
-        for (size_t i = 0; i < width; i++) {
+    for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
             const size_t x = (i + scrollx) % width;
             const size_t y = (j + scrolly) % height;
             const uint8_t lut = raw[y * width + x];
@@ -246,8 +246,8 @@ AedBus::saveFrame(const std::string& path) {
         return;
     }
 
-    for (size_t j = 0; j < height; j++) {
-        for (size_t i = 0; i < width; i++) {
+    for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
             uint32_t pixel = frame[(height - j - 1)*width + i];
             const uint8_t rgb[] = { uint8_t(pixel & 0xff), uint8_t((pixel >> 8) & 0xff), uint8_t(
                     (pixel >> 16) & 0xff) };

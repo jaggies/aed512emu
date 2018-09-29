@@ -9,6 +9,8 @@
 #define LIB_CORE_CPU_H_
 
 #include <ostream>
+#include <functional>
+#include <algorithm>
 #include <vector>
 
 //
@@ -31,7 +33,7 @@ class CPU {
         void cycle(size_t cycles = 1) {
             while (cycles--) {
                 _prev_pc = get_pc();
-                if (std::find(_break.begin(), _break.end(), get_pc()) != _break.end()) {
+                if (std::find(_break.begin(), _break.end(), (uint32_t) get_pc()) != _break.end()) {
                     exception(BREAK_POINT);
                     break;
                 } else {
@@ -73,13 +75,13 @@ class CPU {
         virtual void do_cycle() = 0;
 
         uint8_t read(int address) {
-            if (std::find(_watch.begin(), _watch.end(), address) != _watch.end()) {
+            if (std::find(_watch.begin(), _watch.end(), (uint32_t) address) != _watch.end()) {
                 exception(WATCH_POINT);
             }
             return _reader(address);
         }
         void write(int address, uint8_t value) {
-            if (std::find(_watch.begin(), _watch.end(), address) != _watch.end()) {
+            if (std::find(_watch.begin(), _watch.end(), (uint32_t) address) != _watch.end()) {
                 exception(WATCH_POINT);
             }
             _writer(address, value);
