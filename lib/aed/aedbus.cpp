@@ -64,8 +64,9 @@ static const uint64_t FIELD_TIME = FRAME_TIME / 2;
 // Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
 static const uint64_t SERIAL_HOLDOFF = 0;
 
-AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _pia0(0),
-        _pia1(0), _pia2(0), _sio0(0), _sio1(0), _aedRegs(0), _xon(true) {
+AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
+        _pia0(nullptr), _pia1(nullptr), _pia2(nullptr),
+        _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr), _xon(true) {
     // Open all ROM files and copy to ROM location in romBuffer
     std::vector<uint8_t> romBuffer;
     size_t offset = 0;
@@ -87,9 +88,9 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _p
     }
 
     // Add peripherals. Earlier peripherals are favored when addresses overlap.
-    _mapper.add(_pia0 = new M68B21(pio0da, "PIA0"));
+    _mapper.add(_pia0 = new M68B21(pio0da, "PIA0", [this](int) { _irq(); }, [this](int) {_irq(); } ));
     _mapper.add(_pia1 = new M68B21(pio1da, "PIA1", [this](int) { _irq(); }, [this](int) {_nmi(); } ));
-    _mapper.add(_pia2 = new M68B21(pio2da, "PIA2"));
+    _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", [this](int) { _irq(); }, [this](int) {_irq(); } ));
     _mapper.add(_sio0 = new M68B50(sio0st, "SIO0"));
     _mapper.add(_sio1 = new M68B50(sio1st, "SIO1"));
 #if !defined(AED767) && !defined(AED1024)
@@ -147,6 +148,7 @@ AedBus::reset() {
 // PIA1 Signal pins
 const int VERTBLANK_SIGNAL = M68B21::CB1;
 const int FIELD_SIGNAL = M68B21::PB6;
+const int INT2_5_SIGNAL = M68B21::PB7; // PIA1 Joystick comparator
 
 void AedBus::handleEvents(uint64_t now) {
     // TODO: when swapping this with an if statement, the video timing is correct, but

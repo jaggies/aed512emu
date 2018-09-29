@@ -23,7 +23,7 @@
 class AedBus : public BUS {
     #define SECS2USECS(a) ((a)*1000000)
     // Events in PriorityQueue
-    enum EventType { HSYNC, VSYNC, FIELD, SERIAL };
+    enum EventType { HSYNC, VSYNC, JOYSTICK, FIELD, SERIAL };
     struct Event {
         Event(EventType type_, uint64_t time_) : type(type_), time(time_) { }
         EventType type;

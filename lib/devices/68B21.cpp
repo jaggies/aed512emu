@@ -18,25 +18,25 @@ uint8_t M68B21::read(int offset) {
         case PRA: // PRA or DDRA
             if (_crA & CRA2) {
                 result = (_inA & ~_ddrA) | (_prA & _ddrA);
-                _incA &= 0x3f; // read of peripheral register resets IRQ bits
+                _crA &= 0x3f; // read of peripheral register resets IRQ bits
             } else {
                 result = _ddrA;
             }
             break;
         case CRA: // CRA
-            result = (_crA & 0x3f) | (_incA & 0xc0);
+            result = _crA;
             if (debug) std::cerr << name() << ":CRA read -> " << (int) result << std::endl;
             break;
         case PRB: // PRB or DDRB
             if (_crB & CRB2) {
                 result = (_inB & ~_ddrB) | (_prB & _ddrB);
-                _incB &= 0x3f; // read of peripheral register resets IRQ bits
+                _crB &= 0x3f; // read of peripheral register resets IRQ bits
             } else {
                 result = _ddrB;
             }
             break;
         case CRB: // CRB
-            result = (_crB & 0x3f) | (_incB & 0xc0);
+            result = _crB;
             if (debug) std::cerr << name() << ":CRB read -> " << (int) result << std::endl;
             break;
     }
@@ -65,6 +65,9 @@ void M68B21::write(int offset, uint8_t value) {
                 std::cerr << name() << ":CA2 = " << ((value & CRA3) ? "1" : "0") << std::endl;
             }
             _crA = (_crA & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
+            if (_crA & (CRA5 | CRA4) != (CRA5 | CRA4)) { // if not output mode for CA2
+                std::cerr << name() << ": CRA E clock not supported!" << std::endl;
+            }
         }
         break;
         case PRB: // PRB or DDRB
@@ -86,6 +89,9 @@ void M68B21::write(int offset, uint8_t value) {
                 std::cerr << name() << ":CB2 = " << ((value & CRB3) ? "1" : "0") << std::endl;
             }
             _crB = (_crB & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
+            if (_crB & (CRB5 | CRB4) != (CRB5 | CRB4)) { // if not output mode for CB2
+                std::cerr << name() << ": CRB E clock not supported!" << std::endl;
+            }
         }
         break;
     }
@@ -108,43 +114,45 @@ void M68B21::set(Port port, uint8_t data) {
             _inB |= data;
         break;
         case IrqStatusA:
-            assert((_crA & CRA5) == 0); // E clock config not supported
+            // assert((_crA & CRA5) == 0); // E clock config not supported
             data &= (CA1 | CA2); // Only CA1 and CA2 bits can be set
             if ((data & CA1) && (_crA & CRA0)) { // CA1 IRQ enabled
                 const bool checkRising = _crA & CRA1;
                 if (checkRising && rising(_incA, data, CA1)) { // Falling is done in reset()
-                    _incA |= CA1;
+                    _crA |= CA1; // interrupt!
                     _irqA(data);
                 }
             }
             if ((data & CA2) && (_crA & CRA3)) { // CA2 IRQ enabled
                 const bool checkRising = _crA & CRA4;
                 if (checkRising && rising(_incA, data, CA2)) { // Falling is done in reset()
-                    _incA |= CA2;
+                    _crA |= CA2; // interrupt!
                     _irqA(data);
                 }
             }
+            _incA |= data;
             if (debug) {
                 std::cout << name() << " set statusA " << (int) data << " result = " << (int) _incA << std::endl;
             }
         break;
         case IrqStatusB:
-            assert((_crA & CRA5) == 0); // E clock config not supported
+            // assert((_crB & CRB5) == 0); // E clock config not supported
             data &= (CB1 | CB2); // Only CA1 and CA2 bits can be set
-            if ((data & CB1) && (_crB & CRB0)) { // CA1 IRQ enabled
+            if ((data & CB1) && (_crB & CRB0)) { // CB1 IRQ enabled
                 const bool checkRising = _crB & CRB1;
                 if (checkRising && rising(_incB, data, CB1)) { // Falling is done in reset()
-                    _incB |= CB1;
+                    _crB |= CB1; // interrupt!
                     _irqB(data);
                 }
             }
-            if ((data & CB2) && (_crB & CRB3)) { // CA2 IRQ enabled
+            if ((data & CB2) && (_crB & CRB3)) { // CB2 IRQ enabled
                 const bool checkRising = _crB & CRB4;
                 if (checkRising && rising(_incB, data, CB2)) { // Falling is done in reset()
-                    _incB |= CB2;
+                    _crB |= CB2; // interrupt!
                     _irqB(data);
                 }
             }
+            _incB |= data;
             if (debug) {
                 std::cout << name() << " set statusB " << (int) data << " result = " << (int) _incB << std::endl;
             }
@@ -170,14 +178,14 @@ void M68B21::reset(Port port, uint8_t data) {
             if (_crA & CRA0) { // CA1 IRQ enabled
                 const bool checkFalling = !(_crA & CRA1);
                 if (checkFalling && falling(_incA, data, CA1)) { // Rising is done in set()
-                    _crA |= CRA7;
+                    _crA |= CA1; // interrupt!
                     _irqA(data);
                 }
             }
             if (_crA & CRA3) { // CA2 IRQ enabled
                 const bool checkFalling = !(_crA & CRA4);
                 if (checkFalling && falling(_incA, data, CA2)) { // Rising is done in set()
-                    _crA |= CRA6;
+                    _crA |= CA2; // interrupt!
                     _irqA(data);
                 }
             }
@@ -193,14 +201,14 @@ void M68B21::reset(Port port, uint8_t data) {
             if (_crB & CRB0) { // CB1 IRQ enabled
                 const bool checkFalling = !(_crB & CRB1);
                 if (checkFalling && falling(_incB, data, CB1)) { // Rising is done in set()
-                    _crB |= CRB7;
+                    _crB |= CB1;
                     _irqB(data);
                 }
             }
             if (_crB & CRB3) { // CB2 IRQ enabled
                 const bool checkFalling = !(_crB & CRB4);
                 if (checkFalling && falling(_incB, data, CB2)) { // Rising is done in set()
-                    _crB |= CRB6;
+                    _crB |= CB2;
                     _irqB(data);
                 }
             }
