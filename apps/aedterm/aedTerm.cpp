@@ -23,6 +23,7 @@
 #include "cpu6502.h"
 #include "mos6502.h"
 #include "dis6502.h"
+#include "cpu.h"
 #include "clk.h"
 #include "bus.h"
 #include "aedbus.h"
@@ -274,6 +275,7 @@ static void idle() {
                                     int count = std::stoi(tokens[1], NULL, 10);
                                     cpu->cycle(count);
                                 }
+                                bus->handleEvents(clk->getCpuTime());
                                 showline(std::cout);
                             break;
                             case 'b':
