@@ -57,7 +57,6 @@ void M68B21::write(int offset, uint8_t value) {
             }
         break;
         case CRA: { // CRA
-            uint8_t changed = (_crA ^ value);
             if (debug) std::cerr << std::hex << name() << " CRA write: " << (int) value << std::endl;
             _crA = (_crA & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
             if (debug && (_crA & (CRA5 | CRA4)) != (CRA5 | CRA4)) { // if not output mode for CA2
@@ -76,7 +75,6 @@ void M68B21::write(int offset, uint8_t value) {
             }
         break;
         case CRB: { // CRB
-            uint8_t changed = (_crB ^ value);
             if (debug) std::cerr << std::hex << name() << " CRB write: " << (int) value << std::endl;
             _crB = (_crB & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
             if (debug && (_crB & (CRB5 | CRB4)) != (CRB5 | CRB4)) { // if not output mode for CB2
