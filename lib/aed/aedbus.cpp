@@ -148,12 +148,12 @@ AedBus::reset() {
 // PIA1 Signal pins
 const int VERTBLANK_SIGNAL = M68B21::CB1;
 const int FIELD_SIGNAL = M68B21::PB6;
-const int INT2_5_SIGNAL = M68B21::PB7; // PIA1 Joystick comparator
+//const int INT2_5_SIGNAL = M68B21::PB7; // PIA1 Joystick comparator
 
 void AedBus::handleEvents(uint64_t now) {
     // TODO: when swapping this with an if statement, the video timing is correct, but
     // the device buffer overflows because it never emits XOFF.
-    while (now > _eventQueue.top().time) {
+    if (now > _eventQueue.top().time) {
         const Event& event = _eventQueue.top();
         switch (event.type) {
             case HSYNC: {
@@ -177,6 +177,7 @@ void AedBus::handleEvents(uint64_t now) {
                 // Add this field's HSYNC events
                 for (size_t i = 0; i < VLINES/2; i++) {
                     _eventQueue.push(Event(HSYNC, now + i * LINE_TIME));
+                    _eventQueue.push(Event(HSYNC, now + i * LINE_TIME + 95*LINE_TIME / 100));
                 }
                 _eventQueue.push(Event(FIELD, now + FIELD_TIME));
             }
