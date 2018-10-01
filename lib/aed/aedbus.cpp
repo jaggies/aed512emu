@@ -56,17 +56,17 @@ static const uint8_t SW1 = ~0x10; // negate since open is 0
 static const uint8_t SW2 = ~0x7d;
 
 // Video timing
-static const size_t VLINES = 483; // should be 483i mode
-static const uint64_t LINE_TIME = SECS2USECS(1L) / 15750;
-static const uint64_t FRAME_TIME = VLINES * LINE_TIME;
-static const uint64_t FIELD_TIME = FRAME_TIME / 2;
+static const size_t VTOTAL = 525; // 262.5 lines per field
+static const size_t VBLANK_DURATION = 20; // VBLANK duration in scanlines (per field)
+static const size_t HBLANK_DURATION_US = 12; // Actually 10.7us
+static const uint64_t LINE_TIME_US = SECS2USECS(1L) / 15750;
 
 // Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
 static const uint64_t SERIAL_HOLDOFF = 0;
 
 AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
         _pia0(nullptr), _pia1(nullptr), _pia2(nullptr),
-        _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr), _xon(true) {
+        _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr), _xon(true), _scanline(0) {
     // Open all ROM files and copy to ROM location in romBuffer
     std::vector<uint8_t> romBuffer;
     size_t offset = 0;
@@ -125,8 +125,8 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
     _mapper.add(_blumap = new Ram(CLUT_BLU, 0x100, "BLU"));
     _mapper.add(new RamDebug(0, CPU_MEM, "unmapped"));
 
-    // Kick off VSYNC
-    _eventQueue.push(Event(FIELD, FIELD_TIME));
+    // Kick off HBLANK
+    _eventQueue.push(Event(HBLANK, 0));
 
     std::cerr << std::hex; // dump in hex
     std::cerr << _mapper;
@@ -157,29 +157,33 @@ void AedBus::handleEvents(uint64_t now) {
         const Event& event = _eventQueue.top();
         switch (event.type) {
             case HSYNC: {
-                uint8_t mrd = _aedRegs->read(miscrd);
-                _aedRegs->write(miscrd, (mrd & 1) ? (mrd & 0xfe) : (mrd | 0x01));
-                _pia1->set(M68B21::IrqStatusB, VERTBLANK_SIGNAL);
+                // Assert HBLANK
+                _aedRegs->write(miscrd, _aedRegs->read(miscrd) | 0x01);
             }
             break;
+            case HBLANK: {
+                // Deassert HBLANK
+                _aedRegs->write(miscrd, _aedRegs->read(miscrd) & 0xfe);
 
-            case VSYNC: // handled by FIELD
-            break;
-
-            case FIELD: {
-                _pia1->reset(M68B21::IrqStatusB, VERTBLANK_SIGNAL);
-                // FIELD alternates every VSYNC pulse
-                if (_pia1->isSet(M68B21::PortB, FIELD_SIGNAL)) {
-                    _pia1->reset(M68B21::PortB, FIELD_SIGNAL);
+                // Assert VBLANK for first 20 scan lines after sync
+                int fieldline = _scanline > VTOTAL / 2 ? _scanline - VTOTAL / 2 : _scanline;
+                if (fieldline > (VTOTAL / 2 - VBLANK_DURATION)) {
+                    _pia1->set(M68B21::IrqStatusB, VERTBLANK_SIGNAL);
                 } else {
+                    _pia1->reset(M68B21::IrqStatusB, VERTBLANK_SIGNAL);
+                }
+
+                // Assert FIELD_SIGNAL for second field
+                if (_scanline < VTOTAL / 2) {
                     _pia1->set(M68B21::PortB, FIELD_SIGNAL);
+                } else {
+                    _pia1->reset(M68B21::PortB, FIELD_SIGNAL);
                 }
-                // Add this field's HSYNC events
-                for (size_t i = 0; i < VLINES/2; i++) {
-                    _eventQueue.push(Event(HSYNC, now + i * LINE_TIME));
-                    _eventQueue.push(Event(HSYNC, now + i * LINE_TIME + 95*LINE_TIME / 100));
-                }
-                _eventQueue.push(Event(FIELD, now + FIELD_TIME));
+
+                _scanline++;
+                if (_scanline >= VTOTAL) _scanline = 0;
+                _eventQueue.push(Event(HSYNC, now + LINE_TIME_US));
+                _eventQueue.push(Event(HBLANK, now + LINE_TIME_US - HBLANK_DURATION_US));
             }
             break;
 

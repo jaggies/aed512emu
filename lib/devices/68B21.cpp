@@ -161,21 +161,21 @@ void M68B21::reset(Port port, uint8_t data) {
         case PortB:
             _inB &= ~data;
         break;
-        case IrqStatusA:
+        case IrqStatusA: {
             assert((_crA & CRA5) == 0); // E clock config not supported
             data &= (CA1 | CA2); // Only CA1 and CA2 bits can be set
             data = ~data; // invert the bits so we can simply AND them to clear
-            if (_crA & CRA0) { // CA1 IRQ enabled
-                const bool checkFalling = !(_crA & CRA1);
-                if (checkFalling && falling(_incA, data, CA1)) { // Rising is done in set()
-                    _crA |= CA1; // interrupt!
+            const bool checkFallingca1 = !(_crA & CRA1);
+            if (checkFallingca1 && falling(_incA, data, CA1)) { // Rising is done in set()
+                _crA |= CA1; // interrupt!
+                if (_crA & CRA0) { // CA1 IRQ enabled
                     _irqA(data);
                 }
             }
-            if (_crA & CRA3) { // CA2 IRQ enabled
-                const bool checkFalling = !(_crA & CRA4);
-                if (checkFalling && falling(_incA, data, CA2)) { // Rising is done in set()
-                    _crA |= CA2; // interrupt!
+            const bool checkFallingca2 = !(_crA & CRA4);
+            if (checkFallingca2 && falling(_incA, data, CA2)) { // Rising is done in set()
+                _crA |= CA2; // interrupt!
+                if (_crA & CRA3) { // CA2 IRQ enabled
                     _irqA(data);
                 }
             }
@@ -183,22 +183,23 @@ void M68B21::reset(Port port, uint8_t data) {
             if (debug) {
                 std::cout << name() << " reset statusA " << (int) ~data << " result = " << (int) _incA << std::endl;
             }
+        }
         break;
-        case IrqStatusB:
+        case IrqStatusB: {
             assert((_crA & CRA5) == 0); // E clock config not supported
             data &= (CB1 | CB2); // Only CB1 and CB2 bits can be reset
             data = ~data; // invert the bits so we can simply AND them to clear
-            if (_crB & CRB0) { // CB1 IRQ enabled
-                const bool checkFalling = !(_crB & CRB1);
-                if (checkFalling && falling(_incB, data, CB1)) { // Rising is done in set()
-                    _crB |= CB1;
+            const bool checkFallingcb1 = !(_crB & CRB1);
+            if (checkFallingcb1 && falling(_incB, data, CB1)) { // Rising is done in set()
+                _crB |= CB1;
+                if (_crB & CRB0) { // CB1 IRQ enabled
                     _irqB(data);
                 }
             }
-            if (_crB & CRB3) { // CB2 IRQ enabled
-                const bool checkFalling = !(_crB & CRB4);
-                if (checkFalling && falling(_incB, data, CB2)) { // Rising is done in set()
-                    _crB |= CB2;
+            const bool checkFallingcb2 = !(_crB & CRB4);
+            if (checkFallingcb2 && falling(_incB, data, CB2)) { // Rising is done in set()
+                _crB |= CB2;
+                if (_crB & CRB3) { // CB2 IRQ enabled
                     _irqB(data);
                 }
             }
@@ -206,6 +207,7 @@ void M68B21::reset(Port port, uint8_t data) {
             if (debug) {
                 std::cout << name() << " reset statusB " << (int) ~data << " result = " << (int) _incB << std::endl;
             }
+        }
         break;
         default:
             // Oops.

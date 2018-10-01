@@ -200,7 +200,7 @@ static void keyboard(unsigned char key, int x, int y)
 
 static void mouse(int button, int state, int x, int y)
 {
-    drawCircle();
+    // drawCircle();
 }
 
 static void motion(int x, int y)
@@ -348,9 +348,7 @@ static void idle() {
         }
     } else { // running
         // Amortize by doing more CPU clocks per idle call
-        if (!debugger) {
-            cpu->cycle(CYCLES_PER_CALL);
-        }
+        cpu->cycle(CYCLES_PER_CALL);
 
         if (poll(&filedesc[0], nfds, 0) > 0) {
             for (int n = 0; n < nfds; n++) {
@@ -407,7 +405,7 @@ void handleException(CPU::ExceptionType ex, int pc) {
 
 int main(int argc, char **argv)
 {
-    clk = new Clock(1000000); // TODO: what frequency?
+    clk = new Clock(2000000); // TODO: what frequency?
     bus = new AedBus([]() { ::cpu->irq(); }, []() { ::cpu->nmi(); ::glutPostRedisplay(); });
     cpu = new USE_CPU(
             [](int addr) { return ::bus->read(addr); },

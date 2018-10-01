@@ -23,7 +23,7 @@
 class AedBus : public BUS {
     #define SECS2USECS(a) ((a)*1000000)
     // Events in PriorityQueue
-    enum EventType { HSYNC, VSYNC, FIELD, SERIAL };
+    enum EventType { HSYNC, HBLANK, SERIAL };
     struct Event {
         Event(EventType type_, uint64_t time_) : type(type_), time(time_) { }
         EventType type;
@@ -103,6 +103,7 @@ class AedBus : public BUS {
         Ram*    _grnmap;
         Ram*    _blumap;
         bool    _xon; // XON/XOFF protocol
+        int     _scanline; // the current half-scanline
         std::queue<uint8_t> _serialFifo;
         std::priority_queue<Event, std::vector<Event>, EventCompare> _eventQueue;
 };
