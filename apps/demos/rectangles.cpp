@@ -6,32 +6,14 @@
  */
 
 #include <cstdint>
-#include "aedsequence.h"
+#include "demo.h"
 
 const int xres = 512;
 const int yres = 480;
-const int RBITS = 3;
-const int GBITS = 3;
-const int BBITS = 2;
-
-void initLut() {
-    AedSequence seq;
-    for (int b = 0; b < (1 << BBITS); b++) {
-        for (int g = 0; g < (1 << GBITS); g++) {
-            for (int r = 0; r < (1 << RBITS); r++) {
-                int idx = (b << (RBITS + GBITS)) | (g << RBITS) | r;
-                int red = r << (8-RBITS);
-                int grn = g << (8-GBITS);
-                int blu = b << (8-BBITS);
-                seq.setlut(idx, red, grn, blu).send();
-            }
-        }
-    }
-}
 
 int main(int argc, char **argv) {
     AedSequence seq;
-    initLut();
+    initLut(3, 3, 2);
     int n = 10;
     while(n--) {
         uint16_t x1 = random() % xres;
