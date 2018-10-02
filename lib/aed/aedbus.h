@@ -64,8 +64,10 @@ class AedBus : public BUS {
 
         void key(char c) {
             // TODO: also handle CTRL, SHIFT, REPEAT, BREAK from sheet 14
+            _pia1->reset(M68B21::PortA, 0xff);
             _pia1->set(M68B21::PortA, c);
             _pia1->set(M68B21::IrqStatusA, M68B21::CA1);
+            _pia1->reset(M68B21::IrqStatusA, M68B21::CA1);
         }
 
         // Saves the current frame to a file in NetPBM format.
