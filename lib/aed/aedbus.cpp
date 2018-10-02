@@ -55,7 +55,7 @@ static const size_t CPU_MEM = 64 * 1024; // Total address space
 
 // DIP Switches. Open is 1, closed is 0
 static const int8_t SW1 = 0x10; // Option 1-8:[Fduplex, Erase, Rubout, Tk4014, ParReset, A2, A1, A0]
-static const int8_t SW2 = 0xed; // Comm 1-8: [Xon, ForceRTS, AuxBaud[3..5], HostBaud[6..8]]
+static const int8_t SW2 = 0x7d; // Comm 1-8: [Xoff, ForceRTS, AuxBaud[3..5], HostBaud[6..8]]
 
 // Video timing
 static const size_t VTOTAL = 525; // 262.5 lines per field
