@@ -349,14 +349,7 @@ static void idle() {
             }
         }
     } else { // running
-        // Amortize by doing more CPU clocks per idle call
-        if (!debugger) {
-            int timeUntilNextEvent = bus->getNextEvent().time - clk->getCpuTime();
-            assert(timeUntilNextEvent >= 0);
-            size_t cyclesUntilNextEvent = timeUntilNextEvent * clk->getFrequency() / SECS2USECS(1);
-            cpu->cycle(std::min(CYCLES_PER_CALL, cyclesUntilNextEvent));
-        }
-
+        cpu->cycle(CYCLES_PER_CALL);
         if (poll(&filedesc[0], nfds, 0) > 0) {
             for (int n = 0; n < nfds; n++) {
                 char c;
