@@ -34,10 +34,8 @@ class AedBus : public BUS {
             return (lhs.time > rhs.time); // stored in reverse
         }
     };
-    typedef std::function<void(void)> IRQ;
-    typedef std::function<void(void)> NMI;
     public:
-        AedBus(IRQ irq, NMI nmi);
+        AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi);
         virtual ~AedBus();
         uint8_t read(int addr) override { return _mapper.read(addr); }
         void write(int addr, unsigned char value) override { _mapper.write(addr, value); }
@@ -50,9 +48,8 @@ class AedBus : public BUS {
         // Gets next event from queue
         const Event& getNextEvent() const { return _eventQueue.top(); }
 
-        // Looks for data from serial ports. Returns true if IRQ needs to happen.
-        // TODO: Have this automatically invoke serial callback when requested by CPU write
-        bool doSerial(uint64_t now);
+        // Handles input FIFO for serial ports
+        void doSerial(uint64_t now);
 
         // Copies string to FIFO for handling in doSerial()
         void send(const std::string& string) {
@@ -94,8 +91,8 @@ class AedBus : public BUS {
         const uint8_t& getGreen(uint8_t index) const { return (*_grnmap)[index]; }
         const uint8_t& getBlue(uint8_t index) const { return (*_blumap)[index]; }
 
-        IRQ     _irq;
-        NMI     _nmi;
+        Peripheral::IRQ _irq;
+        Peripheral::IRQ _nmi;
 
         Mapper _mapper;
         M68B21 * _pia0;

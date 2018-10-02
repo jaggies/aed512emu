@@ -12,6 +12,9 @@
 #include "peripheral.h"
 
 class M68B50: public Peripheral {
+        // Function to send to host. Returns false if data cannot be received by host.
+        // If this happens, the host must manually call transmit() to retrieve bytes.
+        typedef std::function<bool(uint8_t)> SendToHost;
     public:
         enum ControlRegisterWrite { // reflected in control register
             CR0 = 1, // counter divide sel1
@@ -32,11 +35,12 @@ class M68B50: public Peripheral {
             FE   = 16, // framing error
             OVRN = 32, // receive overrun
             PE   = 64, // parity error
-            IRQ  = 128 // interrupt request
+            IRQW = 128 // interrupt request waiting
         };
 
-        M68B50(int start, const std::string& name = "68B21")
-                : Peripheral(start, 2, name), control(0), status(0), txdata(0), rxdata(0) {
+        M68B50(int start, const std::string& name = "68B21", IRQ irq = nullptr, SendToHost send = nullptr)
+                : Peripheral(start, 2, name), _control(0), _status(0), _txdata(0), _rxdata(0),
+                  _irq(irq), _send(send) {
             reset();
         };
 
@@ -54,20 +58,23 @@ class M68B50: public Peripheral {
         // Output from serial port. Returns true if data was available
         bool transmit(uint8_t* data);
 
-        // IRQ is set. TODO: add callback to invoke IRQ automatically
-        bool irqAsserted() const { return status & IRQ; }
+        // IRQW is set. TODO: add callback to invoke IRQW automatically
+        bool irqAsserted() const { return _status & IRQW; }
 
         // Reset to initial state
         void reset() override {
-            txdata = rxdata = control = 0;
-            status = TDRE | CTS | DCD; // transmit data should be empty
+            _txdata = _rxdata = _control = 0;
+            _status = TDRE | CTS | DCD; // transmit data should be empty
         }
 
     private:
-        uint8_t control;
-        uint8_t status;
-        uint8_t txdata;
-        uint8_t rxdata;
+        void maybeSendNow(uint8_t data);
+        uint8_t _control;
+        uint8_t _status;
+        uint8_t _txdata;
+        uint8_t _rxdata;
+        IRQ     _irq;
+        SendToHost _send;
 };
 
 #endif /* M68B50_H_ */

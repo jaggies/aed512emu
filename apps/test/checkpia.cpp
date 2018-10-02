@@ -25,8 +25,8 @@ const int cb2_en_falling = M68B21::CRB3; // CB2 en + falling
 
 int main(int argc, char **argv) {
     M68B21* pia = new M68B21(0, "pia",
-            [](int) { ::irqa_called = true; },
-            [](int) { ::irqb_called = true; });
+            []() { ::irqa_called = true; },
+            []() { ::irqb_called = true; });
 
     //
     //  Check Rising Edges

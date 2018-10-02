@@ -202,7 +202,7 @@ static void keyboard(unsigned char key, int x, int y)
 
 static void mouse(int button, int state, int x, int y)
 {
-    // drawCircle();
+     drawCircle();
 }
 
 static void motion(int x, int y)

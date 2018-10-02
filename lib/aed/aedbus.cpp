@@ -66,7 +66,7 @@ static const uint64_t LINE_TIME_US = SECS2USECS(1L) / 15750;
 // Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
 static const uint64_t SERIAL_HOLDOFF = 0;
 
-AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
+AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
         _pia0(nullptr), _pia1(nullptr), _pia2(nullptr),
         _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr), _xon(true), _scanline(0) {
 
@@ -91,11 +91,22 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
     }
 
     // Add peripherals. Earlier peripherals are favored when addresses overlap.
-    _mapper.add(_pia0 = new M68B21(pio0da, "PIA0", [this](int) { _irq(); }, [this](int) {_irq(); } ));
-    _mapper.add(_pia1 = new M68B21(pio1da, "PIA1", [this](int) { _irq(); }, [this](int) {_nmi(); } ));
-    _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", [this](int) { _irq(); }, [this](int) {_irq(); } ));
-    _mapper.add(_sio0 = new M68B50(sio0st, "SIO0"));
-    _mapper.add(_sio1 = new M68B50(sio1st, "SIO1"));
+    _mapper.add(_pia0 = new M68B21(pio0da, "PIA0", [this]() { _irq(); }, [this]() {_irq(); } ));
+    _mapper.add(_pia1 = new M68B21(pio1da, "PIA1", [this]() { _irq(); }, [this]() {_nmi(); } ));
+    _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", [this]() { _irq(); }, [this]() {_irq(); } ));
+    _mapper.add(_sio0 = new M68B50(sio0st, "SIO0", [this]() { _irq(); }, [this](uint8_t byte) -> bool {
+        std::cout << "SIO0: " << (int) byte << std::endl;
+        return true; // byte accepted
+    }));
+    _mapper.add(_sio1 = new M68B50(sio1st, "SIO1", [this]() { _irq(); }, [this](uint8_t byte) -> bool {
+        std::cout << "SIO1: " << (int) byte << std::endl;
+        if (byte == 19) { // XOFF
+            _xon = false;
+        } else if (byte == 17) { // XON
+            _xon = true;
+        }
+        return true; // byte accepted
+    }));
 #if !defined(AED767) && !defined(AED1024)
     _mapper.add(new Generic(0xe9, 1,
             [this](int offset) { return 0x01; },
@@ -199,35 +210,17 @@ void AedBus::handleEvents(uint64_t now) {
         }
         _eventQueue.pop();
     }
-    // TODO: make this event-based
-    if (_irq != nullptr && doSerial(now)) {
-        _irq();
-    }
+    doSerial(now); // TODO: make this entirely event-based
 }
 
-// Handles serial ports. Returns true if IRQ was generated
-bool
+// Checks for data available in serial port FIFO and sends to device.
+void
 AedBus::doSerial(uint64_t now) {
-   uint8_t byte;
-   if (_sio0->transmit(&byte)) {
-       std::cout << "SIO0: " << (int) byte << std::endl;
-   }
-
-   if (_sio1->transmit(&byte)) {
-       std::cout << "SIO1: " << (int) byte << std::endl;
-       if (byte == 19) { // XOFF
-           _xon = false;
-       } else if (byte == 17) { // XON
-           _xon = true;
-       }
-   }
-
    if (_xon && !_serialFifo.empty() && _sio1->receive(_serialFifo.front())) {
        _xon = false;
        _eventQueue.push(Event(SERIAL, now + SERIAL_HOLDOFF));
        _serialFifo.pop();
    }
-   return _sio1->irqAsserted();
 }
 
 uint32_t

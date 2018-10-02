@@ -108,14 +108,14 @@ void M68B21::set(Port port, uint8_t data) {
             if (checkRisingca1 && rising(_incA, data, CA1)) { // Falling is done in reset()
                 _crA |= CA1; // interrupt!
                 if ((data & CA1) && (_crA & CRA0)) { // CA1 IRQ enabled
-                    _irqA(data);
+                    _irqA();
                 }
             }
             const bool checkRisingca2 = _crA & CRA4;
             if (checkRisingca2 && rising(_incA, data, CA2)) { // Falling is done in reset()
                 _crA |= CA2; // interrupt!
                 if ((data & CA2) && (_crA & CRA3)) { // CA2 IRQ enabled
-                    _irqA(data);
+                    _irqA();
                 }
             }
             _incA |= data;
@@ -131,14 +131,14 @@ void M68B21::set(Port port, uint8_t data) {
             if (checkRisingcb1 && rising(_incB, data, CB1)) { // Falling is done in reset()
                 _crB |= CB1; // interrupt!
                 if ((data & CB1) && (_crB & CRB0)) { // CB1 IRQ enabled
-                    _irqB(data);
+                    _irqB();
                 }
             }
             const bool checkRisingcb2 = _crB & CRB4;
             if (checkRisingcb2 && rising(_incB, data, CB2)) { // Falling is done in reset()
                 _crB |= CB2; // interrupt!
                 if ((data & CB2) && (_crB & CRB3)) { // CB2 IRQ enabled
-                    _irqB(data);
+                    _irqB();
                 }
             }
             _incB |= data;
@@ -169,14 +169,14 @@ void M68B21::reset(Port port, uint8_t data) {
             if (checkFallingca1 && falling(_incA, data, CA1)) { // Rising is done in set()
                 _crA |= CA1; // interrupt!
                 if (_crA & CRA0) { // CA1 IRQ enabled
-                    _irqA(data);
+                    _irqA();
                 }
             }
             const bool checkFallingca2 = !(_crA & CRA4);
             if (checkFallingca2 && falling(_incA, data, CA2)) { // Rising is done in set()
                 _crA |= CA2; // interrupt!
                 if (_crA & CRA3) { // CA2 IRQ enabled
-                    _irqA(data);
+                    _irqA();
                 }
             }
             _incA &= data;
@@ -193,14 +193,14 @@ void M68B21::reset(Port port, uint8_t data) {
             if (checkFallingcb1 && falling(_incB, data, CB1)) { // Rising is done in set()
                 _crB |= CB1;
                 if (_crB & CRB0) { // CB1 IRQ enabled
-                    _irqB(data);
+                    _irqB();
                 }
             }
             const bool checkFallingcb2 = !(_crB & CRB4);
             if (checkFallingcb2 && falling(_incB, data, CB2)) { // Rising is done in set()
                 _crB |= CB2;
                 if (_crB & CRB3) { // CB2 IRQ enabled
-                    _irqB(data);
+                    _irqB();
                 }
             }
             _incB &= data;

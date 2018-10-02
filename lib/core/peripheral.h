@@ -8,11 +8,14 @@
 #ifndef PERIPHERAL_H_
 #define PERIPHERAL_H_
 
+#include <functional>
 #include <cstdlib>
 #include <string>
 
 class Peripheral {
     public:
+        typedef std::function<void(void)> IRQ;
+
         Peripheral(int start, int size, const std::string& name="")
             : _start(start), _size(size), _name(name) { }
         virtual ~Peripheral() = default;

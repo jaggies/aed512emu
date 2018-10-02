@@ -14,7 +14,7 @@
 
 class M68B21 : public Peripheral {
     public:
-        typedef std::function<void(int newValue)> Callback;
+        typedef std::function<void(int data)> Callback;
         enum PortA {
             PA7 = (1 << 7), PA6 = (1 << 6), PA5 = (1 << 5), PA4 = (1 << 4),
             PA3 = (1 << 3), PA2 = (1 << 2), PA1 = (1 << 1), PA0 = (1 << 0)
@@ -36,8 +36,7 @@ class M68B21 : public Peripheral {
         enum Port { PortA, PortB, ControlA, ControlB, IrqStatusA, IrqStatusB };
         enum Registers { PRA = 0, DDRA = 0, CRA = 1, PRB = 2, DDRB = 2, CRB = 3 };
 
-        M68B21(int start, const std::string& name = "68B21",
-                Callback irqA = nullptr, Callback irqB = nullptr,
+        M68B21(int start, const std::string& name = "68B21", IRQ irqA = nullptr, IRQ irqB = nullptr,
                 Callback aChanged = nullptr, Callback bChanged = nullptr)
                 : Peripheral(start, 4, name), _prA(0), _ddrA(0), _crA(0),
                   _prB(0), _ddrB(0), _crB(0), _inA(0), _inB(0), _incA(0), _incB(0),
@@ -102,8 +101,8 @@ class M68B21 : public Peripheral {
         uint8_t _incB; // Read-only input value, control port B (bits CB1, CB2)
         Callback _cbA; // Callback invoked when port PortA output changes
         Callback _cbB; // Callback invoked when port PortB output changes
-        Callback _irqA;// Callback invoked when CA1 or CA2 input changes
-        Callback _irqB;// Callback invoked when CB1 or CB2 input changes
+        IRQ _irqA;// Callback invoked when CA1 or CA2 input changes
+        IRQ _irqB;// Callback invoked when CB1 or CB2 input changes
 };
 
 #endif /* M68B21_H_ */
