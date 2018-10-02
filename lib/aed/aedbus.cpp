@@ -52,8 +52,10 @@ static const size_t CLUT_RED = CLUT_BASE;
 static const size_t CLUT_GRN = CLUT_BASE + 256;
 static const size_t CLUT_BLU = CLUT_BASE + 512;
 static const size_t CPU_MEM = 64 * 1024; // Total address space
-static const uint8_t SW1 = ~0x10; // negate since open is 0
-static const uint8_t SW2 = ~0x7d;
+
+// DIP Switches. Open is 1, closed is 0
+static const int8_t SW1 = 0x10; // Option 1-8:[Fduplex, Erase, Rubout, Tk4014, ParReset, A2, A1, A0]
+static const int8_t SW2 = 0xed; // Comm 1-8: [Xon, ForceRTS, AuxBaud[3..5], HostBaud[6..8]]
 
 // Video timing
 static const size_t VTOTAL = 525; // 262.5 lines per field
@@ -67,6 +69,7 @@ static const uint64_t SERIAL_HOLDOFF = 0;
 AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
         _pia0(nullptr), _pia1(nullptr), _pia2(nullptr),
         _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr), _xon(true), _scanline(0) {
+
     // Open all ROM files and copy to ROM location in romBuffer
     std::vector<uint8_t> romBuffer;
     size_t offset = 0;
@@ -130,6 +133,10 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
 
     std::cerr << std::hex; // dump in hex
     std::cerr << _mapper;
+
+    // Set up DIP switch settings
+    _pia0->set(M68B21::PortA, ~SW1);
+    _pia2->set(M68B21::PortA, ~SW2);
 }
 
 AedBus::~AedBus() {
@@ -138,10 +145,9 @@ AedBus::~AedBus() {
 
 void
 AedBus::reset() {
-   _mapper.reset();
-   _aedRegs->reset();
-   _pia0->set(M68B21::PortA, SW1);
-   _pia2->set(M68B21::PortA, SW2);
+   _mapper.reset(); // This resets all peripherals
+   _pia0->set(M68B21::PortA, ~SW1); // update DIP switch settings
+   _pia2->set(M68B21::PortA, ~SW2);
    _xon = true;
 }
 
