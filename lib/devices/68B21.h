@@ -14,17 +14,34 @@
 
 class M68B21 : public Peripheral {
     public:
-        enum Line {
-            CA1, CA2, CB1, CB2
-        };
         typedef std::function<void(int newValue)> Callback;
+        enum PortA {
+            PA7 = (1 << 7), PA6 = (1 << 6), PA5 = (1 << 5), PA4 = (1 << 4),
+            PA3 = (1 << 3), PA2 = (1 << 2), PA1 = (1 << 1), PA0 = (1 << 0)
+        };
+        enum PortB {
+            PB7 = (1 << 7), PB6 = (1 << 6), PB5 = (1 << 5), PB4 = (1 << 4),
+            PB3 = (1 << 3), PB2 = (1 << 2), PB1 = (1 << 1), PB0 = (1 << 0),
+        };
+        enum ControlA {
+            CRA0 = 1<<0, CRA1 = 1<<1, CRA2 = 1<<2, CRA3 = 1<<3,
+            CRA4 = 1<<4, CRA5 = 1<<5, CRA6 = 1<<6, CRA7 = 1<<7
+        };
+        enum ControlB {
+            CRB0 = 1<<0, CRB1 = 1<<1, CRB2 = 1<<2, CRB3 = 1<<3,
+            CRB4 = 1<<4, CRB5 = 1<<5, CRB6 = 1<<6, CRB7 = 1<<7,
+        };
+        enum IrqStatusA { CA1 = 0x80, CA2 = 0x40 };
+        enum IrqStatusB { CB1 = 0x80, CB2 = 0x40 };
+        enum Port { PortA, PortB, ControlA, ControlB, IrqStatusA, IrqStatusB };
+        enum Registers { PRA = 0, DDRA = 0, CRA = 1, PRB = 2, DDRB = 2, CRB = 3 };
 
-        M68B21(int start, const std::string& name = "68B21", uint8_t aInit = 0, uint8_t bInit = 0,
+        M68B21(int start, const std::string& name = "68B21",
+                Callback irqA = nullptr, Callback irqB = nullptr,
                 Callback aChanged = nullptr, Callback bChanged = nullptr)
-                : Peripheral(start, 4, name),
-                  PRA(0), DDRA(0), CRA(0), PRB(0), DDRB(0), CRB(0), inA(aInit), inB(bInit),
-                  cbA(aChanged), cbB(bChanged)
-        { }
+                : Peripheral(start, 4, name), _prA(0), _ddrA(0), _crA(0),
+                  _prB(0), _ddrB(0), _crB(0), _inA(0), _inB(0), _incA(0), _incB(0),
+                  _cbA(aChanged), _cbB(bChanged), _irqA(irqA), _irqB(irqB) { }
         virtual ~M68B21() = default;
 
         // Reads peripheral register at offset
@@ -35,75 +52,58 @@ class M68B21 : public Peripheral {
 
         // Reset to initial state
         void reset() override {
-            PRA = inA;
-            PRB = inB;
-            DDRA = DDRB = CRA = CRB = 0;
+            _prA = _prB = 0;
+            _ddrA = _ddrB = 0;
+            _crA = _crB = 0;
+            _inA = _inB = 0; // TODO: handle static initialization
+            _incA = _incB = 0;
         }
 
-        // Check if the line is asserted
-        bool isAssertedLine(Line line) {
-            switch(line) {
-                case CA1: return CRA & 0x80; break;
-                case CA2: return CRA & 0x40; break;
-                case CB1: return CRB & 0x80; break;
-                case CB2: return CRB & 0x40; break;
-                default: return false;
+        // Returns true if one or more of the given bits is set. The host shouldn't
+        // care about ControlA or ControlB.
+        bool isSet(Port port, uint8_t data) {
+            switch (port) {
+                case PortA:
+                    return (_inA & data);
+                case PortB:
+                    return (_inB & data);
+                case IrqStatusA:
+                    return _crA & data;
+                case IrqStatusB:
+                    return _crB & data;
+                default:
+                    return false; // Oops.
             }
         }
 
-        // Assert IRQ line
-        void assertLine(Line line) {
-            switch(line) {
-                case CA1: CRA |= 0x80; break;
-                case CA2: CRA |= 0x40; break;
-                case CB1: CRB |= 0x80; break;
-                case CB2: CRB |= 0x40; break;
-            }
-        }
-        // Assert IRQ line
-        void deassertLine(Line line) {
-            switch(line) {
-                case CA1: CRA &= ~0x80; break;
-                case CA2: CRA &= ~0x40; break;
-                case CB1: CRB &= ~0x80; break;
-                case CB2: CRB &= ~0x40; break;
-            }
-        }
+        // Sets all bits in data to 1. The host shouldn't be mucking with ControlA or ControlB.
+        // Lines should be changed one at a time to ensure IRQ callbacks are issued correctly.
+        void set(Port port, uint8_t data);
 
-        void setA(uint8_t data) { inA = data; }
-        void setB(uint8_t data) { inB = data; }
-        uint8_t getA() const { return inA; }
-        uint8_t getB() const { return inB; }
-
+        // Resets all 1 bits in data. The host shouldn't be mucking with ControlA or ControlB.
+        void reset(Port port, uint8_t data);
     private:
-        uint8_t PRA; // Peripheral Register A (when CRA2 is set)
-        uint8_t DDRA; // Data Direction Register A. A bit value of 0 = input, 1 = output
-        uint8_t CRA; // Control Register A
-        uint8_t PRB; // Peripheral Register A (when CRB2 is set)
-        uint8_t DDRB; // Data Direction Register B. A bit value of 0 = input, 1 = output
-        uint8_t CRB; // Control Register B
-        uint8_t inA; // Read-only input value, port A
-        uint8_t inB; // Read-only input value, port B
-        Callback cbA; // Callback invoked when port A output changes
-        Callback cbB; // Callback invoked when port B output changes
-        enum ControlBits {
-            CRA0 = 1<<0,
-            CRA1 = 1<<1,
-            CRA2 = 1<<2,
-            CRA3 = 1<<3,
-            CRA4 = 1<<4,
-            CRA5 = 1<<5,
-            CRA6 = 1<<6,
-            CRA7 = 1<<7,
-            CRB0 = 1<<0,
-            CRB1 = 1<<1,
-            CRB2 = 1<<2,
-            CRB3 = 1<<3,
-            CRB4 = 1<<4,
-            CRB5 = 1<<5,
-            CRB6 = 1<<6,
-            CRB7 = 1<<7,
-        };
+        inline bool rising(uint8_t prev, uint8_t cur, uint8_t bit) const {
+            return !(prev & bit) && (cur & bit);
+        }
+        inline bool falling(uint8_t prev, uint8_t cur, uint8_t bit) const {
+            return (prev & bit) && !(cur & bit);
+        }
+        uint8_t get(Port port) const { return port == PortA ? _inA : _inB; }
+        uint8_t _prA; // Peripheral Register PortA (when CRA2 is set)
+        uint8_t _ddrA; // Data Direction Register PortA. PortA bit value of 0 = input, 1 = output
+        uint8_t _crA; // Control Register PortA
+        uint8_t _prB; // Peripheral Register PortA (when CRB2 is set)
+        uint8_t _ddrB; // Data Direction Register PortB. PortA bit value of 0 = input, 1 = output
+        uint8_t _crB; // Control Register PortB
+        uint8_t _inA; // Read-only input value, port PortA
+        uint8_t _inB; // Read-only input value, port PortB
+        uint8_t _incA; // Read-only input value, control port A (bits CA1, CA2)
+        uint8_t _incB; // Read-only input value, control port B (bits CB1, CB2)
+        Callback _cbA; // Callback invoked when port PortA output changes
+        Callback _cbB; // Callback invoked when port PortB output changes
+        Callback _irqA;// Callback invoked when CA1 or CA2 input changes
+        Callback _irqB;// Callback invoked when CB1 or CB2 input changes
 };
 
 #endif /* M68B21_H_ */

@@ -52,18 +52,24 @@ static const size_t CLUT_RED = CLUT_BASE;
 static const size_t CLUT_GRN = CLUT_BASE + 256;
 static const size_t CLUT_BLU = CLUT_BASE + 512;
 static const size_t CPU_MEM = 64 * 1024; // Total address space
-static const uint8_t SW1 = ~0x10; // negate since open is 0
-static const uint8_t SW2 = ~0x7d;
+
+// DIP Switches. Open is 1, closed is 0
+static const int8_t SW1 = 0x10; // Option 1-8:[Fduplex, Erase, Rubout, Tk4014, ParReset, A2, A1, A0]
+static const int8_t SW2 = 0xed; // Comm 1-8: [Xon, ForceRTS, AuxBaud[3..5], HostBaud[6..8]]
 
 // Video timing
-static const uint64_t LINE_TIME = SECS2USECS(1L) / 15750;
-static const uint64_t FRAME_TIME = 525*LINE_TIME/2;
+static const size_t VTOTAL = 525; // 262.5 lines per field
+static const size_t VBLANK_DURATION = 20; // VBLANK duration in scanlines (per field)
+static const size_t HBLANK_DURATION_US = 12; // Actually 10.7us
+static const uint64_t LINE_TIME_US = SECS2USECS(1L) / 15750;
 
 // Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
 static const uint64_t SERIAL_HOLDOFF = 0;
 
-AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _pia0(0),
-        _pia1(0), _pia2(0), _sio0(0), _sio1(0), _aedRegs(0), _xon(true) {
+AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
+        _pia0(nullptr), _pia1(nullptr), _pia2(nullptr),
+        _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr), _xon(true), _scanline(0) {
+
     // Open all ROM files and copy to ROM location in romBuffer
     std::vector<uint8_t> romBuffer;
     size_t offset = 0;
@@ -85,9 +91,9 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _p
     }
 
     // Add peripherals. Earlier peripherals are favored when addresses overlap.
-    _mapper.add(_pia0 = new M68B21(pio0da, "PIA0", SW1));
-    _mapper.add(_pia1 = new M68B21(pio1da, "PIA1"));
-    _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", SW2));
+    _mapper.add(_pia0 = new M68B21(pio0da, "PIA0", [this](int) { _irq(); }, [this](int) {_irq(); } ));
+    _mapper.add(_pia1 = new M68B21(pio1da, "PIA1", [this](int) { _irq(); }, [this](int) {_nmi(); } ));
+    _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", [this](int) { _irq(); }, [this](int) {_irq(); } ));
     _mapper.add(_sio0 = new M68B50(sio0st, "SIO0"));
     _mapper.add(_sio1 = new M68B50(sio1st, "SIO1"));
 #if !defined(AED767) && !defined(AED1024)
@@ -122,41 +128,69 @@ AedBus::AedBus(IRQ irq, NMI nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM), _p
     _mapper.add(_blumap = new Ram(CLUT_BLU, 0x100, "BLU"));
     _mapper.add(new RamDebug(0, CPU_MEM, "unmapped"));
 
-    // Kick off VSYNC
-    _eventQueue.push(Event(VSYNC, FRAME_TIME));
+    // Kick off HBLANK
+    _eventQueue.push(Event(HBLANK, 0));
 
     std::cerr << std::hex; // dump in hex
     std::cerr << _mapper;
+
+    // Set up DIP switch settings
+    _pia0->set(M68B21::PortA, ~SW1);
+    _pia2->set(M68B21::PortA, ~SW2);
 }
 
 AedBus::~AedBus() {
     std::cerr << __func__ << std::endl;
 }
 
+void
+AedBus::reset() {
+   _mapper.reset(); // This resets all peripherals
+   _pia0->set(M68B21::PortA, ~SW1); // update DIP switch settings
+   _pia2->set(M68B21::PortA, ~SW2);
+   _xon = true;
+}
+
+// PIA1 Signal pins
+const int VERTBLANK_SIGNAL = M68B21::CB1;
+const int FIELD_SIGNAL = M68B21::PB6;
+//const int INT2_5_SIGNAL = M68B21::PB7; // PIA1 Joystick comparator
+
 void AedBus::handleEvents(uint64_t now) {
     // TODO: when swapping this with an if statement, the video timing is correct, but
     // the device buffer overflows because it never emits XOFF.
-    while (now >= _eventQueue.top().time) {
+    if (now > _eventQueue.top().time) {
         const Event& event = _eventQueue.top();
         switch (event.type) {
             case HSYNC: {
-                _eventQueue.push(Event(HSYNC, now + LINE_TIME));
-                uint8_t mrd = _aedRegs->read(miscrd);
-                _aedRegs->write(miscrd, (mrd & 1) ? (mrd & 0xfe) : (mrd | 0x01));
+                // Assert HBLANK
+                _aedRegs->write(miscrd, _aedRegs->read(miscrd) | 0x01);
             }
             break;
+            case HBLANK: {
+                // Deassert HBLANK
+                _aedRegs->write(miscrd, _aedRegs->read(miscrd) & 0xfe);
 
-            case VSYNC:
-                _eventQueue.push(Event(HSYNC, now + LINE_TIME));
-                _eventQueue.push(Event(VSYNC, now + FRAME_TIME));
-                if (_pia1->isAssertedLine(M68B21::CB1)) {
-                    _pia1->deassertLine(M68B21::CB1);
+                // Assert VBLANK for first 20 scan lines after sync
+                int fieldline = _scanline > VTOTAL / 2 ? _scanline - VTOTAL / 2 : _scanline;
+                if (fieldline > (VTOTAL / 2 - VBLANK_DURATION)) {
+                    _pia1->set(M68B21::IrqStatusB, VERTBLANK_SIGNAL);
                 } else {
-                    _pia1->assertLine(M68B21::CB1);
-                    if (_nmi != nullptr) {
-                        _nmi();
-                    }
+                    _pia1->reset(M68B21::IrqStatusB, VERTBLANK_SIGNAL);
                 }
+
+                // Assert FIELD_SIGNAL for second field
+                if (_scanline < VTOTAL / 2) {
+                    _pia1->set(M68B21::PortB, FIELD_SIGNAL);
+                } else {
+                    _pia1->reset(M68B21::PortB, FIELD_SIGNAL);
+                }
+
+                _scanline++;
+                if (_scanline >= VTOTAL) _scanline = 0;
+                _eventQueue.push(Event(HSYNC, now + LINE_TIME_US));
+                _eventQueue.push(Event(HBLANK, now + LINE_TIME_US - HBLANK_DURATION_US));
+            }
             break;
 
             case SERIAL:

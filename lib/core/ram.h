@@ -17,7 +17,11 @@ template <bool debug>
 class _Ram: public Peripheral {
     public:
         _Ram(int start, int size, const std::string& name = "RAM")
-            : Peripheral(start, size, name), _storage(size, 0) { }
+            : Peripheral(start, size, name), _storage(size, 0) {
+            for (size_t i = 0; i < _storage.size(); i++) {
+                _storage[i] = i;
+            }
+        }
         virtual ~_Ram() = default;
 
         uint8_t read(int offset) override {

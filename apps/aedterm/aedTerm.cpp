@@ -24,6 +24,7 @@
 #include "cpu6502.h"
 #include "mos6502.h"
 #include "dis6502.h"
+#include "cpu.h"
 #include "clk.h"
 #include "bus.h"
 #include "aedbus.h"
@@ -48,7 +49,7 @@ static int nfds = 0;
 
 // Small numbers can be used for more accuracy, but lesser performance.
 static size_t CPU_MHZ = 1000000;
-static size_t CYCLES_PER_CALL = 10;
+static size_t CYCLES_PER_CALL = 1;
 
 static void drawCircle() {
     AedSequence seq;
@@ -201,7 +202,7 @@ static void keyboard(unsigned char key, int x, int y)
 
 static void mouse(int button, int state, int x, int y)
 {
-    drawCircle();
+    // drawCircle();
 }
 
 static void motion(int x, int y)
@@ -276,6 +277,7 @@ static void idle() {
                                     int count = std::stoi(tokens[1], NULL, 10);
                                     cpu->cycle(count);
                                 }
+                                bus->handleEvents(clk->getCpuTime());
                                 showline(std::cout);
                             break;
                             case 'b':
