@@ -87,9 +87,9 @@ void AedRegs::write(int offset, uint8_t value) {
             }
         break;
         default:
-            _storage[offset] = value;
         break;
     }
+    _storage[offset] = value;
 }
 
 uint8_t& AedRegs::pixel(int x, int y) {
