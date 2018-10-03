@@ -39,7 +39,7 @@ class M68B50: public Peripheral {
         };
 
         M68B50(int start, const std::string& name = "68B21", IRQ irq = nullptr, SendToHost send = nullptr)
-                : Peripheral(start, 2, name), _control(0), _status(0), _txdata(0), _rxdata(0),
+                : Peripheral(start, 2, name), _control(0), _status(TDRE | CTS | DCD), _txdata(0), _rxdata(0),
                   _irq(irq), _send(send) {
             reset();
         };
@@ -57,9 +57,6 @@ class M68B50: public Peripheral {
 
         // Output from serial port. Returns true if data was available
         bool transmit(uint8_t* data);
-
-        // IRQW is set. TODO: add callback to invoke IRQW automatically
-        bool irqAsserted() const { return _status & IRQW; }
 
         // Reset to initial state
         void reset() override {

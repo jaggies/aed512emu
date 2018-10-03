@@ -62,10 +62,15 @@ M68B50::maybeSendNow(uint8_t data) {
 // Host to serial port. Returns true if byte can be received.
 bool
 M68B50::receive(uint8_t byte) {
-    if (_status & RDRF) {
-        return false; // receiver data register full
+    // The manual states that RTS# is low when CR6 is low or CR5 and CR6 are both high
+    const int mask = (CR6 | CR5);
+    bool requestToSend = ((_control & CR6) == 0) || (_control & mask) == mask;
+
+    if (!requestToSend || (_status & RDRF)) {
+        return false; // receiver data register full or not ready
     }
-    if (_status & CTS) {
+
+    if (_status && requestToSend) {
         _rxdata = byte;
         _status |= RDRF; // something is now in the receive buffer
         if (_control & CR7) {
