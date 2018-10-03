@@ -24,6 +24,11 @@ class AedSequence {
             return *this;
         }
 
+        AedSequence& clear() {
+            _sequence.push_back(ERS);
+            return *this;
+        }
+
         AedSequence& color(uint8_t clr) {
             _sequence.push_back(SEC);
             _sequence.push_back(clr);

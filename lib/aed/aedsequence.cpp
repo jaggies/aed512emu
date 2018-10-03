@@ -16,6 +16,7 @@ AedSequence::write_horizontal_run(const uint8_t* begin, const uint8_t* end, Stat
     if (state == RLE) {
         while (count > 0) {
             int n = std::min(254, count);
+            assert(n > 0);
             _sequence.push_back(n); // # of same color
             _sequence.push_back(*begin); // the color
             count -= n;
@@ -23,6 +24,7 @@ AedSequence::write_horizontal_run(const uint8_t* begin, const uint8_t* end, Stat
     } else if (state == UNIQ) {
         while (count > 0) {
             int n = std::min(254, count);
+            assert(n > 0);
             _sequence.push_back(255); // buffer of unique pixels
             _sequence.push_back(n); // number of colors
             _sequence.insert(_sequence.end(), begin, begin + n);
