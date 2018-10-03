@@ -104,8 +104,9 @@ class AedBus : public BUS {
         Ram*    _redmap;
         Ram*    _grnmap;
         Ram*    _blumap;
+        bool    _eraseCycle; // when true, hardware is in erase cycle, erase each scanline as output
         bool    _xon; // XON/XOFF protocol
-        int     _scanline; // the current half-scanline
+        int     _scanline; // the current scanline
         std::queue<uint8_t> _serialFifo;
         std::priority_queue<Event, std::vector<Event>, EventCompare> _eventQueue;
 };

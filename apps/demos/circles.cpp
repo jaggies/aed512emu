@@ -15,7 +15,7 @@ const int yres = 480;
 int main(int argc, char **argv) {
     AedSequence seq;
     initLut(3, 3, 2);
-    int n = 1000;
+    int n = 100;
     while(n--) {
         seq.mov(random() % xres, random() % yres);
         seq.circle(random(), true);

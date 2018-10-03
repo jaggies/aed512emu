@@ -42,7 +42,7 @@ class AedRegs: public Peripheral {
                 _storage[i] = 0;
             }
             for (size_t i = 0; i < _videoMemory.size(); i++) {
-                _videoMemory[i] = 0;; // random();
+                _videoMemory[i] = random();
             }
         }
 
@@ -54,6 +54,12 @@ class AedRegs: public Peripheral {
 
         const uint8_t getScrollX() const { return _storage[xscrl]; }
         const uint8_t getScrollY() const { return _storage[yscrl]; }
+
+        void eraseLine(int line) {
+            uint8_t* pixel = &_videoMemory[line * DISPLAY_WIDTH];
+            size_t count = DISPLAY_WIDTH;
+            while (count--) *pixel++ = _storage[vmnoi];
+        }
 
         uint8_t& pixel(int x, int y);
 
