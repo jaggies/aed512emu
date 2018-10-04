@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <cassert>
+#include "util.h"
 #include "68B21.h"
 
 static bool debug = false;
@@ -49,10 +50,10 @@ void M68B21::write(int offset, uint8_t value) {
         case PRA: // PRA or DDRA
             if (_crA & CRA2) {
                 const bool changed = (_prA ^ value); // TODO: account for write mask
-                _prA = value;
                 if (_registerChanged != nullptr && changed) {
-                    _registerChanged(OutputA, _prA);
+                    _registerChanged(OutputA, _prA, value);
                 }
+                _prA = value;
             } else {
                 _ddrA = value;
             }
@@ -68,10 +69,10 @@ void M68B21::write(int offset, uint8_t value) {
         case PRB: // PRB or DDRB
             if (_crB & CRB2) {
                 const bool changed = (_prB ^ value); // TODO: account for write mask
-                _prB = value;
                 if (changed && _registerChanged != nullptr) {
-                    _registerChanged(OutputB, _prB);
+                    _registerChanged(OutputB, _prB, value);
                 }
+                _prB = value;
             } else {
                 _ddrB = value;
             }

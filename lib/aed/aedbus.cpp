@@ -15,8 +15,18 @@
 #include "ram.h"
 #include "generic.h"
 #include "io.h"
+#include "util.h"
 
 static bool debug = false;
+
+// PIA1 Signal pins
+const int VERTBLANK_SIGNAL = M68B21::CB1;
+const int FIELD_SIGNAL = M68B21::PB6;
+const int ADCH0 = M68B21::PB0;
+const int ADCH1 = M68B21::PB1;
+const int REFS = M68B21::PB2;
+const int JSTK = M68B21::PB3;
+const int INT2_5_SIGNAL = M68B21::PB7; // PIA1 Joystick comparator
 
 #if defined(AED767) || defined(AED1024)
 #define SRAM_SIZE 2048
@@ -69,7 +79,7 @@ static const uint64_t SERIAL_HOLDOFF = 0;
 AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
         _pia0(nullptr), _pia1(nullptr), _pia2(nullptr),
         _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr),
-        _eraseCycle(false), _xon(true), _scanline(0) {
+        _eraseCycle(false), _xon(true), _scanline(0), _cpuTime(0), _joyX(0), _joyY(0) {
 
     // Open all ROM files and copy to ROM location in romBuffer
     std::vector<uint8_t> romBuffer;
@@ -92,8 +102,26 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi),
     }
     // Add peripherals. Earlier peripherals are favored when addresses overlap.
     _mapper.add(_pia0 = new M68B21(pio0da, "PIA0", [this]() { _irq(); }, [this]() {_irq(); } ));
-    _mapper.add(_pia1 = new M68B21(pio1da, "PIA1", [this]() { _irq(); }, [this]() {_nmi(); }, nullptr,
-            [this](int data) { _eraseCycle = data & 0x10; }));
+    _mapper.add(_pia1 = new M68B21(pio1da, "PIA1", [this]() { _irq(); }, [this]() {_nmi(); },
+            [this](M68B21::Port port, uint8_t oldData, uint8_t newData) {
+                uint8_t changed = oldData ^ newData;
+                switch (port) {
+                    case M68B21::OutputB:
+                        if (newData & 0x10) {
+                            //_eraseCycle = data & 0x10;
+                        }
+                        if (changed & 0x0f) {
+                            //std::cerr << _cpuTime << " new data: " << (int) (newData & 0x0f) << std::endl;
+                            if (newData & REFS) {
+                                _pia1->set(M68B21::InputB, INT2_5_SIGNAL);
+                            }
+                            if (rising(oldData, newData, ADCH1 | ADCH0)) {
+                                _eventQueue.push(Event(JOYSTICK, _cpuTime + 10 * _joyX));
+                            }
+                        }
+                    break;
+                }
+    }));
     _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", [this]() { _irq(); }, [this]() {_irq(); } ));
     _mapper.add(_sio0 = new M68B50(sio0st, "SIO0", [this]() { _irq(); }, [this](uint8_t byte) -> bool {
         std::cout << "SIO0: " << (int) byte << std::endl;
@@ -147,8 +175,8 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi),
     std::cerr << _mapper;
 
     // Set up DIP switch settings
-    _pia0->set(M68B21::PortA, ~SW1);
-    _pia2->set(M68B21::PortA, ~SW2);
+    _pia0->set(M68B21::InputA, ~SW1);
+    _pia2->set(M68B21::InputA, ~SW2);
 }
 
 AedBus::~AedBus() {
@@ -158,15 +186,10 @@ AedBus::~AedBus() {
 void
 AedBus::reset() {
    _mapper.reset(); // This resets all peripherals
-   _pia0->set(M68B21::PortA, ~SW1); // update DIP switch settings
-   _pia2->set(M68B21::PortA, ~SW2);
+   _pia0->set(M68B21::InputA, ~SW1); // update DIP switch settings
+   _pia2->set(M68B21::InputA, ~SW2);
    _xon = true;
 }
-
-// PIA1 Signal pins
-const int VERTBLANK_SIGNAL = M68B21::CB1;
-const int FIELD_SIGNAL = M68B21::PB6;
-//const int INT2_5_SIGNAL = M68B21::PB7; // PIA1 Joystick comparator
 
 void AedBus::handleEvents(uint64_t now) {
     // TODO: when swapping this with an if statement, the video timing is correct, but
@@ -201,9 +224,9 @@ void AedBus::handleEvents(uint64_t now) {
 
                 // Assert FIELD_SIGNAL for second field
                 if (_scanline < VTOTAL / 2) {
-                    _pia1->set(M68B21::PortB, FIELD_SIGNAL);
+                    _pia1->set(M68B21::InputB, FIELD_SIGNAL);
                 } else {
-                    _pia1->reset(M68B21::PortB, FIELD_SIGNAL);
+                    _pia1->reset(M68B21::InputB, FIELD_SIGNAL);
                 }
 
                 _scanline++;
@@ -215,6 +238,10 @@ void AedBus::handleEvents(uint64_t now) {
 
             case SERIAL:
                 _xon = true;
+            break;
+
+            case JOYSTICK:
+                _pia1->reset(M68B21::InputB, INT2_5_SIGNAL);
             break;
         }
         _eventQueue.pop();

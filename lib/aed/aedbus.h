@@ -23,7 +23,7 @@
 class AedBus : public BUS {
     #define SECS2USECS(a) ((a)*1000000)
     // Events in PriorityQueue
-    enum EventType { HSYNC, HBLANK, SERIAL };
+    enum EventType { HSYNC, HBLANK, SERIAL, JOYSTICK };
     struct Event {
         Event(EventType type_, uint64_t time_) : type(type_), time(time_) { }
         EventType type;
@@ -64,8 +64,8 @@ class AedBus : public BUS {
 
         void key(char c) {
             // TODO: also handle CTRL, SHIFT, REPEAT, BREAK from sheet 14
-            _pia1->reset(M68B21::PortA, 0xff);
-            _pia1->set(M68B21::PortA, c);
+            _pia1->reset(M68B21::InputA, 0xff);
+            _pia1->set(M68B21::InputA, c);
             _pia1->set(M68B21::IrqStatusA, M68B21::CA1);
             _pia1->reset(M68B21::IrqStatusA, M68B21::CA1);
         }
@@ -85,6 +85,9 @@ class AedBus : public BUS {
 
         // Gets a pixel using the color map for the device
         uint32_t getPixel(int x, int y);
+
+        void setCpuTime(uint64_t t) { _cpuTime = t; }
+        void setJoystick(uint16_t x, uint16_t y) { _joyX = x; _joyY = y; }
 
     private:
         const uint8_t& getRed(uint8_t index) const { return (*_redmap)[index]; }
@@ -107,6 +110,9 @@ class AedBus : public BUS {
         bool    _eraseCycle; // when true, hardware is in erase cycle, erase each scanline as output
         bool    _xon; // XON/XOFF protocol
         int     _scanline; // the current scanline
+        uint64_t    _cpuTime;
+        uint16_t    _joyX;
+        uint16_t    _joyY;
         std::queue<uint8_t> _serialFifo;
         std::priority_queue<Event, std::vector<Event>, EventCompare> _eventQueue;
 };

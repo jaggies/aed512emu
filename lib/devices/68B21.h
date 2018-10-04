@@ -34,7 +34,7 @@ class M68B21 : public Peripheral {
         enum IrqStatusB { CB1 = 0x80, CB2 = 0x40 };
         enum Port { InputA, InputB, OutputA, OutputB, ControlA, ControlB, IrqStatusA, IrqStatusB };
         enum Registers { PRA = 0, DDRA = 0, CRA = 1, PRB = 2, DDRB = 2, CRB = 3 };
-        typedef std::function<void(Port port, int newvalue)> RegisterChangedCB;
+        typedef std::function<void(Port port, uint8_t oldvalue, uint8_t newvalue)> RegisterChangedCB;
 
         M68B21(int start, const std::string& name = "68B21",
                 IRQ irqA = nullptr, IRQ irqB = nullptr, RegisterChangedCB registerChanged = nullptr)
@@ -82,12 +82,6 @@ class M68B21 : public Peripheral {
         // Resets all 1 bits in data. The host shouldn't be mucking with ControlA or ControlB.
         void reset(Port port, uint8_t data);
     private:
-        inline bool rising(uint8_t prev, uint8_t cur, uint8_t bit) const {
-            return !(prev & bit) && (cur & bit);
-        }
-        inline bool falling(uint8_t prev, uint8_t cur, uint8_t bit) const {
-            return (prev & bit) && !(cur & bit);
-        }
         uint8_t get(Port port) const { return port == InputA ? _inA : _inB; }
         uint8_t _prA; // Peripheral Register InputA (when CRA2 is set)
         uint8_t _ddrA; // Data Direction Register InputA. InputA bit value of 0 = input, 1 = output

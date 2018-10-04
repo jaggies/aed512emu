@@ -48,7 +48,7 @@ static struct pollfd filedesc[5] = {{ 0, POLLIN | POLLPRI, 0 }};
 static int nfds = 0;
 
 // Small numbers can be used for more accuracy, but lesser performance.
-static size_t CPU_MHZ = 1000000;
+static size_t CPU_MHZ = 2000000;
 static size_t CYCLES_PER_CALL = 1;
 
 static void drawCircle() {
@@ -207,10 +207,12 @@ static void mouse(int button, int state, int x, int y)
 
 static void motion(int x, int y)
 {
+    std::cerr << __func__ << "(" << x << ", " << y << ")\n";
 }
 
 static void passiveMotion(int x, int y)
 {
+    bus->setJoystick(x, y);
 }
 
 static void idle() {
@@ -410,7 +412,7 @@ int main(int argc, char **argv)
     cpu = new USE_CPU(
             [](int addr) { return ::bus->read(addr); },
             [](int addr, uint8_t value) { ::bus->write(addr, value); },
-            [](int cycles) { ::clk->add_cpu_cycles(cycles); },
+            [](int cycles) { ::clk->add_cpu_cycles(cycles); ::bus->setCpuTime(clk->getCpuTime()); },
             [](CPU::ExceptionType ex, int pc) { ::handleException(ex, pc); });
 
     // Add various file descriptors
