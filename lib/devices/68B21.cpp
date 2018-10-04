@@ -48,10 +48,11 @@ void M68B21::write(int offset, uint8_t value) {
     switch (offset) {
         case PRA: // PRA or DDRA
             if (_crA & CRA2) {
-                if (_cbA != nullptr && (_prA ^ value)) {
-                    _cbA(value);
-                }
+                const bool changed = (_prA ^ value); // TODO: account for write mask
                 _prA = value;
+                if (_registerChanged != nullptr && changed) {
+                    _registerChanged(OutputA, _prA);
+                }
             } else {
                 _ddrA = value;
             }
@@ -66,10 +67,11 @@ void M68B21::write(int offset, uint8_t value) {
         break;
         case PRB: // PRB or DDRB
             if (_crB & CRB2) {
-                if (_cbB != nullptr && (_prB ^ value)) {
-                    _cbB(value);
-                }
+                const bool changed = (_prB ^ value); // TODO: account for write mask
                 _prB = value;
+                if (changed && _registerChanged != nullptr) {
+                    _registerChanged(OutputB, _prB);
+                }
             } else {
                 _ddrB = value;
             }
@@ -95,10 +97,10 @@ void M68B21::write(int offset, uint8_t value) {
 // CRx5 = 1 -> follow E clock (unimplemented)
 void M68B21::set(Port port, uint8_t data) {
     switch (port) {
-        case PortA:
+        case InputA:
             _inA |= data;
         break;
-        case PortB:
+        case InputB:
             _inB |= data;
         break;
         case IrqStatusA: {
@@ -155,10 +157,10 @@ void M68B21::set(Port port, uint8_t data) {
 
 void M68B21::reset(Port port, uint8_t data) {
     switch (port) {
-        case PortA:
+        case InputA:
             _inA &= ~data;
         break;
-        case PortB:
+        case InputB:
             _inB &= ~data;
         break;
         case IrqStatusA: {

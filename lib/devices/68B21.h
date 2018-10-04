@@ -14,7 +14,6 @@
 
 class M68B21 : public Peripheral {
     public:
-        typedef std::function<void(int data)> Callback;
         enum PortA {
             PA7 = (1 << 7), PA6 = (1 << 6), PA5 = (1 << 5), PA4 = (1 << 4),
             PA3 = (1 << 3), PA2 = (1 << 2), PA1 = (1 << 1), PA0 = (1 << 0)
@@ -33,14 +32,15 @@ class M68B21 : public Peripheral {
         };
         enum IrqStatusA { CA1 = 0x80, CA2 = 0x40 };
         enum IrqStatusB { CB1 = 0x80, CB2 = 0x40 };
-        enum Port { PortA, PortB, ControlA, ControlB, IrqStatusA, IrqStatusB };
+        enum Port { InputA, InputB, OutputA, OutputB, ControlA, ControlB, IrqStatusA, IrqStatusB };
         enum Registers { PRA = 0, DDRA = 0, CRA = 1, PRB = 2, DDRB = 2, CRB = 3 };
+        typedef std::function<void(Port port, int newvalue)> RegisterChangedCB;
 
-        M68B21(int start, const std::string& name = "68B21", IRQ irqA = nullptr, IRQ irqB = nullptr,
-                Callback aChanged = nullptr, Callback bChanged = nullptr)
-                : Peripheral(start, 4, name), _prA(0), _ddrA(0), _crA(0),
+        M68B21(int start, const std::string& name = "68B21",
+                IRQ irqA = nullptr, IRQ irqB = nullptr, RegisterChangedCB registerChanged = nullptr)
+                    : Peripheral(start, 4, name), _prA(0), _ddrA(0), _crA(0),
                   _prB(0), _ddrB(0), _crB(0), _inA(0), _inB(0), _incA(0), _incB(0),
-                  _cbA(aChanged), _cbB(bChanged), _irqA(irqA), _irqB(irqB) { }
+                  _registerChanged(registerChanged), _irqA(irqA), _irqB(irqB) { }
         virtual ~M68B21() = default;
 
         // Reads peripheral register at offset
@@ -62,9 +62,9 @@ class M68B21 : public Peripheral {
         // care about ControlA or ControlB.
         bool isSet(Port port, uint8_t data) {
             switch (port) {
-                case PortA:
+                case InputA:
                     return (_inA & data);
-                case PortB:
+                case InputB:
                     return (_inB & data);
                 case IrqStatusA:
                     return _crA & data;
@@ -88,19 +88,18 @@ class M68B21 : public Peripheral {
         inline bool falling(uint8_t prev, uint8_t cur, uint8_t bit) const {
             return (prev & bit) && !(cur & bit);
         }
-        uint8_t get(Port port) const { return port == PortA ? _inA : _inB; }
-        uint8_t _prA; // Peripheral Register PortA (when CRA2 is set)
-        uint8_t _ddrA; // Data Direction Register PortA. PortA bit value of 0 = input, 1 = output
-        uint8_t _crA; // Control Register PortA
-        uint8_t _prB; // Peripheral Register PortA (when CRB2 is set)
-        uint8_t _ddrB; // Data Direction Register PortB. PortA bit value of 0 = input, 1 = output
-        uint8_t _crB; // Control Register PortB
-        uint8_t _inA; // Read-only input value, port PortA
-        uint8_t _inB; // Read-only input value, port PortB
+        uint8_t get(Port port) const { return port == InputA ? _inA : _inB; }
+        uint8_t _prA; // Peripheral Register InputA (when CRA2 is set)
+        uint8_t _ddrA; // Data Direction Register InputA. InputA bit value of 0 = input, 1 = output
+        uint8_t _crA; // Control Register InputA
+        uint8_t _prB; // Peripheral Register InputA (when CRB2 is set)
+        uint8_t _ddrB; // Data Direction Register InputB. InputA bit value of 0 = input, 1 = output
+        uint8_t _crB; // Control Register InputB
+        uint8_t _inA; // Read-only input value, port InputA
+        uint8_t _inB; // Read-only input value, port InputB
         uint8_t _incA; // Read-only input value, control port A (bits CA1, CA2)
         uint8_t _incB; // Read-only input value, control port B (bits CB1, CB2)
-        Callback _cbA; // Callback invoked when port PortA output changes
-        Callback _cbB; // Callback invoked when port PortB output changes
+        RegisterChangedCB _registerChanged; // Callback invoked when any register changes
         IRQ _irqA;// Callback invoked when CA1 or CA2 input changes
         IRQ _irqB;// Callback invoked when CB1 or CB2 input changes
 };
