@@ -78,8 +78,7 @@ static const uint64_t SERIAL_HOLDOFF = 0;
 
 AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
         _pia0(nullptr), _pia1(nullptr), _pia2(nullptr),
-        _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr),
-        _eraseCycle(false), _xon(true), _scanline(0), _cpuTime(0), _joyX(0), _joyY(0) {
+        _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr) {
 
     // Open all ROM files and copy to ROM location in romBuffer
     std::vector<uint8_t> romBuffer;
@@ -107,18 +106,34 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi),
                 uint8_t changed = oldData ^ newData;
                 switch (port) {
                     case M68B21::OutputB:
-                        if (newData & 0x10) {
-                            //_eraseCycle = data & 0x10;
-                        }
-                        if (changed & 0x0f) {
-                            //std::cerr << _cpuTime << " new data: " << (int) (newData & 0x0f) << std::endl;
-                            if (newData & REFS) {
-                                _pia1->set(M68B21::InputB, INT2_5_SIGNAL);
+                        // _erase = newData & 0x10;
+
+                        if (changed & 0x0f) { // Joystick processing
+                            switch (newData & 0x0f) {
+                                case 0x00: // disconnected
+                                break;
+
+                                case (REFS | ADCH1): // 4V on inverting amp => INT2.5V low
+                                    _pia1->set(M68B21::InputB, INT2_5_SIGNAL);
+                                    _eventQueue.push(Event(JOYSTICK_RESET, _cpuTime + _joyDelay));
+                                break;
+
+                                case (REFS | ADCH1 | ADCH0): // GND on inverting amp => INT2.5V high
+                                    _eventQueue.push(Event(JOYSTICK_SET, _cpuTime));
+                                break;
+
+                                case JSTK: // Y joystick tracking - charge Y
+                                    _joyDelay = 10 * (512 - _joyY); // Y is inverted by hw design.
+                                break;
+
+                                case (JSTK | ADCH0): // X joystick tracking - charge X
+                                    _joyDelay = 10 * _joyX;
+                                break;
                             }
-                            if (rising(oldData, newData, ADCH1 | ADCH0)) {
-                                _eventQueue.push(Event(JOYSTICK, _cpuTime + 10 * _joyX));
-                            }
                         }
+                    break;
+
+                    default: // fix warning
                     break;
                 }
     }));
@@ -216,7 +231,7 @@ void AedBus::handleEvents(uint64_t now) {
                 }
 
                 // If erase hw is enabled, erase 1 scanline at a time
-                if (_eraseCycle) {
+                if (_erase) {
                     if (_scanline < getDisplayHeight()) {
                         _aedRegs->eraseLine(_scanline);
                     }
@@ -240,7 +255,11 @@ void AedBus::handleEvents(uint64_t now) {
                 _xon = true;
             break;
 
-            case JOYSTICK:
+            case JOYSTICK_SET:
+                _pia1->set(M68B21::InputB, INT2_5_SIGNAL);
+            break;
+
+            case JOYSTICK_RESET:
                 _pia1->reset(M68B21::InputB, INT2_5_SIGNAL);
             break;
         }

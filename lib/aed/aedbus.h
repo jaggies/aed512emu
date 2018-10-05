@@ -23,7 +23,7 @@
 class AedBus : public BUS {
     #define SECS2USECS(a) ((a)*1000000)
     // Events in PriorityQueue
-    enum EventType { HSYNC, HBLANK, SERIAL, JOYSTICK };
+    enum EventType { HSYNC, HBLANK, SERIAL, JOYSTICK_SET, JOYSTICK_RESET };
     struct Event {
         Event(EventType type_, uint64_t time_) : type(type_), time(time_) { }
         EventType type;
@@ -107,12 +107,13 @@ class AedBus : public BUS {
         Ram*    _redmap;
         Ram*    _grnmap;
         Ram*    _blumap;
-        bool    _eraseCycle; // when true, hardware is in erase cycle, erase each scanline as output
-        bool    _xon; // XON/XOFF protocol
-        int     _scanline; // the current scanline
-        uint64_t    _cpuTime;
-        uint16_t    _joyX;
-        uint16_t    _joyY;
+        bool    _erase = false; // hardware is in erase cycle when true; erase each scanline during scan
+        bool    _xon = true; // XON/XOFF protocol
+        int     _scanline = 0; // the current scanline
+        uint64_t    _cpuTime = 0; // current CPU time. TODO: have this be the source of truth
+        uint16_t    _joyX = 0; // X joystick input, range [0, 511]
+        uint16_t    _joyY = 0; // Y joystick input, range [0, 511]
+        uint64_t    _joyDelay = 0; // delay for joyX and joyY, depending on last selection cycle
         std::queue<uint8_t> _serialFifo;
         std::priority_queue<Event, std::vector<Event>, EventCompare> _eventQueue;
 };

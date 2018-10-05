@@ -5,3 +5,34 @@ PB1 ADCCH1 (output) "
 PB2 REFS   (output) Enable various references
 PB3 JSTK   (outout) Enable X&Y joystic connections
 PB7 INT2.5 (input)	Input from comparator (Integrator?) Shifted into CC for testing in tight loop
+
+Joystick Notes
+	QVDDA = +8V (REG 9, sheet 27)
+	QVBBA = -5V (Reg 10, sheet 27)
+	1I0 = (QVBBA + QVDD) / 2 = 1.5V
+	II1 = 5V
+	1I2 = QVDDA / 2 = 4V
+	1I3 = 0V (GND)
+
+	2I0 = Y potentiometer
+	2I1 = X potentiometer
+
+Low reference for pots = 120 Ohm to GND
+High reference for pots = QVDDA * 240 / (240+390) = 3.05V
+
+186400 new data: 6 IOUT = 1I2 = 4V and wait for it to settle
+18740f new data: 7 IOUT = GND
+187420 new data: 0 DISABLE ALL
+187426 new data: 8 IOUT = 2I0 = Y
+188108 new data: 0 DISABLE ALL
+18810d new data: 6 IOUT = 4V
+18912a new data: 0 DISABLE ALL
+18bca4 new data: 6 IOUT = 4V
+18ccb3 new data: 7 IOUT = GND
+18ccc4 new data: 0 DISABLE ALL
+18ccca new data: 9 IOUT = 2I1 = X
+18d9ac new data: 0 DISABLE ALL
+18d9b1 new data: 6 IOUT = 4V
+18dce9 new data: 0 DISABLE ALL
+
+
