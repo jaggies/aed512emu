@@ -11,7 +11,6 @@
 void
 AedSequence::write_horizontal_run(const uint8_t* begin, const uint8_t* end, State state) {
     assert(end > begin);
-    _sequence.push_back(WHU);
     int count = end - begin;
     if (state == RLE) {
         while (count > 0) {
@@ -32,7 +31,6 @@ AedSequence::write_horizontal_run(const uint8_t* begin, const uint8_t* end, Stat
             count -= n;
         }
     }
-    _sequence.push_back(0); // termination
 }
 
 AedSequence& AedSequence::write_horizontal_runs(const uint8_t* buffer, int n) {
@@ -41,6 +39,7 @@ AedSequence& AedSequence::write_horizontal_runs(const uint8_t* buffer, int n) {
     const uint8_t* end = &buffer[n];
 
     State state = SEARCH;
+    _sequence.push_back(WHU);
     while (current < end) {
         //std::cout << state << " " << *begin << std::endl;
         if (state == SEARCH) {
@@ -66,5 +65,6 @@ AedSequence& AedSequence::write_horizontal_runs(const uint8_t* buffer, int n) {
         current++;
     }
     write_horizontal_run(begin, current, state);
+    _sequence.push_back(0); // termination
     return *this;
 }
