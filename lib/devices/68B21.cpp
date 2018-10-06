@@ -59,8 +59,12 @@ void M68B21::write(int offset, uint8_t value) {
             }
         break;
         case CRA: { // CRA
-            if (debug) std::cerr << std::hex << name() << " CRA write: " << (int) value << std::endl;
-            _crA = (_crA & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
+            const bool changed = (_crA ^ (value & 0x3f));
+            uint8_t newValue = (_crA & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
+            if (_registerChanged != nullptr && changed) {
+                _registerChanged(ControlA, _crA, newValue);
+            }
+            _crA = newValue;
             if (debug && (_crA & (CRA5 | CRA4)) != (CRA5 | CRA4)) { // if not output mode for CA2
                 std::cerr << name() << ": CRA E clock not supported!" << std::endl;
             }
@@ -78,8 +82,12 @@ void M68B21::write(int offset, uint8_t value) {
             }
         break;
         case CRB: { // CRB
-            if (debug) std::cerr << std::hex << name() << " CRB write: " << (int) value << std::endl;
-            _crB = (_crB & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
+            const bool changed = (_crB ^ (value & 0x3f));
+            uint8_t newValue = (_crB & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
+            if (_registerChanged != nullptr && changed) {
+                _registerChanged(ControlB, _crB, newValue);
+            }
+            _crB = newValue;
             if (debug && (_crB & (CRB5 | CRB4)) != (CRB5 | CRB4)) { // if not output mode for CB2
                 std::cerr << name() << ": CRB E clock not supported!" << std::endl;
             }

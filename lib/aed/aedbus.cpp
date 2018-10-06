@@ -20,13 +20,20 @@
 static bool debug = false;
 
 // PIA1 Signal pins
-const int VERTBLANK_SIGNAL = M68B21::CB1;
+const int VBLANK_SIGNAL = M68B21::CB1;
+const int ERASE_SIGNAL = M68B21::CRB3; // CB2 output bit
+const int ERASE_ENABLE = M68B21::CRB4; // CB2 is not in handshake mode
+const int ERASE_OUTPUT = M68B21::CRB5; // CB2 is enabled as output
 const int FIELD_SIGNAL = M68B21::PB6;
 const int ADCH0 = M68B21::PB0;
 const int ADCH1 = M68B21::PB1;
 const int REFS = M68B21::PB2;
 const int JSTK = M68B21::PB3;
 const int INT2_5_SIGNAL = M68B21::PB7; // PIA1 Joystick comparator
+
+// PIA2 - These seem to be involved in SuperRoam
+//const int X9_SIGNAL = M68B21::CA2;
+//const int Y9_SIGNAL = M68B21::CB2;
 
 #if defined(AED767) || defined(AED1024)
 #define SRAM_SIZE 2048
@@ -76,6 +83,64 @@ static const uint64_t LINE_TIME_US = SECS2USECS(1L) / 15750;
 // Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
 static const uint64_t SERIAL_HOLDOFF = 0;
 
+void AedBus::handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData) {
+    uint8_t changed = oldData ^ newData;
+    switch (port) {
+        case M68B21::ControlA:
+            if (debug) {
+                std::cerr << _pia1->name() << " CrA changed: " << (int) (newData) << std::endl;
+            }
+        break;
+        case M68B21::ControlB:
+            if (debug) {
+                std::cerr << _pia1->name() << " CrB changed: " << (int) (newData) << std::endl;
+            }
+            _erase = _pia1->isSet(M68B21::ControlB, ERASE_OUTPUT | ERASE_ENABLE | ERASE_SIGNAL);
+            if (debug) std::cerr << "ERASE : " << _erase << std::endl;
+        break;
+        case M68B21::OutputB:
+            if (changed & 0x10) {
+                // Memory Write Enable (enables 6502 writing to video memory?)
+                std::cerr << "MWE:" << bool(newData & 0x10) << std::endl;
+            }
+            if (changed & 0x0f) {
+                // Joystick processing
+                switch (newData & 0x0f) {
+                    case 0x00: // disconnected
+                    break;
+                    case (REFS | ADCH1): // 4V on inverting amp => INT2.5V low
+                        _pia1->set(M68B21::InputB, INT2_5_SIGNAL);
+                        _eventQueue.push(Event(JOYSTICK_RESET, _cpuTime + _joyDelay));
+                    break;
+                    case (REFS | ADCH1 | ADCH0): // GND on inverting amp => INT2.5V high
+                        _eventQueue.push(Event(JOYSTICK_SET, _cpuTime));
+                    break;
+                    case JSTK: // Y joystick tracking - charge Y
+                        _joyDelay = 10 * (512 - _joyY); // Y is inverted by hw design.
+                    break;
+                    case (JSTK | ADCH0): // X joystick tracking - charge X
+                        _joyDelay = 10 * _joyX;
+                    break;
+                }
+            }
+        break;
+
+        default: // fix warning
+        break;
+    }
+}
+
+void AedBus::handlePIA2(M68B21::Port port, uint8_t oldData, uint8_t newData) {
+    switch (port) {
+        case M68B21::OutputB:
+            if (debug) std::cout << "BaudRates: " << (newData >> 2) << std::endl;
+        break;
+
+        default: // fix warning
+        break;
+    }
+}
+
 AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
         _pia0(nullptr), _pia1(nullptr), _pia2(nullptr),
         _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr) {
@@ -102,42 +167,9 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi),
     // Add peripherals. Earlier peripherals are favored when addresses overlap.
     _mapper.add(_pia0 = new M68B21(pio0da, "PIA0", [this]() { _irq(); }, [this]() {_irq(); } ));
     _mapper.add(_pia1 = new M68B21(pio1da, "PIA1", [this]() { _irq(); }, [this]() {_nmi(); },
-            [this](M68B21::Port port, uint8_t oldData, uint8_t newData) {
-                uint8_t changed = oldData ^ newData;
-                switch (port) {
-                    case M68B21::OutputB:
-                        // _erase = newData & 0x10;
-
-                        if (changed & 0x0f) { // Joystick processing
-                            switch (newData & 0x0f) {
-                                case 0x00: // disconnected
-                                break;
-
-                                case (REFS | ADCH1): // 4V on inverting amp => INT2.5V low
-                                    _pia1->set(M68B21::InputB, INT2_5_SIGNAL);
-                                    _eventQueue.push(Event(JOYSTICK_RESET, _cpuTime + _joyDelay));
-                                break;
-
-                                case (REFS | ADCH1 | ADCH0): // GND on inverting amp => INT2.5V high
-                                    _eventQueue.push(Event(JOYSTICK_SET, _cpuTime));
-                                break;
-
-                                case JSTK: // Y joystick tracking - charge Y
-                                    _joyDelay = 10 * (512 - _joyY); // Y is inverted by hw design.
-                                break;
-
-                                case (JSTK | ADCH0): // X joystick tracking - charge X
-                                    _joyDelay = 10 * _joyX;
-                                break;
-                            }
-                        }
-                    break;
-
-                    default: // fix warning
-                    break;
-                }
-    }));
-    _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", [this]() { _irq(); }, [this]() {_irq(); } ));
+        [this](M68B21::Port port, uint8_t o, uint8_t n) { handlePIA1(port, o, n); }));
+    _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", [this]() { _irq(); }, [this]() {_irq(); },
+                    [this](M68B21::Port port, uint8_t o, uint8_t n) {handlePIA2(port, o, n); }));
     _mapper.add(_sio0 = new M68B50(sio0st, "SIO0", [this]() { _irq(); }, [this](uint8_t byte) -> bool {
         std::cout << "SIO0: " << (int) byte << std::endl;
         return true; // byte accepted
@@ -225,9 +257,9 @@ void AedBus::handleEvents(uint64_t now) {
                 // Assert VBLANK for first 20 scan lines after sync
                 int fieldline = _scanline > VTOTAL / 2 ? _scanline - VTOTAL / 2 : _scanline;
                 if (fieldline > (VTOTAL / 2 - VBLANK_DURATION)) {
-                    _pia1->set(M68B21::IrqStatusB, VERTBLANK_SIGNAL);
+                    _pia1->set(M68B21::IrqStatusB, VBLANK_SIGNAL);
                 } else {
-                    _pia1->reset(M68B21::IrqStatusB, VERTBLANK_SIGNAL);
+                    _pia1->reset(M68B21::IrqStatusB, VBLANK_SIGNAL);
                 }
 
                 // If erase hw is enabled, erase 1 scanline at a time

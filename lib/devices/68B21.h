@@ -36,8 +36,8 @@ class M68B21 : public Peripheral {
         enum Registers { PRA = 0, DDRA = 0, CRA = 1, PRB = 2, DDRB = 2, CRB = 3 };
         typedef std::function<void(Port port, uint8_t oldvalue, uint8_t newvalue)> RegisterChangedCB;
 
-        M68B21(int start, const std::string& name = "68B21",
-                IRQ irqA = nullptr, IRQ irqB = nullptr, RegisterChangedCB registerChanged = nullptr)
+        M68B21(int start, const std::string& name = "68B21", IRQ irqA = nullptr, IRQ irqB = nullptr,
+                    RegisterChangedCB registerChanged = nullptr)
                     : Peripheral(start, 4, name), _prA(0), _ddrA(0), _crA(0),
                   _prB(0), _ddrB(0), _crB(0), _inA(0), _inB(0), _incA(0), _incB(0),
                   _registerChanged(registerChanged), _irqA(irqA), _irqB(irqB) { }
@@ -58,20 +58,31 @@ class M68B21 : public Peripheral {
             _incA = _incB = 0;
         }
 
-        // Returns true if one or more of the given bits is set. The host shouldn't
+        // Returns true if all of the given bits are set. The host shouldn't
         // care about ControlA or ControlB.
         bool isSet(Port port, uint8_t data) {
             switch (port) {
                 case InputA:
-                    return (_inA & data);
+                    return (_inA & data) == data;
                 case InputB:
-                    return (_inB & data);
+                    return (_inB & data) == data;
+                case OutputA:
+                    return ((_inA & _ddrA) & data) == data;
+                case OutputB:
+                    return ((_inB & _ddrB) & data) == data;
+                case ControlA:
+                    return (_crA & data) == data;
+                case ControlB:
+                    return (_crB & data) == data;
                 case IrqStatusA:
-                    return _crA & data;
+                    assert((data & 0x3f) == 0);  // only IRQ status bits are valid
+                    return (_crA & 0xc0 & data) == data;
                 case IrqStatusB:
-                    return _crB & data;
+                    assert((data & 0x3f) == 0);  // only IRQ status bits are valid
+                    return (_crB & 0xc0 & data) == data;
                 default:
-                    return false; // Oops.
+                    std::cerr << name() << " oops, unrecognized port " << port << std::endl;
+                    return false;
             }
         }
 

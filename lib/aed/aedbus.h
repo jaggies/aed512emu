@@ -94,6 +94,10 @@ class AedBus : public BUS {
         const uint8_t& getGreen(uint8_t index) const { return (*_grnmap)[index]; }
         const uint8_t& getBlue(uint8_t index) const { return (*_blumap)[index]; }
 
+        void handlePIA0(M68B21::Port port, uint8_t oldData, uint8_t newData);
+        void handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData);
+        void handlePIA2(M68B21::Port port, uint8_t oldData, uint8_t newData);
+
         Peripheral::IRQ _irq;
         Peripheral::IRQ _nmi;
 
