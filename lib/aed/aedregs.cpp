@@ -99,11 +99,12 @@ uint8_t& AedRegs::pixel(int x, int y) {
 }
 
 void AedRegs::doVideoUpdate(int dX, int dY, uint8_t color, uint16_t count) {
-    uint16_t& x = *(uint16_t *) &_storage[capxl];  // TODO: Handle fix for big endian
+    uint16_t& x = *(uint16_t *) &_storage[capxl];  // TODO: fix for big endian machines
     uint16_t& y = *(uint16_t *) &_storage[capyl];
-    uint8_t mask = _storage[wrmsk];
+    const uint8_t mask = _storage[wrmsk];
     while (count--) {
-        pixel(x,y) = color & mask;
+        uint8_t &p = pixel(x,y);
+        p = (p & ~mask) | (color & mask);
         x += dX;
         y += dY;
     }
