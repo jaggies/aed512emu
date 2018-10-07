@@ -11,7 +11,7 @@
 
 const int xres = 483;
 const int yres = xres;
-const int points = 20;
+const int points = 19;
 
 int main(int argc, char **argv) {
     AedSequence seq;
@@ -19,10 +19,10 @@ int main(int argc, char **argv) {
 
     for (int i = 0; i < points; i++) {
         x[i] = xres * 0.5f * (1.0f + cos(2.0f * M_PI * i / (points - 1)));
-        y[i] = 42 + yres * 0.5f * (1.0f + sin(2.0f * M_PI * i / (points - 1)));
+        y[i] = yres * 0.5f * (1.0f + sin(2.0f * M_PI * i / (points - 1)));
     }
 
-    seq.color(7).send(); // white
+    seq.background(4).clear().color(7).send(); // white on blue background
 
     for (int n = 0; n < points; n++) {
         for (int m = n+1; m < points; m++) {

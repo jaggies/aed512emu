@@ -18,6 +18,12 @@ class AedSequence {
         AedSequence() = default;
         virtual ~AedSequence() = default;
 
+        AedSequence& background(uint8_t clr) {
+            _sequence.push_back(SBC);
+            _sequence.push_back(clr);
+            return *this;
+        }
+
         AedSequence& circle(int radius, bool fat = false) {
             _sequence.push_back(fat ? DFC : DCL);
             _sequence.push_back(radius & 0xff);
