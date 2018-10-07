@@ -1,6 +1,4 @@
-Better implementation of XON/XOFF protocol
-	Looks like the device is properly sending XOFF(19) when the buffer is full,
-	but the code is ignoring it. Might solve the buffer overrun.
+Chase down NPIX routine in ROM and figure out how FF1 works to clear memory
 
 Implement hardware erase 
 	This appears to be controlled by the ERASE line from PIA1.
