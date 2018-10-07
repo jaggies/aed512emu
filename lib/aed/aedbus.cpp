@@ -76,7 +76,8 @@ static const int8_t SW2 = 0x7d; // Comm 1-8: [Xoff, ForceRTS, AuxBaud[3..5], Hos
 
 // Video timing
 static const size_t VTOTAL = 525; // 262.5 lines per field
-static const size_t VBLANK_DURATION = 20; // VBLANK duration in scanlines (per field)
+static const size_t VISIBLE = 483; // total number of visisble lines
+static const size_t VBLANK_DURATION = (VTOTAL - VISIBLE) / 2; // VBLANK duration in scanlines (per field)
 static const size_t HBLANK_DURATION_US = 12; // Actually 10.7us
 static const uint64_t LINE_TIME_US = SECS2USECS(1L) / 15750;
 

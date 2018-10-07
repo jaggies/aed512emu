@@ -41,6 +41,12 @@ class AedSequence {
             return *this;
         }
 
+        AedSequence& line(uint16_t x, uint16_t y) {
+            _sequence.push_back(DVA);
+            coordinate(x, y);
+            return *this;
+        }
+
         AedSequence& mov(uint16_t x, uint16_t y) {
             _sequence.push_back(MOV);
             coordinate(x, y);
