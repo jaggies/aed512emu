@@ -78,7 +78,7 @@ static const int8_t SW2 = 0x7d; // Comm 1-8: [Xoff, ForceRTS, AuxBaud[3..5], Hos
 static const size_t VTOTAL = 525; // 262.5 lines per field
 static const size_t VISIBLE = 483; // total number of visisble lines
 static const size_t VBLANK_DURATION = (VTOTAL - VISIBLE) / 2; // VBLANK duration in scanlines (per field)
-static const size_t HBLANK_DURATION_US = 12; // Actually 10.7us
+static const size_t HBLANK_DURATION_US = 11; // Actually 10.7us
 static const uint64_t LINE_TIME_US = SECS2USECS(1L) / 15750;
 
 // Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
@@ -257,10 +257,10 @@ void AedBus::handleEvents(uint64_t now) {
 
                 // Assert VBLANK for first 20 scan lines after sync
                 int fieldline = _scanline > VTOTAL / 2 ? _scanline - VTOTAL / 2 : _scanline;
-                if (fieldline > (VTOTAL / 2 - VBLANK_DURATION)) {
-                    _pia1->set(M68B21::IrqStatusB, VBLANK_SIGNAL);
-                } else {
+                if (fieldline > VBLANK_DURATION) {
                     _pia1->reset(M68B21::IrqStatusB, VBLANK_SIGNAL);
+                } else {
+                    _pia1->set(M68B21::IrqStatusB, VBLANK_SIGNAL);
                 }
 
                 // If erase hw is enabled, erase 1 scanline at a time
@@ -334,10 +334,10 @@ AedBus::getFrame(std::vector<uint32_t>& frame, int* w, int *h) {
     const uint8_t* grn = &getGreen(0);
     const uint8_t* blu = &getBlue(0);
 
-    const int scrollx = _aedRegs->getScrollX();
-    const int scrolly = _aedRegs->getScrollY();
-    for (int j = 0; j < height; j++) {
-        for (int i = 0; i < width; i++) {
+    const size_t scrollx = _aedRegs->getScrollX();
+    const size_t scrolly = _aedRegs->getScrollY();
+    for (size_t j = 0; j < height; j++) {
+        for (size_t i = 0; i < width; i++) {
             const size_t x = (i + scrollx) % width;
             const size_t y = (j + scrolly) % height;
             const uint8_t lut = raw[y * width + x];
