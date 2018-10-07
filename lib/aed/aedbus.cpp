@@ -84,6 +84,10 @@ static const uint64_t LINE_TIME_US = SECS2USECS(1L) / 15750;
 // Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
 static const uint64_t SERIAL_HOLDOFF = 0;
 
+void AedBus::handlePIA0(M68B21::Port port, uint8_t oldData, uint8_t newData) {
+    // TODO
+}
+
 void AedBus::handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData) {
     uint8_t changed = oldData ^ newData;
     switch (port) {
@@ -142,6 +146,21 @@ void AedBus::handlePIA2(M68B21::Port port, uint8_t oldData, uint8_t newData) {
     }
 }
 
+bool AedBus::handleSIO0(uint8_t byte) {
+    std::cout << "SIO0: " << (int) byte << std::endl;
+    return true; // handled
+}
+
+bool AedBus::handleSIO1(uint8_t byte) {
+    std::cout << "SIO1: " << (int) byte << std::endl;
+    if (byte == 19) { // XOFF
+        _xon = false;
+    } else if (byte == 17) { // XON
+        _xon = true;
+    }
+    return true; // handled
+}
+
 AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
         _pia0(nullptr), _pia1(nullptr), _pia2(nullptr),
         _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr) {
@@ -165,25 +184,17 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi),
             offset += size;
         }
     }
-    // Add peripherals. Earlier peripherals are favored when addresses overlap.
-    _mapper.add(_pia0 = new M68B21(pio0da, "PIA0", [this]() { _irq(); }, [this]() {_irq(); } ));
+    // Add peripherals. Lower address peripherals are favored when addresses overlap.
+    _mapper.add(_pia0 = new M68B21(pio0da, "PIA0", [this]() { _irq(); }, [this]() {_irq(); },
+            [this](M68B21::Port port, uint8_t old, uint8_t new_) { handlePIA0(port, old, new_); }));
     _mapper.add(_pia1 = new M68B21(pio1da, "PIA1", [this]() { _irq(); }, [this]() {_nmi(); },
-        [this](M68B21::Port port, uint8_t o, uint8_t n) { handlePIA1(port, o, n); }));
+            [this](M68B21::Port port, uint8_t old, uint8_t new_) { handlePIA1(port, old, new_); }));
     _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", [this]() { _irq(); }, [this]() {_irq(); },
-                    [this](M68B21::Port port, uint8_t o, uint8_t n) {handlePIA2(port, o, n); }));
-    _mapper.add(_sio0 = new M68B50(sio0st, "SIO0", [this]() { _irq(); }, [this](uint8_t byte) -> bool {
-        std::cout << "SIO0: " << (int) byte << std::endl;
-        return true; // byte accepted
-    }));
-    _mapper.add(_sio1 = new M68B50(sio1st, "SIO1", [this]() { _irq(); }, [this](uint8_t byte) -> bool {
-        std::cout << "SIO1: " << (int) byte << std::endl;
-        if (byte == 19) { // XOFF
-            _xon = false;
-        } else if (byte == 17) { // XON
-            _xon = true;
-        }
-        return true; // byte accepted
-    }));
+            [this](M68B21::Port port, uint8_t old, uint8_t new_) { handlePIA2(port, old, new_); }));
+    _mapper.add(_sio0 = new M68B50(sio0st, "SIO0", [this]() { _irq(); },
+            [this](uint8_t byte) { return handleSIO0(byte); }));
+    _mapper.add(_sio1 = new M68B50(sio1st, "SIO1", [this]() { _irq(); },
+            [this](uint8_t byte) { return handleSIO1(byte); }));
 #if !defined(AED767) && !defined(AED1024)
     _mapper.add(new Generic(0xe9, 1,
             [this](int offset) { return 0x01; },
@@ -198,12 +209,6 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi),
                 if (debug) std::cerr << "write 0xe5:" << (int) value << std::endl;
             },
             "hack_0xe5"));
-//    _mapper.add(new Generic(0x3e, 2,
-//            [this](int offset) { return offset ? 0x02 : 0xff; },
-//            [this](int offset, uint8_t value) {
-//                if (debug) std::cerr << "write " << (int)(offset + 0x3e) << ":" << (int) value << std::endl;
-//            },
-//            "hack_lines"));
     _mapper.add(new Ram(0x8000, 0x300, "hack_0x8000"));
     _mapper.add(new RamDebug(ACAIK_BASE, SRAM_SIZE, "ACAIK"));
 #endif
@@ -258,9 +263,9 @@ void AedBus::handleEvents(uint64_t now) {
                 // Assert VBLANK for first 20 scan lines after sync
                 int fieldline = _scanline > VTOTAL / 2 ? _scanline - VTOTAL / 2 : _scanline;
                 if (fieldline > VBLANK_DURATION) {
-                    _pia1->reset(M68B21::IrqStatusB, VBLANK_SIGNAL);
+                    _pia1->reset(M68B21::ControlB, VBLANK_SIGNAL);
                 } else {
-                    _pia1->set(M68B21::IrqStatusB, VBLANK_SIGNAL);
+                    _pia1->set(M68B21::ControlB, VBLANK_SIGNAL);
                 }
 
                 // If erase hw is enabled, erase 1 scanline at a time

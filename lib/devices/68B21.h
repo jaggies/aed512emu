@@ -32,7 +32,7 @@ class M68B21 : public Peripheral {
         };
         enum IrqStatusA { CA1 = 0x80, CA2 = 0x40 };
         enum IrqStatusB { CB1 = 0x80, CB2 = 0x40 };
-        enum Port { InputA, InputB, OutputA, OutputB, ControlA, ControlB, IrqStatusA, IrqStatusB };
+        enum Port { InputA, InputB, OutputA, OutputB, ControlA, ControlB };
         enum Registers { PRA = 0, DDRA = 0, CRA = 1, PRB = 2, DDRB = 2, CRB = 3 };
         typedef std::function<void(Port port, uint8_t oldvalue, uint8_t newvalue)> RegisterChangedCB;
 
@@ -74,12 +74,6 @@ class M68B21 : public Peripheral {
                     return (_crA & data) == data;
                 case ControlB:
                     return (_crB & data) == data;
-                case IrqStatusA:
-                    assert((data & 0x3f) == 0);  // only IRQ status bits are valid
-                    return (_crA & 0xc0 & data) == data;
-                case IrqStatusB:
-                    assert((data & 0x3f) == 0);  // only IRQ status bits are valid
-                    return (_crB & 0xc0 & data) == data;
                 default:
                     std::cerr << name() << " oops, unrecognized port " << port << std::endl;
                     return false;

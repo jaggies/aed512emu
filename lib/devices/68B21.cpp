@@ -112,7 +112,7 @@ void M68B21::set(Port port, uint8_t data) {
         case InputB:
             _inB |= data;
         break;
-        case IrqStatusA: {
+        case ControlA: {
             // assert((_crA & CRA5) == 0); // E clock config not supported
             data &= (CA1 | CA2); // Only CA1 and CA2 bits can be set
             const bool checkRisingca1 = _crA & CRA1;
@@ -135,7 +135,7 @@ void M68B21::set(Port port, uint8_t data) {
             }
         }
         break;
-        case IrqStatusB: {
+        case ControlB: {
             // assert((_crB & CRB5) == 0); // E clock config not supported
             data &= (CB1 | CB2); // Only CA1 and CA2 bits can be set
             const bool checkRisingcb1 = _crB & CRB1;
@@ -172,7 +172,7 @@ void M68B21::reset(Port port, uint8_t data) {
         case InputB:
             _inB &= ~data;
         break;
-        case IrqStatusA: {
+        case ControlA: {
             assert((_crA & CRA5) == 0); // E clock config not supported
             data &= (CA1 | CA2); // Only CA1 and CA2 bits can be set
             data = ~data; // invert the bits so we can simply AND them to clear
@@ -196,7 +196,7 @@ void M68B21::reset(Port port, uint8_t data) {
             }
         }
         break;
-        case IrqStatusB: {
+        case ControlB: {
             assert((_crA & CRA5) == 0); // E clock config not supported
             data &= (CB1 | CB2); // Only CB1 and CB2 bits can be reset
             data = ~data; // invert the bits so we can simply AND them to clear

@@ -66,8 +66,8 @@ class AedBus : public BUS {
             // TODO: also handle CTRL, SHIFT, REPEAT, BREAK from sheet 14
             _pia1->reset(M68B21::InputA, 0xff);
             _pia1->set(M68B21::InputA, c);
-            _pia1->set(M68B21::IrqStatusA, M68B21::CA1);
-            _pia1->reset(M68B21::IrqStatusA, M68B21::CA1);
+            _pia1->set(M68B21::ControlA, M68B21::CA1);
+            _pia1->reset(M68B21::ControlA, M68B21::CA1);
         }
 
         // Saves the current frame to a file in NetPBM format.
@@ -97,6 +97,8 @@ class AedBus : public BUS {
         void handlePIA0(M68B21::Port port, uint8_t oldData, uint8_t newData);
         void handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData);
         void handlePIA2(M68B21::Port port, uint8_t oldData, uint8_t newData);
+        bool handleSIO0(uint8_t byte);
+        bool handleSIO1(uint8_t byte);
 
         Peripheral::IRQ _irq;
         Peripheral::IRQ _nmi;

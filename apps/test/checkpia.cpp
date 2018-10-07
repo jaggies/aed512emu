@@ -36,10 +36,10 @@ int main(int argc, char **argv) {
     assert((pia->read(M68B21::CRA) & 0xc0) == 0); // no interrupts set yet
     assert((pia->read(M68B21::CRB) & 0xc0) == 0); // no interrupts set yet
 
-    pia->set(M68B21::IrqStatusA, M68B21::CA1); // should not invoke irqa_callback
-    pia->set(M68B21::IrqStatusA, M68B21::CA2); // should not invoke irqa_callback
-    pia->set(M68B21::IrqStatusB, M68B21::CB1); // should not invoke irqa_callback
-    pia->set(M68B21::IrqStatusB, M68B21::CB2); // should not invoke irqa_callback
+    pia->set(M68B21::ControlA, M68B21::CA1); // should not invoke irqa_callback
+    pia->set(M68B21::ControlA, M68B21::CA2); // should not invoke irqa_callback
+    pia->set(M68B21::ControlB, M68B21::CB1); // should not invoke irqa_callback
+    pia->set(M68B21::ControlB, M68B21::CB2); // should not invoke irqa_callback
     assert(!irqa_called && !irqb_called);
     assert((pia->read(M68B21::CRA) & 0xc0) == 0); // no interrupts set yet
     assert((pia->read(M68B21::CRB) & 0xc0) == 0); // no interrupts set yet
@@ -47,35 +47,35 @@ int main(int argc, char **argv) {
     // Configure CA1/CA2, CB1/CB2 to trigger on rising edge
     pia->write(M68B21::CRA, ca1_en_rising | ca2_en_rising);
     pia->write(M68B21::CRB, cb1_en_rising | cb2_en_rising);
-    pia->reset(M68B21::IrqStatusA, M68B21::CA1 | M68B21::CA2);
-    pia->reset(M68B21::IrqStatusB, M68B21::CB1 | M68B21::CB2);
+    pia->reset(M68B21::ControlA, M68B21::CA1 | M68B21::CA2);
+    pia->reset(M68B21::ControlB, M68B21::CB1 | M68B21::CB2);
     assert(!irqa_called && !irqb_called); // should have no effect
 
     // Check enabled CA1/CA2
-    pia->set(M68B21::IrqStatusA, M68B21::CA1); // should invoke irqa_callback
+    pia->set(M68B21::ControlA, M68B21::CA1); // should invoke irqa_callback
     assert(irqa_called && !irqb_called);
     irqa_called = false;
-    pia->set(M68B21::IrqStatusA, M68B21::CA1); // should not invoke irqa_callback again
+    pia->set(M68B21::ControlA, M68B21::CA1); // should not invoke irqa_callback again
     assert(!irqa_called && !irqb_called);
 
-    pia->set(M68B21::IrqStatusA, M68B21::CA2); // should invoke irqa_callback
+    pia->set(M68B21::ControlA, M68B21::CA2); // should invoke irqa_callback
     assert(irqa_called && !irqb_called);
     irqa_called = false;
-    pia->set(M68B21::IrqStatusA, M68B21::CA2); // should not invoke irqa_callback again
+    pia->set(M68B21::ControlA, M68B21::CA2); // should not invoke irqa_callback again
     assert(!irqa_called && !irqb_called);
 
     // Check CB1/CB2
     irqa_called = irqb_called = false;
-    pia->set(M68B21::IrqStatusB, M68B21::CB1); // should invoke irqb_callback
+    pia->set(M68B21::ControlB, M68B21::CB1); // should invoke irqb_callback
     assert(!irqa_called && irqb_called);
     irqb_called = false;
-    pia->set(M68B21::IrqStatusB, M68B21::CB1); // should not invoke irqb_callback again
+    pia->set(M68B21::ControlB, M68B21::CB1); // should not invoke irqb_callback again
     assert(!irqa_called && !irqb_called);
 
-    pia->set(M68B21::IrqStatusB, M68B21::CB2); // should invoke irqb_callback
+    pia->set(M68B21::ControlB, M68B21::CB2); // should invoke irqb_callback
     assert(!irqa_called && irqb_called);
     irqb_called = false;
-    pia->set(M68B21::IrqStatusB, M68B21::CB2); // should not invoke irqa_callback again
+    pia->set(M68B21::ControlB, M68B21::CB2); // should not invoke irqa_callback again
     assert(!irqa_called && !irqb_called);
 
     assert((pia->read(M68B21::CRA) & 0xc0) == (M68B21::CA1 | M68B21::CA2)); // irqA CA1 and CA2 set
@@ -101,10 +101,10 @@ int main(int argc, char **argv) {
     assert((pia->read(M68B21::CRA) & 0xc0) == 0); // no interrupts set yet
     assert((pia->read(M68B21::CRB) & 0xc0) == 0); // no interrupts set yet
 
-    pia->reset(M68B21::IrqStatusA, M68B21::CA1); // should not invoke irqa_callback
-    pia->reset(M68B21::IrqStatusA, M68B21::CA2); // should not invoke irqa_callback
-    pia->reset(M68B21::IrqStatusB, M68B21::CB1); // should not invoke irqa_callback
-    pia->reset(M68B21::IrqStatusB, M68B21::CB2); // should not invoke irqa_callback
+    pia->reset(M68B21::ControlA, M68B21::CA1); // should not invoke irqa_callback
+    pia->reset(M68B21::ControlA, M68B21::CA2); // should not invoke irqa_callback
+    pia->reset(M68B21::ControlB, M68B21::CB1); // should not invoke irqa_callback
+    pia->reset(M68B21::ControlB, M68B21::CB2); // should not invoke irqa_callback
     assert(!irqa_called && !irqb_called);
     assert((pia->read(M68B21::CRA) & 0xc0) == 0); // no interrupts set yet
     assert((pia->read(M68B21::CRB) & 0xc0) == 0); // no interrupts set yet
@@ -112,35 +112,35 @@ int main(int argc, char **argv) {
     // Configure CA1/CA2, CB1/CB2 to trigger on falling edge
     pia->write(M68B21::CRA, ca1_en_falling | ca2_en_falling);
     pia->write(M68B21::CRB, cb1_en_falling | cb2_en_falling);
-    pia->set(M68B21::IrqStatusA, M68B21::CA1 | M68B21::CA2);
-    pia->set(M68B21::IrqStatusB, M68B21::CB1 | M68B21::CB2);
+    pia->set(M68B21::ControlA, M68B21::CA1 | M68B21::CA2);
+    pia->set(M68B21::ControlB, M68B21::CB1 | M68B21::CB2);
     assert(!irqa_called && !irqb_called); // should have no effect
 
     // Check enabled CA1/CA2
-    pia->reset(M68B21::IrqStatusA, M68B21::CA1); // should invoke irqa_callback
+    pia->reset(M68B21::ControlA, M68B21::CA1); // should invoke irqa_callback
     assert(irqa_called && !irqb_called);
     irqa_called = false;
-    pia->reset(M68B21::IrqStatusA, M68B21::CA1); // should not invoke irqa_callback again
+    pia->reset(M68B21::ControlA, M68B21::CA1); // should not invoke irqa_callback again
     assert(!irqa_called && !irqb_called);
 
-    pia->reset(M68B21::IrqStatusA, M68B21::CA2); // should invoke irqa_callback
+    pia->reset(M68B21::ControlA, M68B21::CA2); // should invoke irqa_callback
     assert(irqa_called && !irqb_called);
     irqa_called = false;
-    pia->reset(M68B21::IrqStatusA, M68B21::CA2); // should not invoke irqa_callback again
+    pia->reset(M68B21::ControlA, M68B21::CA2); // should not invoke irqa_callback again
     assert(!irqa_called && !irqb_called);
 
     // Check CB1/CB2
     irqa_called = irqb_called = false;
-    pia->reset(M68B21::IrqStatusB, M68B21::CB1); // should invoke irqb_callback
+    pia->reset(M68B21::ControlB, M68B21::CB1); // should invoke irqb_callback
     assert(!irqa_called && irqb_called);
     irqb_called = false;
-    pia->reset(M68B21::IrqStatusB, M68B21::CB1); // should not invoke irqb_callback again
+    pia->reset(M68B21::ControlB, M68B21::CB1); // should not invoke irqb_callback again
     assert(!irqa_called && !irqb_called);
 
-    pia->reset(M68B21::IrqStatusB, M68B21::CB2); // should invoke irqb_callback
+    pia->reset(M68B21::ControlB, M68B21::CB2); // should invoke irqb_callback
     assert(!irqa_called && irqb_called);
     irqb_called = false;
-    pia->reset(M68B21::IrqStatusB, M68B21::CB2); // should not invoke irqa_callback again
+    pia->reset(M68B21::ControlB, M68B21::CB2); // should not invoke irqa_callback again
     assert(!irqa_called && !irqb_called);
 
     assert((pia->read(M68B21::CRA) & 0xc0) == (M68B21::CA1 | M68B21::CA2)); // irqA CA1 and CA2 set
@@ -157,6 +157,11 @@ int main(int argc, char **argv) {
     pia->read(M68B21::PRB); // reading clears irq
     assert((pia->read(M68B21::CRA) & 0xc0) == 0); // CRA should be unaffected
     assert((pia->read(M68B21::CRB) & 0xc0) == 0); // no irqs set anymore
+
+    //
+    // Check CA1/CA2, CB1, CB2 outputs
+    //
+    pia->reset();
 
     std::cerr << "*** All tests passed! ***" << std::endl;
 }
