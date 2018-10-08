@@ -85,11 +85,30 @@ static const uint64_t LINE_TIME_US = SECS2USECS(1L) / 15750;
 static const uint64_t SERIAL_HOLDOFF = 0;
 
 void AedBus::handlePIA0(M68B21::Port port, uint8_t oldData, uint8_t newData) {
-    // TODO
+    uint8_t changed = oldData ^ newData;
+    switch (port) {
+            case M68B21::ControlA:
+                if (rising(oldData, newData, M68B21::CRA5)) {
+                    std::cerr << "PIA0: CA2 output enabled" << std::endl;
+                }
+                if (changed & M68B21::CRA3) {
+                    std::cerr << "PIA0: CA2:" << bool(newData & M68B21::CRB3) << std::endl;
+                }
+            break;
+            case M68B21::ControlB:
+                if (rising(oldData, newData, M68B21::CRB5)) {
+                    std::cerr << "PIA0: CB2 output enabled" << std::endl;
+                }
+                if (changed & M68B21::CRB3) {
+                    std::cerr << "PIA0: CB2:" << bool(newData & M68B21::CRB3) << std::endl;
+                }
+            break;
+            default: break; // get rid of warning
+    }
 }
 
 void AedBus::handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData) {
-    uint8_t changed = oldData ^ newData;
+    const uint8_t changed = oldData ^ newData;
     switch (port) {
         case M68B21::ControlA:
             if (debug) {
@@ -100,8 +119,12 @@ void AedBus::handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData) {
             if (debug) {
                 std::cerr << _pia1->name() << " CrB changed: " << (int) (newData) << std::endl;
             }
-            _erase = _pia1->isSet(M68B21::ControlB, ERASE_OUTPUT | ERASE_ENABLE | ERASE_SIGNAL);
-            if (debug) std::cerr << "ERASE : " << _erase << std::endl;
+            if (newData & ERASE_OUTPUT) { // CB2 configured as output
+                if (changed & ERASE_SIGNAL) {
+                    _erase = newData & ERASE_SIGNAL;
+                    std::cerr << "ERASE:" << (int) _erase << std::endl;
+                }
+            }
         break;
         case M68B21::OutputB:
             if (changed & 0x10) {
@@ -136,13 +159,28 @@ void AedBus::handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData) {
 }
 
 void AedBus::handlePIA2(M68B21::Port port, uint8_t oldData, uint8_t newData) {
+    uint8_t changed = oldData ^ newData;
     switch (port) {
         case M68B21::OutputB:
             if (debug) std::cout << "BaudRates: " << (newData >> 2) << std::endl;
         break;
-
-        default: // fix warning
+        case M68B21::ControlA:
+            if (rising(oldData, newData, M68B21::CRA5)) {
+                std::cerr << "PIA2: CA2 output enabled" << std::endl;
+            }
+            if (changed & M68B21::CRA3) {
+                std::cerr << "PIA2: CA2:" << bool(newData & M68B21::CRA3) << std::endl;
+            }
         break;
+        case M68B21::ControlB:
+            if (rising(oldData, newData, M68B21::CRB5)) {
+                std::cerr << "PIA2: CB2 output enabled" << std::endl;
+            }
+            if (changed & M68B21::CRB3) {
+                std::cerr << "PIA2: CB2:" << bool(newData & M68B21::CRB3) << std::endl;
+            }
+        break;
+        default: break; // get rid of warning
     }
 }
 

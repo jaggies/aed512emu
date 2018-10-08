@@ -81,11 +81,11 @@ void AedRegs::write(int offset, uint8_t value) {
 
         case xscrl:
         case yscrl:
-            _storage[offset] = value;
             if (debug) {
                 std::cerr << "scroll(" << (int) _storage[xscrl] << "," << (int) _storage[yscrl] << ")" << std::endl;
             }
         break;
+
         default:
         break;
     }
