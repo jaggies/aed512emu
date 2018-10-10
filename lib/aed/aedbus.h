@@ -23,9 +23,10 @@
 class AedBus : public BUS {
     #define SECS2USECS(a) ((a)*1000000)
     // Events in PriorityQueue
-    enum EventType { HSYNC, HBLANK, SERIAL, JOYSTICK_SET, JOYSTICK_RESET };
+    enum EventType { FIELD, VBLANK_P, VBLANK_N, HBLANK_P, HBLANK_N,
+        SERIAL, JOYSTICK_SET, JOYSTICK_RESET };
     struct Event {
-        Event(EventType type_, uint64_t time_) : type(type_), time(time_) { }
+        Event(EventType type_, uint64_t time_us) : type(type_), time(time_us) { }
         EventType type;
         uint64_t time; // time we want the event to happen, in microseconds
     };

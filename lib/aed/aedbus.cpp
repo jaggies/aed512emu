@@ -75,11 +75,12 @@ static const int8_t SW1 = 0x10; // Option 1-8:[Fduplex, Erase, Rubout, Tk4014, P
 static const int8_t SW2 = 0x7d; // Comm 1-8: [Xoff, ForceRTS, AuxBaud[3..5], HostBaud[6..8]]
 
 // Video timing
-static const size_t VTOTAL = 525; // 262.5 lines per field
-//static const size_t VISIBLE = 483; // total number of visisble lines
-static const size_t VBLANK_DURATION = 257; // VBLANK duration in scanlines (per field)
-static const size_t HBLANK_DURATION_US = 11; // Actually 10.7us
-static const uint64_t LINE_TIME_US = SECS2USECS(1L) / 15750;
+static const uint64_t VBLANK_P_US = 15300;
+static const uint64_t VBLANK_N_US =  1366;
+static const uint64_t HBLANK_P_US = 22; // 22.92
+static const uint64_t HBLANK_N_US = 40; // 40.60
+static const uint64_t FIELD_DLY_US = 387; // 387us (delay from VBLANK_N)
+static const uint64_t HBLANK_DLY_US = 16; // 15.8us (delay from VBLANK_N)
 
 // Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
 static const uint64_t SERIAL_HOLDOFF = 0;
@@ -263,8 +264,8 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi),
     _mapper.add(_blumap = new Ram(CLUT_BLU, 0x100, "BLU"));
     _mapper.add(new RamDebug(0, CPU_MEM, "unmapped"));
 
-    // Kick off HBLANK
-    _eventQueue.push(Event(HBLANK, 0));
+    // Kick off VBLANK_N
+    _eventQueue.push(Event(VBLANK_N, 0));
 
     std::cerr << std::hex; // dump in hex
     std::cerr << _mapper;
@@ -289,46 +290,38 @@ AedBus::reset() {
 void AedBus::handleEvents(uint64_t now) {
     // TODO: when swapping this with an if statement, the video timing is correct, but
     // the device buffer overflows because it never emits XOFF.
-    if (now > _eventQueue.top().time) {
+    while (now > _eventQueue.top().time) {
         const Event& event = _eventQueue.top();
         switch (event.type) {
-            case HSYNC: {
-                // Assert HBLANK
+            case HBLANK_P:
                 _aedRegs->write(miscrd, _aedRegs->read(miscrd) | 0x01);
-            }
+                _eventQueue.push(Event(HBLANK_N, event.time + HBLANK_P_US));
             break;
 
-            case HBLANK: {
-                // Deassert HBLANK
+            case HBLANK_N:
                 _aedRegs->write(miscrd, _aedRegs->read(miscrd) & 0xfe);
+                _eventQueue.push(Event(HBLANK_P, event.time + HBLANK_N_US));
+            break;
 
-                // Assert VBLANK for first 20 scan lines after sync
-                int fieldline = _scanline > VTOTAL / 2 ? _scanline - VTOTAL / 2 : _scanline;
-                if (fieldline > VBLANK_DURATION) {
-                    _pia1->reset(M68B21::ControlB, VBLANK_SIGNAL);
-                } else {
-                    _pia1->set(M68B21::ControlB, VBLANK_SIGNAL);
-                }
+            case VBLANK_P:
+                _pia1->set(M68B21::ControlB, VBLANK_SIGNAL);
+                _eventQueue.push(Event(VBLANK_N, event.time + VBLANK_P_US));
+            break;
 
-                // If erase hw is enabled, erase 1 scanline at a time
-                if (_erase) {
-                    if (_scanline < getDisplayHeight()) {
-                        _aedRegs->eraseLine(_scanline);
-                    }
-                }
+            case VBLANK_N:
+                _pia1->reset(M68B21::ControlB, VBLANK_SIGNAL);
+                _aedRegs->write(miscrd, _aedRegs->read(miscrd) | 0x01);
+                _eventQueue.push(Event(HBLANK_N, event.time + HBLANK_DLY_US));
+                _eventQueue.push(Event(VBLANK_P, event.time + VBLANK_N_US));
+                _eventQueue.push(Event(FIELD, event.time + FIELD_DLY_US));
+            break;
 
-                // Assert FIELD_SIGNAL for second field
-                if (_scanline < VTOTAL / 2) {
-                    _pia1->set(M68B21::InputB, FIELD_SIGNAL);
-                } else {
+            case FIELD:
+                if (_pia1->isSet(M68B21::InputB, FIELD_SIGNAL)) {
                     _pia1->reset(M68B21::InputB, FIELD_SIGNAL);
+                } else {
+                    _pia1->set(M68B21::InputB, FIELD_SIGNAL);
                 }
-
-                _scanline++;
-                if (_scanline >= VTOTAL) _scanline = 0;
-                _eventQueue.push(Event(HSYNC, now + LINE_TIME_US));
-                _eventQueue.push(Event(HBLANK, now + LINE_TIME_US - HBLANK_DURATION_US));
-            }
             break;
 
             case SERIAL:
