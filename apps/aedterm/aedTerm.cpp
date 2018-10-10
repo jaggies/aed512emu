@@ -131,7 +131,7 @@ static void showline(std::ostream& os) {
     cpu->dump(os);
 }
 
-static void maybeUpdateTexture() {
+static void updateTexture() {
     bus->getFrame(imageData, &imageWidth, &imageHeight);
 
     // Copy to texture.
@@ -176,8 +176,6 @@ static void reshape(int w, int h)
 
 static void display(void)
 {
-    maybeUpdateTexture();
-
     checkGLError("before display()");
     glPushMatrix();
         // Compute (u,v) and (x,y) scaling factors to center the image on the screen
@@ -419,7 +417,8 @@ void handleException(CPU::ExceptionType ex, int pc) {
 int main(int argc, char **argv)
 {
     clk = new Clock(CPU_MHZ);
-    bus = new AedBus([]() { ::cpu->irq(); }, []() { ::cpu->nmi(); ::glutPostRedisplay(); });
+    bus = new AedBus([]() { ::cpu->irq(); }, []() { ::cpu->nmi(); },
+            []() { ::updateTexture(); ::glutPostRedisplay(); });
     cpu = new USE_CPU(
             [](int addr) { return ::bus->read(addr); },
             [](int addr, uint8_t value) { ::bus->write(addr, value); },

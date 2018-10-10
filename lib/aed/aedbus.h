@@ -35,8 +35,10 @@ class AedBus : public BUS {
             return (lhs.time > rhs.time); // stored in reverse
         }
     };
+    typedef std::function<void(void)> Redraw;
+
     public:
-        AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi);
+        AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi, Redraw redraw = nullptr);
         virtual ~AedBus();
         uint8_t read(int addr) override { return _mapper.read(addr); }
         void write(int addr, unsigned char value) override { _mapper.write(addr, value); }
@@ -126,6 +128,8 @@ class AedBus : public BUS {
         uint64_t    _joyDelay = 0; // delay for joyX and joyY, depending on last selection cycle
         std::queue<uint8_t> _serialFifo;
         std::priority_queue<Event, std::vector<Event>, EventCompare> _eventQueue;
+        Redraw  _redraw;
+        bool    _mwe; // memory write enable? Used to debug erase hardwares
 };
 
 #endif // AEDBUS_H

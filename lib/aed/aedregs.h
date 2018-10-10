@@ -56,6 +56,7 @@ class AedRegs: public Peripheral {
         const uint8_t getScrollY() const { return _storage[yscrl]; }
 
         void eraseLine(int line) {
+            if (line >= DISPLAY_HEIGHT) return;
             uint8_t* pixel = &_videoMemory[line * DISPLAY_WIDTH];
             size_t count = DISPLAY_WIDTH;
             while (count--) *pixel++ = _storage[vmnoi];

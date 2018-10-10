@@ -132,7 +132,9 @@ void AedBus::handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData) {
         case M68B21::OutputB:
             if (changed & 0x10) {
                 // Memory Write Enable (enables 6502 writing to video memory?)
-                std::cerr << "MWE:" << bool(newData & 0x10) << std::endl;
+                _mwe = bool(newData & 0x10);
+                std::cerr << "MWE:" << _mwe << std::endl;
+
             }
             if (changed & 0x0f) {
                 // Joystick processing
@@ -234,9 +236,10 @@ void AedBus::hblank(bool set) {
     }
 }
 
-AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
+AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi, Redraw redraw)
+        : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
         _pia0(nullptr), _pia1(nullptr), _pia2(nullptr),
-        _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr) {
+        _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr), _redraw(redraw), _mwe(false) {
 
     // Open all ROM files and copy to ROM location in romBuffer
     std::vector<uint8_t> romBuffer;
@@ -324,7 +327,6 @@ void AedBus::handleEvents(uint64_t now) {
     // the device buffer overflows because it never emits XOFF.
     if (now > _eventQueue.top().time) {
         const Event& event = _eventQueue.top();
-        std::cerr << std::dec;
         switch (event.type) {
             case HBLANK_P:
                 hblank(1);
@@ -332,14 +334,19 @@ void AedBus::handleEvents(uint64_t now) {
 
             case HBLANK_N:
                 hblank(0);
+                _scanline++;
             break;
 
             case VBLANK_P:
                 vblank(1);
+                if (_redraw) {
+                    _redraw();
+                }
             break;
 
             case VBLANK_N: {
                 vblank(0);
+                _scanline = 0;
                 _eventQueue.push(Event(VBLANK_P, event.time + VBLANK_N_US));
                 _eventQueue.push(Event(FIELD, event.time + FIELD_DLY_US));
                 // Add all horizontal retraces
