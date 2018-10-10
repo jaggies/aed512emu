@@ -23,7 +23,7 @@
 class AedBus : public BUS {
     #define SECS2USECS(a) ((a)*1000000)
     // Events in PriorityQueue
-    enum EventType { FIELD, VBLANK_P, VBLANK_N, HBLANK_P, HBLANK_N,
+    enum EventType { FIELD = 0, VBLANK_P, VBLANK_N, HBLANK_P, HBLANK_N,
         SERIAL, JOYSTICK_SET, JOYSTICK_RESET };
     struct Event {
         Event(EventType type_, uint64_t time_us) : type(type_), time(time_us) { }
@@ -100,6 +100,9 @@ class AedBus : public BUS {
         void handlePIA2(M68B21::Port port, uint8_t oldData, uint8_t newData);
         bool handleSIO0(uint8_t byte);
         bool handleSIO1(uint8_t byte);
+        void field();
+        void vblank(bool set);
+        void hblank(bool set);
 
         Peripheral::IRQ _irq;
         Peripheral::IRQ _nmi;

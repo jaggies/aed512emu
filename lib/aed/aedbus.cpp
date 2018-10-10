@@ -76,11 +76,11 @@ static const int8_t SW2 = 0x7d; // Comm 1-8: [Xoff, ForceRTS, AuxBaud[3..5], Hos
 
 // Video timing
 static const uint64_t VBLANK_P_US = 15300;
-static const uint64_t VBLANK_N_US =  1366;
+static const uint64_t VBLANK_N_US =  1300;
 static const uint64_t HBLANK_P_US = 22; // 22.92
 static const uint64_t HBLANK_N_US = 40; // 40.60
 static const uint64_t FIELD_DLY_US = 387; // 387us (delay from VBLANK_N)
-static const uint64_t HBLANK_DLY_US = 16; // 15.8us (delay from VBLANK_N)
+static const uint64_t HBLANK_DLY_US = 0; // 15.8us (delay from VBLANK_N)
 
 // Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
 static const uint64_t SERIAL_HOLDOFF = 0;
@@ -204,6 +204,30 @@ bool AedBus::handleSIO1(uint8_t byte) {
     return true; // handled
 }
 
+void AedBus::field() {
+    if (_pia1->isSet(M68B21::InputB, FIELD_SIGNAL)) {
+        _pia1->reset(M68B21::InputB, FIELD_SIGNAL);
+    } else {
+        _pia1->set(M68B21::InputB, FIELD_SIGNAL);
+    }
+}
+
+void AedBus::vblank(bool set) {
+    if (set) {
+        _pia1->set(M68B21::ControlB, VBLANK_SIGNAL);
+    } else {
+        _pia1->reset(M68B21::ControlB, VBLANK_SIGNAL);
+    }
+}
+
+void AedBus::hblank(bool set) {
+    if (set) {
+        _aedRegs->write(miscrd, _aedRegs->read(miscrd) | 0x01);
+    } else {
+        _aedRegs->write(miscrd, _aedRegs->read(miscrd) & 0xfe);
+    }
+}
+
 AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi), _mapper(0, CPU_MEM),
         _pia0(nullptr), _pia1(nullptr), _pia2(nullptr),
         _sio0(nullptr), _sio1(nullptr), _aedRegs(nullptr) {
@@ -265,6 +289,8 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi) : _irq(irq), _nmi(nmi),
     _mapper.add(new RamDebug(0, CPU_MEM, "unmapped"));
 
     // Kick off VBLANK_N
+    vblank(1);
+    hblank(1);
     _eventQueue.push(Event(VBLANK_N, 0));
 
     std::cerr << std::hex; // dump in hex
@@ -290,38 +316,39 @@ AedBus::reset() {
 void AedBus::handleEvents(uint64_t now) {
     // TODO: when swapping this with an if statement, the video timing is correct, but
     // the device buffer overflows because it never emits XOFF.
-    while (now > _eventQueue.top().time) {
+    if (now > _eventQueue.top().time) {
         const Event& event = _eventQueue.top();
+        std::cerr << std::dec;
         switch (event.type) {
             case HBLANK_P:
-                _aedRegs->write(miscrd, _aedRegs->read(miscrd) | 0x01);
-                _eventQueue.push(Event(HBLANK_N, event.time + HBLANK_P_US));
+                hblank(1);
             break;
 
             case HBLANK_N:
-                _aedRegs->write(miscrd, _aedRegs->read(miscrd) & 0xfe);
-                _eventQueue.push(Event(HBLANK_P, event.time + HBLANK_N_US));
+                hblank(0);
             break;
 
             case VBLANK_P:
-                _pia1->set(M68B21::ControlB, VBLANK_SIGNAL);
-                _eventQueue.push(Event(VBLANK_N, event.time + VBLANK_P_US));
+                vblank(1);
             break;
 
-            case VBLANK_N:
-                _pia1->reset(M68B21::ControlB, VBLANK_SIGNAL);
-                _aedRegs->write(miscrd, _aedRegs->read(miscrd) | 0x01);
-                _eventQueue.push(Event(HBLANK_N, event.time + HBLANK_DLY_US));
+            case VBLANK_N: {
+                vblank(0);
                 _eventQueue.push(Event(VBLANK_P, event.time + VBLANK_N_US));
                 _eventQueue.push(Event(FIELD, event.time + FIELD_DLY_US));
+                // Add all horizontal retraces
+                uint64_t t = HBLANK_DLY_US;
+                while (t < (VBLANK_N + VBLANK_P)) {
+                    _eventQueue.push(Event(HBLANK_N, event.time + t));
+                    _eventQueue.push(Event(HBLANK_P, event.time + t + HBLANK_N_US));
+                    t += HBLANK_N_US + HBLANK_P_US;
+                }
+                _eventQueue.push(Event(VBLANK_N, event.time + VBLANK_N_US + VBLANK_P_US));
+            }
             break;
 
             case FIELD:
-                if (_pia1->isSet(M68B21::InputB, FIELD_SIGNAL)) {
-                    _pia1->reset(M68B21::InputB, FIELD_SIGNAL);
-                } else {
-                    _pia1->set(M68B21::InputB, FIELD_SIGNAL);
-                }
+                field();
             break;
 
             case SERIAL:
