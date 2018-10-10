@@ -76,6 +76,7 @@ static const int8_t SW1 = 0x10; // Option 1-8:[Fduplex, Erase, Rubout, Tk4014, P
 static const int8_t SW2 = 0x7d; // Comm 1-8: [Xoff, ForceRTS, AuxBaud[3..5], HostBaud[6..8]]
 
 // Video timing
+static const int VTOTAL = 525;
 static const uint64_t VBLANK_P_US = 15300;
 static const uint64_t VBLANK_N_US =  1300;
 static const uint64_t HBLANK_P_US = 22; // 22.92
@@ -407,8 +408,10 @@ AedBus::getFrame(std::vector<uint32_t>& frame, int* w, int *h) {
     const uint8_t* grn = &getGreen(0);
     const uint8_t* blu = &getBlue(0);
 
+    const size_t yshift = VTOTAL / 2 + 13; // TODO: Why!?!?
+
     const size_t scrollx = _aedRegs->getScrollX();
-    const size_t scrolly = _aedRegs->getScrollY();
+    const size_t scrolly = _aedRegs->getScrollY() + yshift;
     for (size_t j = 0; j < height; j++) {
         for (size_t i = 0; i < width; i++) {
             const size_t x = (i + scrollx) % width;
