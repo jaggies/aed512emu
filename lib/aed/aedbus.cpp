@@ -18,6 +18,7 @@
 #include "util.h"
 
 static bool debug = false;
+static bool debug_timing = false;
 
 // PIA1 Signal pins
 const int VBLANK_SIGNAL = M68B21::CB1;
@@ -80,7 +81,7 @@ static const uint64_t VBLANK_N_US =  1300;
 static const uint64_t HBLANK_P_US = 22; // 22.92
 static const uint64_t HBLANK_N_US = 40; // 40.60
 static const uint64_t FIELD_DLY_US = 387; // 387us (delay from VBLANK_N)
-static const uint64_t HBLANK_DLY_US = 0; // 15.8us (delay from VBLANK_N)
+static const uint64_t HBLANK_DLY_US = 16; // 15.8us (delay from VBLANK_N)
 
 // Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
 static const uint64_t SERIAL_HOLDOFF = 0;
@@ -205,7 +206,9 @@ bool AedBus::handleSIO1(uint8_t byte) {
 }
 
 void AedBus::field() {
-    if (_pia1->isSet(M68B21::InputB, FIELD_SIGNAL)) {
+    bool set = _pia1->isSet(M68B21::InputB, FIELD_SIGNAL);
+    if (debug_timing) std::cerr << __func__ << ":" << set << " at " << _cpuTime << std::endl;
+    if (set) {
         _pia1->reset(M68B21::InputB, FIELD_SIGNAL);
     } else {
         _pia1->set(M68B21::InputB, FIELD_SIGNAL);
@@ -213,6 +216,7 @@ void AedBus::field() {
 }
 
 void AedBus::vblank(bool set) {
+    if (debug_timing) std::cerr << __func__ << ":" << set << " at " << _cpuTime << std::endl;
     if (set) {
         _pia1->set(M68B21::ControlB, VBLANK_SIGNAL);
     } else {
@@ -221,6 +225,7 @@ void AedBus::vblank(bool set) {
 }
 
 void AedBus::hblank(bool set) {
+    if (debug_timing) std::cerr << __func__ << ":" << set << " at " << _cpuTime << std::endl;
     if (set) {
         _aedRegs->write(miscrd, _aedRegs->read(miscrd) | 0x01);
     } else {
@@ -337,12 +342,13 @@ void AedBus::handleEvents(uint64_t now) {
                 _eventQueue.push(Event(VBLANK_P, event.time + VBLANK_N_US));
                 _eventQueue.push(Event(FIELD, event.time + FIELD_DLY_US));
                 // Add all horizontal retraces
-                uint64_t t = HBLANK_DLY_US;
-                while (t < (VBLANK_N + VBLANK_P)) {
-                    _eventQueue.push(Event(HBLANK_N, event.time + t));
-                    _eventQueue.push(Event(HBLANK_P, event.time + t + HBLANK_N_US));
+                uint64_t t = event.time + HBLANK_DLY_US;
+                while (t < (event.time + VBLANK_N_US + VBLANK_P_US)) {
+                    _eventQueue.push(Event(HBLANK_N, t));
+                    _eventQueue.push(Event(HBLANK_P, t + HBLANK_N_US));
                     t += HBLANK_N_US + HBLANK_P_US;
                 }
+                // Rinse and repeat...
                 _eventQueue.push(Event(VBLANK_N, event.time + VBLANK_N_US + VBLANK_P_US));
             }
             break;
