@@ -21,6 +21,7 @@
 #include <GL/glut.h>
 #include <GL/glu.h>
 #include <iostream>
+#include <getopt.h>
 #include "cpu6502.h"
 #include "mos6502.h"
 #include "dis6502.h"
@@ -65,6 +66,32 @@ static void checkGLError(const char* msg) {
     GLenum err;
     if ((err = glGetError()) != GL_NO_ERROR) {
         std::cerr << "GL Error (" << msg << ") : " << gluErrorString(err) << std::endl;
+    }
+}
+
+static void doShell(const char* path) {
+    int parentToChild[2];
+    int childToParent[2];
+    pipe(parentToChild);
+    pipe(childToParent);
+    pid_t pid;
+    if ((pid = fork()) == -1) { //error
+        std::cerr << "Can't fork: " << strerror(errno) << std::endl;
+    } else if (pid == 0) { // child process
+        close(parentToChild[1]); // close the write end
+        dup2(parentToChild[0], 0); // read from pipe come from stdin
+        close(childToParent[0]); // close read end
+        dup2(childToParent[1], 1); // stdout goes to parent
+        dup2(childToParent[1], 2); // stderr goes to parent
+        execv(path, nullptr);
+        // If we get here, something bad happened
+        std::cerr << "Unknown command: " << strerror(errno) << std::endl;
+        exit(1);
+    } else { // parent process
+        close(parentToChild[0]); // close the read end
+        dup2(parentToChild[1], 1); // write to pipe comes from stdout
+        close(childToParent[1]); // close the write end
+        dup2(childToParent[0], 0); // read end maps to stdin
     }
 }
 
@@ -407,7 +434,7 @@ void handleException(CPU::ExceptionType ex, int pc) {
 
 int main(int argc, char **argv)
 {
-    clk = new Clock(CPU_MHZ); // TODO: what frequency?
+    clk = new Clock(CPU_MHZ);
     bus = new AedBus([]() { ::cpu->irq(); }, []() { ::cpu->nmi(); ::glutPostRedisplay(); });
     cpu = new USE_CPU(
             [](int addr) { return ::bus->read(addr); },
@@ -424,6 +451,25 @@ int main(int argc, char **argv)
             std::cerr << "Adding input file at descriptor " << fd << std::endl;
             filedesc[nfds] = {fd, POLLIN | POLLPRI, 0 }; nfds++;
         }
+    }
+
+    int opt;
+    const char* shell = nullptr;
+    while ((opt = getopt(argc, argv, "e:")) != -1) {
+        switch (opt) {
+            case 'e':
+                shell = optarg;
+            break;
+            case '?':  // unknown option...
+                std::cerr << "Unknown option: '" << char(optopt) << "'!" << endl;
+                exit(0);
+            break;
+        }
+    }
+
+    if (shell) {
+        std::cout << "Starting with shell '" << shell << "'" << std::endl;
+        doShell(shell);
     }
 
     signal(SIGINT, signalHandler);
