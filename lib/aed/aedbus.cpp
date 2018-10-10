@@ -190,12 +190,16 @@ bool AedBus::handleSIO0(uint8_t byte) {
 }
 
 bool AedBus::handleSIO1(uint8_t byte) {
-    std::cout << "SIO1: " << (int) byte << std::endl;
-    if (byte == 19) { // XOFF
-        _xon = false;
-    } else if (byte == 17) { // XON
-        _xon = true;
+    switch(byte) {
+        //case 10: std::cout << (char) 13; break; // LF
+        case 13: std::cout << (char) 10; break; // CR
+        case 17: _xon = true; break; // XON
+        case 19: _xon = false; break; // XOFF
+        default:
+            std::cout << byte << std::flush;
+            break;
     }
+
     return true; // handled
 }
 
