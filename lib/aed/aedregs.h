@@ -42,7 +42,7 @@ class AedRegs: public Peripheral {
                 _storage[i] = 0;
             }
             for (size_t i = 0; i < _videoMemory.size(); i++) {
-                _videoMemory[i] = random();
+                _videoMemory[i] = 0;//random();
             }
         }
 
