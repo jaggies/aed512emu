@@ -11,10 +11,15 @@
 
 const int xres = 483;
 const int yres = xres;
-const int points = 19;
 
 int main(int argc, char **argv) {
     AedSequence seq;
+    int points = 19;
+
+    if (argc > 1) {
+        points = atoi(argv[1]);
+    }
+
     float x[points], y[points];
 
     for (int i = 0; i < points; i++) {
