@@ -33,6 +33,12 @@ AedSequence::write_horizontal_run(const uint8_t* begin, const uint8_t* end, Stat
     }
 }
 
+AedSequence& AedSequence::write_horizontal_scan_aoi(const uint8_t* buffer, int n) {
+    _sequence.push_back(WHS);
+    _sequence.insert(_sequence.end(), buffer, buffer + n);
+    return *this;
+}
+
 AedSequence& AedSequence::write_horizontal_runs(const uint8_t* buffer, int n) {
     const uint8_t* begin = buffer;
     const uint8_t* current = begin + 1;

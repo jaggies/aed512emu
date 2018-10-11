@@ -22,3 +22,7 @@ Main doily : doily.cpp ;
 Depends rectangles : libemu.a ;
 LINKLIBS on rectangles = $(LINKLIBS) -lemu ;
 Main rectangles : rectangles.cpp ;
+
+Depends aoi : libemu.a ;
+LINKLIBS on aoi = $(LINKLIBS) -lemu ;
+Main aoi : aoi.cpp ;

@@ -24,6 +24,12 @@ class AedSequence {
             return *this;
         }
 
+        AedSequence& define_area_of_interest(uint16_t x, uint16_t y) {
+            _sequence.push_back(DAI);
+            coordinate(x, y);
+            return *this;
+        }
+
         AedSequence& circle(int radius, bool fat = false) {
             _sequence.push_back(fat ? DFC : DCL);
             _sequence.push_back(radius & 0xff);
@@ -92,6 +98,7 @@ class AedSequence {
             return *this;
         }
 
+        AedSequence& write_horizontal_scan_aoi(const uint8_t* buffer, int n);
         AedSequence& write_horizontal_runs(const uint8_t* buffer, int n);
 
     private:
