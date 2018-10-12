@@ -86,6 +86,13 @@ void AedRegs::write(int offset, uint8_t value) {
             }
         break;
 
+        case pxcnth:
+            if (_pixcntoflo && ((_storage[offset] ^ value) & 0x0f)) {
+                // This is the difference between A/B versions of the AED512
+                _pixcntoflo((value & 0x0f) == 0x0f); // Terminal Count (TC) from 74ls191 U164
+            }
+        break;
+
         default:
         break;
     }

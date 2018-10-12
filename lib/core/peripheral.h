@@ -15,6 +15,7 @@
 class Peripheral {
     public:
         typedef std::function<void(void)> IRQ;
+        typedef std::function<void(bool set)> Signal;
 
         Peripheral(int start, int size, const std::string& name="")
             : _start(start), _size(size), _name(name) { }

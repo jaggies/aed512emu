@@ -22,6 +22,7 @@ static bool debug_timing = false;
 
 // PIA1 Signal pins
 const int VBLANK_SIGNAL = M68B21::CB1;
+const int PIXCNTOFLO_SIGNAL = M68B21::CA2;
 const int ERASE_SIGNAL = M68B21::CRB3; // CB2 output bit
 //const int ERASE_ENABLE = M68B21::CRB4; // CB2 is not in handshake mode
 const int ERASE_OUTPUT = M68B21::CRB5; // CB2 is enabled as output
@@ -92,7 +93,11 @@ void AedBus::handlePIA0(M68B21::Port port, uint8_t oldData, uint8_t newData) {
     switch (port) {
             case M68B21::ControlA:
                 if (rising(oldData, newData, M68B21::CRA5)) {
-                    std::cerr << "PIA0: CA2 output enabled" << std::endl;
+                    if (newData & M68B21::CRA4) {
+                        std::cerr << "PIA0: CA2 output enabled" << std::endl;
+                    } else {
+                        std::cerr << "PIA0: CA2 output E-clock enabled" << std::endl;
+                    }
                 }
                 if (changed & M68B21::CRA3) {
                     std::cerr << "PIA0: CA2:" << bool(newData & M68B21::CRB3) << std::endl;
@@ -100,7 +105,11 @@ void AedBus::handlePIA0(M68B21::Port port, uint8_t oldData, uint8_t newData) {
             break;
             case M68B21::ControlB:
                 if (rising(oldData, newData, M68B21::CRB5)) {
-                    std::cerr << "PIA0: CB2 output enabled" << std::endl;
+                    if (newData & M68B21::CRB4) {
+                        std::cerr << "PIA0: CB2 output enabled" << std::endl;
+                    } else {
+                        std::cerr << "PIA0: CB2 output E-clock enabled" << std::endl;
+                    }
                 }
                 if (changed & M68B21::CRB3) {
                     std::cerr << "PIA0: CB2:" << bool(newData & M68B21::CRB3) << std::endl;
@@ -288,7 +297,14 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi, Redraw redraw)
     _mapper.add(new Ram(0x8000, 0x300, "hack_0x8000"));
     _mapper.add(new RamDebug(ACAIK_BASE, SRAM_SIZE, "ACAIK"));
 #endif
-    _mapper.add(_aedRegs = new AedRegs(0x00, 0x30, "aedregs"));
+    _mapper.add(_aedRegs = new AedRegs(0x00, 0x30, "aedregs",
+            [this](bool set) {
+                if (set) {
+                    _pia0->set(M68B21::ControlA, PIXCNTOFLO_SIGNAL);
+                } else {
+                    _pia0->reset(M68B21::ControlA, PIXCNTOFLO_SIGNAL);
+                }
+    }));
     _mapper.add(new Rom(0x10000 - romBuffer.size(), romBuffer));
     _mapper.add(new Ram(LED_BASE, SRAM_SIZE, "LED"));
     _mapper.add(new Ram(RAM_START, RAM_SIZE - RAM_START));
@@ -300,7 +316,7 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi, Redraw redraw)
     // Kick off VBLANK_N
     vblank(1);
     hblank(1);
-    _eventQueue.push(Event(VBLANK_N, 0));
+    _eventQueue.push(Event(VBLANK_N, 1000)); // Allow CPU to run for a bit before sending IRQs
 
     std::cerr << std::hex; // dump in hex
     std::cerr << _mapper;

@@ -23,9 +23,10 @@ class AedRegs: public Peripheral {
     #endif
 
     public:
-        AedRegs(int start, int size, const std::string& name="")
+        AedRegs(int start, int size, const std::string& name="", Signal pixcntoflo = nullptr)
             : Peripheral(start, size, name), _storage(size, 0),
-              _videoMemory(DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(uint8_t), 0x00) {
+              _videoMemory(DISPLAY_WIDTH * DISPLAY_HEIGHT * sizeof(uint8_t), 0x00),
+              _pixcntoflo(pixcntoflo) {
             reset();
         }
         virtual ~AedRegs() = default;
@@ -69,6 +70,7 @@ class AedRegs: public Peripheral {
         void dump(int offset, uint8_t value);
         std::vector<uint8_t> _storage;
         std::vector<uint8_t> _videoMemory;
+        Signal  _pixcntoflo;
 };
 
 #endif /* AEDREGS_H_ */
