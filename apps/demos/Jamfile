@@ -26,3 +26,7 @@ Main rectangles : rectangles.cpp ;
 Depends aoi : libemu.a ;
 LINKLIBS on aoi = $(LINKLIBS) -lemu ;
 Main aoi : aoi.cpp ;
+
+Depends showpbm : libemu.a ;
+LINKLIBS on showpbm = $(LINKLIBS) -lemu ;
+Main showpbm : showpbm.cpp ;

@@ -1,5 +1,7 @@
 SubDir TOP lib util ;
 
-Library libemu : 
-	netpbm.c
-	;
+Library libemu :
+    diffusion.cpp
+    netpbm.c
+    ordered.cpp
+    ;

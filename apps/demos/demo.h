@@ -12,8 +12,7 @@
 #include "aedsequence.h"
 
 // Initializes color LUT with given allocation of bits.
-inline void initLut(int rbits, int gbits, int bbits) {
-    AedSequence seq;
+inline void initLut(AedSequence& seq, int rbits, int gbits, int bbits) {
     assert(rbits + gbits + bbits <= 8);
     for (int b = 0; b < (1 << bbits); b++) {
         for (int g = 0; g < (1 << gbits); g++) {
@@ -26,11 +25,6 @@ inline void initLut(int rbits, int gbits, int bbits) {
             }
         }
     }
-}
-
-inline void drawCircle(uint16_t x, uint16_t y, uint8_t color) {
-    AedSequence seq;
-    seq.mov(x, y).circle(color).send();
 }
 
 #endif /* APPS_DEMOS_DEMO_H_ */

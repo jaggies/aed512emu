@@ -12,16 +12,14 @@
 const int xres = 512;
 const int yres = 512;
 const int maxCount = 256;
+static AedSequence seq;
 
 void mandel(double xmin, double xmax, double ymin, double ymax) {
     float cr_delta = (xmax - xmin)/(xres-1);
     float ci_delta = (ymax - ymin)/(yres-1);
-
     float ci = ymin;
-    AedSequence seq;
 
     uint8_t buffer[xres];
-
     for (int j = 0; j < yres; j++, ci += ci_delta) {
         float cr = xmin;
         for (int i = 0; i < xres; i++, cr += cr_delta) {
@@ -44,6 +42,6 @@ void mandel(double xmin, double xmax, double ymin, double ymax) {
 
 int main(int argc, char **argv)
 {
-    initLut(3, 3, 2);
+    initLut(seq, 3, 3, 2);
     mandel(-2.0, 1.0, -1.25, 1.25);
 }

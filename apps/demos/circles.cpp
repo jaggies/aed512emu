@@ -14,12 +14,12 @@ const int yres = 480;
 
 int main(int argc, char **argv) {
     AedSequence seq;
-    initLut(3, 3, 2);
+    initLut(seq, 3, 3, 2);
     int n = 100;
     while(n--) {
         seq.mov(random() % xres, random() % yres);
-        seq.circle(random(), true);
         seq.color(random() % 256);
+        seq.circle(random() & 0x7f, true);
         seq.send();
     }
 }

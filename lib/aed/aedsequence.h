@@ -32,7 +32,7 @@ class AedSequence {
 
         AedSequence& circle(int radius, bool fat = false) {
             _sequence.push_back(fat ? DFC : DCL);
-            _sequence.push_back(radius & 0xff);
+            _sequence.push_back(radius & 0x7f); // only up to 127 radius? WTF?
             return *this;
         }
 
