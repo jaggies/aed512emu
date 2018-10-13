@@ -94,9 +94,9 @@ void AedBus::handlePIA0(M68B21::Port port, uint8_t oldData, uint8_t newData) {
             case M68B21::ControlA:
                 if (rising(oldData, newData, M68B21::CRA5)) {
                     if (newData & M68B21::CRA4) {
-                        std::cerr << "PIA0: CA2 output enabled" << std::endl;
+                        if (debug) std::cerr << "PIA0: CA2 output enabled" << std::endl;
                     } else {
-                        std::cerr << "PIA0: CA2 output E-clock enabled" << std::endl;
+                        if (debug) std::cerr << "PIA0: CA2 output E-clock enabled" << std::endl;
                     }
                 }
                 if (changed & M68B21::CRA3) {
@@ -106,9 +106,9 @@ void AedBus::handlePIA0(M68B21::Port port, uint8_t oldData, uint8_t newData) {
             case M68B21::ControlB:
                 if (rising(oldData, newData, M68B21::CRB5)) {
                     if (newData & M68B21::CRB4) {
-                        std::cerr << "PIA0: CB2 output enabled" << std::endl;
+                        if (debug) std::cerr << "PIA0: CB2 output enabled" << std::endl;
                     } else {
-                        std::cerr << "PIA0: CB2 output E-clock enabled" << std::endl;
+                        if (debug) std::cerr << "PIA0: CB2 output E-clock enabled" << std::endl;
                     }
                 }
                 if (changed & M68B21::CRB3) {
@@ -180,18 +180,18 @@ void AedBus::handlePIA2(M68B21::Port port, uint8_t oldData, uint8_t newData) {
         break;
         case M68B21::ControlA:
             if (rising(oldData, newData, M68B21::CRA5)) {
-                std::cerr << "PIA2: CA2 output enabled" << std::endl;
+                if (debug) std::cerr << "PIA2: CA2 output enabled" << std::endl;
             }
             if (changed & M68B21::CRA3) {
-                std::cerr << "PIA2: CA2:" << bool(newData & M68B21::CRA3) << std::endl;
+                if (debug) std::cerr << "PIA2: CA2:" << bool(newData & M68B21::CRA3) << std::endl;
             }
         break;
         case M68B21::ControlB:
             if (rising(oldData, newData, M68B21::CRB5)) {
-                std::cerr << "PIA2: CB2 output enabled" << std::endl;
+                if (debug) std::cerr << "PIA2: CB2 output enabled" << std::endl;
             }
             if (changed & M68B21::CRB3) {
-                std::cerr << "PIA2: CB2:" << bool(newData & M68B21::CRB3) << std::endl;
+                if (debug) std::cerr << "PIA2: CB2:" << bool(newData & M68B21::CRB3) << std::endl;
             }
         break;
         default: break; // get rid of warning

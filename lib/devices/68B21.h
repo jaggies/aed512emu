@@ -13,6 +13,12 @@
 #include "peripheral.h"
 
 class M68B21 : public Peripheral {
+    const uint8_t MODE_MASKA = CRA5 | CRA4;
+    const uint8_t MODE_MASKB = CRB5 | CRB4;
+    const uint8_t MODE_HANDSHAKEA = CRA5; // CRA5:CRA4 = 10
+    const uint8_t MODE_HANDSHAKEB = CRB5; // CRB5:CRB4 = 10
+    const uint8_t MODE_DIRECTA = CRA5 | CRA4;
+    const uint8_t MODE_DIRECTB = CRB5 | CRB4;
     public:
         enum PortBits {
             PA7 = 1<<7, PA6 = 1<<6, PA5 = 1<<5, PA4 = 1<<4,
@@ -85,6 +91,9 @@ class M68B21 : public Peripheral {
         // Resets all 1 bits in data. The host shouldn't be mucking with ControlA or ControlB.
         void reset(Port port, uint8_t data);
     private:
+        void maybeChangeCA2(bool newValue);
+        void maybeChangeCB2(bool newValue);
+
         uint8_t _prA = 0; // Peripheral Register A (when CRA2 is set)
         uint8_t _ddrA = 0; // Data Direction Register A. A bit value of 0 = input, 1 = output
         uint8_t _crA = 0; // Control Register InputA
@@ -95,8 +104,8 @@ class M68B21 : public Peripheral {
         uint8_t _inB = 0; // Incoming port B (can only by set by host)
         uint8_t _inCA = 0; // Incoming bits CA1, CA2 (can only by set by host)
         uint8_t _inCB = 0; // Incoming bits CB1, CB2 (can only by set by host)
-        bool    _outCA = false; // Outgoing bit CA2
-        bool    _outCB = false; // Outgoing bit CB2
+        bool    _outCA2 = false; // Outgoing bit CA2
+        bool    _outCB2 = false; // Outgoing bit CB2
         IRQ _irqA;// Callback invoked when CA1 or CA2 input changes
         IRQ _irqB;// Callback invoked when CB1 or CB2 input changes
         RegisterChangedCB _changed; // Callback invoked when any register changes

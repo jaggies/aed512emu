@@ -14,9 +14,9 @@ bool irqb_called;
 bool ca2_set = 0;
 bool cb2_set = 0;
 
-const int ca1_en_rising = M68B21::CRA0 | M68B21::CRA1; // CA1 en + rising
+const int CA1_EN_RISING = M68B21::CRA0 | M68B21::CRA1; // CA1 en + rising
 const int ca2_en_rising = M68B21::CRA3 | M68B21::CRA4; // CA2 en + rising
-const int cb1_en_rising = M68B21::CRB0 | M68B21::CRB1; // CB1 en + rising
+const int CB1_EN_RISING = M68B21::CRB0 | M68B21::CRB1; // CB1 en + rising
 const int cb2_en_rising = M68B21::CRB3 | M68B21::CRB4; // CB2 en + rising
 const int ca1_en_falling = M68B21::CRA0; // CA1 en + falling
 const int ca2_en_falling = M68B21::CRA3; // CA2 en + falling
@@ -51,8 +51,8 @@ int main(int argc, char **argv) {
     assert((pia->read(M68B21::CRB) & 0xc0) == 0); // no interrupts set yet
 
     // Configure CA1/CA2, CB1/CB2 to trigger on rising edge
-    pia->write(M68B21::CRA, ca1_en_rising | ca2_en_rising);
-    pia->write(M68B21::CRB, cb1_en_rising | cb2_en_rising);
+    pia->write(M68B21::CRA, CA1_EN_RISING | ca2_en_rising);
+    pia->write(M68B21::CRB, CB1_EN_RISING | cb2_en_rising);
     pia->reset(M68B21::ControlA, M68B21::CA1 | M68B21::CA2);
     pia->reset(M68B21::ControlB, M68B21::CB1 | M68B21::CB2);
     assert(!irqa_called && !irqb_called); // should have no effect
@@ -163,6 +163,38 @@ int main(int argc, char **argv) {
     pia->read(M68B21::PRB); // reading clears irq
     assert((pia->read(M68B21::CRA) & 0xc0) == 0); // CRA should be unaffected
     assert((pia->read(M68B21::CRB) & 0xc0) == 0); // no irqs set anymore
+
+    //
+    // Check CA2 output (Read Strobe With CA1 Restore)
+    //
+    const uint8_t READ_STROBE_WITH_CA1_RESTORE = M68B21::CRA5; // CRA5:CRA3 = 100
+    pia->reset();
+    ca2_set = cb2_set = false;
+    pia->write(M68B21::CRA, READ_STROBE_WITH_CA1_RESTORE | CA1_EN_RISING);
+    assert(!ca2_set && !cb2_set); // no effect
+    pia->reset(M68B21::ControlA, M68B21::CA1);
+    assert(!ca2_set && !cb2_set); // no effect
+    pia->set(M68B21::ControlA, M68B21::CA1);
+    assert(ca2_set && !cb2_set); // ca2 should now be set
+    pia->write(M68B21::CRA, READ_STROBE_WITH_CA1_RESTORE | CA1_EN_RISING | M68B21::CRA2); // select PRA
+    pia->read(M68B21::PRA); // read clears CA2
+    assert(!ca2_set && !cb2_set); // ca2 should now be reset
+
+    //
+    // Check CB2 output (Write Strobe With CB1 Restore)
+    //
+    const uint8_t WRITE_STROBE_WITH_CB1_RESTORE = M68B21::CRB5; // CRB5:CRB3 = 100
+    pia->reset();
+    ca2_set = cb2_set = false;
+    pia->write(M68B21::CRB, WRITE_STROBE_WITH_CB1_RESTORE | CB1_EN_RISING);
+    assert(!ca2_set && !cb2_set); // no effect
+    pia->reset(M68B21::ControlB, M68B21::CB1);
+    assert(!ca2_set && !cb2_set); // no effect
+    pia->set(M68B21::ControlB, M68B21::CB1);
+    assert(!ca2_set && cb2_set); // cb2 should now be set
+    pia->write(M68B21::CRB, WRITE_STROBE_WITH_CB1_RESTORE | CB1_EN_RISING | M68B21::CRA2); // select PRB
+    pia->write(M68B21::PRB, 0); // write clears CB2
+    assert(!ca2_set && !cb2_set); // cb2 should now be reset
 
     //
     // Check CA2 output (CRA5:CRA4 = 11)
