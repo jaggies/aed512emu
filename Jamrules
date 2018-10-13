@@ -6,7 +6,11 @@ DEFINES += USE_CPU=CPU6502 ;
 CCFLAGS += -Wall ;
 C++FLAGS += $(CCFLAGS) -std=c++11 ;
 OPTIM = -g -O3 ;
-LINK = $(C++) $(OPTIM) ;
+LINK = c++ $(OPTIM) ;
 LINKLIBS += -L$(TOP)/build/$(OSFULL) ;
 ALL_LOCATE_TARGET = $(TOP)/build/$(OSFULL) ;
+
+if $(OS) = LINUX {
+    AR = ar cUr ; # Turn off deterministic ar. Sigh.
+}
 

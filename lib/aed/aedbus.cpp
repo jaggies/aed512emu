@@ -366,11 +366,17 @@ void AedBus::handleEvents(uint64_t now) {
                 _eventQueue.push(Event(VBLANK_P, event.time + VBLANK_N_US));
                 _eventQueue.push(Event(FIELD, event.time + FIELD_DLY_US));
                 // Add all horizontal retraces
-                uint64_t t = event.time + HBLANK_DLY_US;
-                while (t < (event.time + VBLANK_N_US + VBLANK_P_US)) {
+                size_t t = event.time + HBLANK_DLY_US;
+		const size_t end_time = event.time + VBLANK_N_US + VBLANK_P_US;
+		const float nlines = float(end_time - t) / (HBLANK_N_US + HBLANK_P_US);
+		std::cerr << "Lines per frame = " << nlines << std::endl;
+		int lines = 0;
+                while (t < end_time) {
                     _eventQueue.push(Event(HBLANK_N, t));
                     _eventQueue.push(Event(HBLANK_P, t + HBLANK_N_US));
                     t += HBLANK_N_US + HBLANK_P_US;
+		    assert(lines < 1000);
+		    lines++;
                 }
                 // Rinse and repeat...
                 _eventQueue.push(Event(VBLANK_N, event.time + VBLANK_N_US + VBLANK_P_US));
@@ -420,8 +426,8 @@ AedBus::getPixel(int x, int y)
 
 void
 AedBus::getFrame(std::vector<uint32_t>& frame, int* w, int *h) {
-    int width = *w = _aedRegs->getDisplayWidth();
-    int height = *h = _aedRegs->getDisplayHeight();
+    size_t width = *w = _aedRegs->getDisplayWidth();
+    size_t height = *h = _aedRegs->getDisplayHeight();
     const std::vector<uint8_t>& raw = _aedRegs->getVideoMemory();
     if (frame.size() != raw.size()) {
         frame.resize(raw.size());

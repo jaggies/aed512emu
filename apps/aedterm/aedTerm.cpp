@@ -72,8 +72,14 @@ static void checkGLError(const char* msg) {
 static void doShell(const char* path) {
     int parentToChild[2];
     int childToParent[2];
-    pipe(parentToChild);
-    pipe(childToParent);
+    if (!pipe(parentToChild)) {
+	std::cerr << "Failed to open parent pipe: " << strerror(errno) << std::endl;
+	exit(0);
+    }
+    if (!pipe(childToParent)) {
+	std::cerr << "Failed to open child pipe: " << strerror(errno) << std::endl;
+	exit(0);
+    }
     pid_t pid;
     if ((pid = fork()) == -1) { //error
         std::cerr << "Can't fork: " << strerror(errno) << std::endl;
@@ -83,7 +89,8 @@ static void doShell(const char* path) {
         close(childToParent[0]); // close read end
         dup2(childToParent[1], 1); // stdout goes to parent
         dup2(childToParent[1], 2); // stderr goes to parent
-        execv(path, nullptr);
+	char*const argv[] = { nullptr };
+        execv(path, argv);
         // If we get here, something bad happened
         std::cerr << "Unknown command: " << strerror(errno) << std::endl;
         exit(1);
