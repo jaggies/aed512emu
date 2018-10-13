@@ -4,4 +4,5 @@ Library libemu :
     diffusion.cpp
     netpbm.c
     ordered.cpp
+    threshold.cpp
     ;

@@ -5,16 +5,19 @@
  *      Author: jmiller
  */
 
+#include <getopt.h>
 #include "demo.h"
 #include "netpbm.h"
 #include "ordered.h"
 #include "diffusion.h"
+#include "threshold.h"
 
 const int RBITS = 3;
 const int GBITS = 3;
 const int BBITS = 2;
 
-static DiffusionDither dither(RBITS, GBITS, BBITS);
+static Dither* dither;
+
 static int width, height, depth;
 static uint8_t* buffer;
 static int idx;
@@ -29,17 +32,45 @@ static void callback(void* clientData, int x, int y, unsigned char pixel[3]) {
         }
         idx = 0;
     }
-    buffer[idx++] = dither.dither(pixel[0], pixel[1], pixel[2], x, 511-y);
+    buffer[idx++] = dither->dither(pixel[0], pixel[1], pixel[2], x, 511-y);
+}
+
+void usage(const char* name) {
+    std::cerr << "Usage: " << name << " -d <ordered|diffusion|threshold> <image.pbm>" << std::endl;
 }
 
 int main(int argc, char** argv) {
     NetPBM* pbm = createNetPBM();
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << "<image.pbm>" << std::endl;
-        return 0;
+    int opt;
+    while ((opt = getopt(argc, argv, "d:")) != -1) {
+       switch(opt) {
+           case 'd':
+               switch(*optarg) {
+                   case 'd': // error diffusion
+                       dither = new DiffusionDither(RBITS, GBITS, BBITS);
+                   break;
+                   case 'o': // ordered dither
+                       dither = new OrderedDither(RBITS, GBITS, BBITS);
+                   break;
+                   case 't': // threshold dither (no dither)
+                       dither = new Threshold(RBITS, GBITS, BBITS);
+                   break;
+               }
+           break;
+       }
     }
+
+    if (!argv[optind]) {
+        usage(argv[0]);
+        exit(0);
+    }
+
+    if (!dither) {
+        dither = new OrderedDither(RBITS, GBITS, BBITS);
+    }
+
     width = height = depth = 0;
-    if (!pbm->open(pbm, argv[1], &width, &height, &depth, NETPBM_READ)) {
+    if (!pbm->open(pbm, argv[optind], &width, &height, &depth, NETPBM_READ)) {
         std::cerr << "Can't open %s\n" << argv[1] << std::endl;
         return 0;
     }

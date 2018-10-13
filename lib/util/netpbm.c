@@ -18,12 +18,12 @@ static int openNetPBM(NetPBM* pbm, const char* path, int* width, int* height, in
     }
     if (mode == NETPBM_WRITE) {
         if (*width == 0 || *height == 0) {
-            printf("Width and height must be non-zero\n");
+            fprintf(stderr, "Width and height must be non-zero\n");
             return 0;
         }
         pbm->fp = fopen(path, "w");
         if (!pbm->fp) {
-            printf("Couldn't open file %s for write!\n", path);
+            fprintf(stderr, "Couldn't open file %s for write!\n", path);
             return 0;
         }
         fprintf(pbm->fp, "P6 %d %d %d\n", *width, *height, *depth);
@@ -32,12 +32,12 @@ static int openNetPBM(NetPBM* pbm, const char* path, int* width, int* height, in
         char hdr[8];
         pbm->fp = fopen(path, "r");
         if (!pbm->fp) {
-            printf("Couldn't open pbm file '%s'\n", path);
+            fprintf(stderr, "Couldn't open pbm file '%s'\n", path);
             return 0;
         }
         int n = fscanf(pbm->fp, "%s %d %d %d\n", hdr, &pbm->width, &pbm->height, &pbm->depth);
         if (n != 4 || pbm->width == 0 || pbm->height == 0) {
-            printf("Invalid width/height while reading pbm header\n");
+            fprintf(stderr, "Invalid width/height while reading pbm header\n");
             fclose(pbm->fp);
             pbm->fp = 0;
             return 0;
@@ -47,7 +47,7 @@ static int openNetPBM(NetPBM* pbm, const char* path, int* width, int* height, in
         *depth = pbm->depth; /* TODO: convert to # bits */
         return 1;
     } else {
-        printf("Invalid mode: %d\n", mode);
+        fprintf(stderr, "Invalid mode: %d\n", mode);
     }
     return 0;
 }
