@@ -31,13 +31,14 @@ class M68B21 : public Peripheral {
         enum Port { InputA, InputB, OutputA, OutputB, ControlA, ControlB };
 
         // TODO: these should be private.  Currently used for test case.
-        enum Registers { PRA = 0, DDRA = 0, CRA = 1, PRB = 2, DDRB = 2, CRB = 3 };
+        enum Registers { PRA = 0, DDRA = PRA, CRA = 1, PRB = 2, DDRB = PRB, CRB = 3 };
 
         typedef std::function<void(Port port, uint8_t oldvalue, uint8_t newvalue)> RegisterChangedCB;
 
         M68B21(int start, const std::string& name = "68B21", IRQ irqA = nullptr, IRQ irqB = nullptr,
-                RegisterChangedCB registerChanged = nullptr) :
-                Peripheral(start, 4, name),  _irqA(irqA), _irqB(irqB), _registerChanged(registerChanged) { }
+                RegisterChangedCB changed = nullptr, Signal ca2 = nullptr, Signal cb2 = nullptr)
+                :Peripheral(start, 4, name),  _irqA(irqA), _irqB(irqB), _changed(changed),
+                 _ca2(ca2), _cb2(cb2) { }
         virtual ~M68B21() = default;
 
         // Reads peripheral register at offset
@@ -84,19 +85,23 @@ class M68B21 : public Peripheral {
         // Resets all 1 bits in data. The host shouldn't be mucking with ControlA or ControlB.
         void reset(Port port, uint8_t data);
     private:
-        uint8_t _prA = 0; // Peripheral Register InputA (when CRA2 is set)
-        uint8_t _ddrA = 0; // Data Direction Register InputA. InputA bit value of 0 = input, 1 = output
+        uint8_t _prA = 0; // Peripheral Register A (when CRA2 is set)
+        uint8_t _ddrA = 0; // Data Direction Register A. A bit value of 0 = input, 1 = output
         uint8_t _crA = 0; // Control Register InputA
-        uint8_t _prB = 0; // Peripheral Register InputA (when CRB2 is set)
-        uint8_t _ddrB = 0; // Data Direction Register InputB. InputA bit value of 0 = input, 1 = output
-        uint8_t _crB = 0; // Control Register InputB
-        uint8_t _inA = 0; // Incoming port InputA (can only by set by host)
-        uint8_t _inB = 0; // Incoming port InputB (can only by set by host)
+        uint8_t _prB = 0; // Peripheral Register B (when CRB2 is set)
+        uint8_t _ddrB = 0; // Data Direction Register B. B bit value of 0 = input, 1 = output
+        uint8_t _crB = 0; // Control Register B
+        uint8_t _inA = 0; // Incoming port A (can only by set by host)
+        uint8_t _inB = 0; // Incoming port B (can only by set by host)
         uint8_t _inCA = 0; // Incoming bits CA1, CA2 (can only by set by host)
         uint8_t _inCB = 0; // Incoming bits CB1, CB2 (can only by set by host)
+        bool    _outCA = false; // Outgoing bit CA2
+        bool    _outCB = false; // Outgoing bit CB2
         IRQ _irqA;// Callback invoked when CA1 or CA2 input changes
         IRQ _irqB;// Callback invoked when CB1 or CB2 input changes
-        RegisterChangedCB _registerChanged; // Callback invoked when any register changes
+        RegisterChangedCB _changed; // Callback invoked when any register changes
+        Signal  _ca2;   // called when output is configure and CA2 changes
+        Signal  _cb2;   // called when output is configured and CB2 changes
 };
 
 #endif /* M68B21_H_ */

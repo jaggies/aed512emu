@@ -50,8 +50,8 @@ void M68B21::write(int offset, uint8_t value) {
         case PRA: // PRA or DDRA
             if (_crA & CRA2) {
                 const bool changed = (_prA ^ value); // TODO: account for write mask
-                if (_registerChanged != nullptr && changed) {
-                    _registerChanged(OutputA, _prA, value);
+                if (_changed != nullptr && changed) {
+                    _changed(OutputA, _prA, value);
                 }
                 _prA = value;
             } else {
@@ -59,22 +59,27 @@ void M68B21::write(int offset, uint8_t value) {
             }
         break;
         case CRA: { // CRA
-            const bool changed = (_crA ^ (value & 0x3f));
+            const uint8_t changed = (_crA ^ (value & 0x3f));
             uint8_t newValue = (_crA & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
-            if (_registerChanged != nullptr && changed) {
-                _registerChanged(ControlA, _crA, newValue);
+            if (_changed != nullptr && changed) {
+                _changed(ControlA, _crA, newValue);
+            }
+            // When CRA4=CRA5=1, then mode is output and CA2 always reflects CRA3 bit
+            const uint8_t MODE_OUT = CRA5 | CRA4;
+            if ((changed & (MODE_OUT | CRA3)) && (value & MODE_OUT) == MODE_OUT)  {
+                _outCA = value & CRA3;
+                if (_ca2) {
+                    _ca2(_outCA);
+                }
             }
             _crA = newValue;
-            if (debug && (_crA & (CRA5 | CRA4)) != (CRA5 | CRA4)) { // if not output mode for CA2
-                std::cerr << name() << ": CRA E clock not supported!" << std::endl;
-            }
         }
         break;
         case PRB: // PRB or DDRB
             if (_crB & CRB2) {
                 const bool changed = (_prB ^ value); // TODO: account for write mask
-                if (changed && _registerChanged != nullptr) {
-                    _registerChanged(OutputB, _prB, value);
+                if (changed && _changed != nullptr) {
+                    _changed(OutputB, _prB, value);
                 }
                 _prB = value;
             } else {
@@ -82,28 +87,25 @@ void M68B21::write(int offset, uint8_t value) {
             }
         break;
         case CRB: { // CRB
-            const bool changed = (_crB ^ (value & 0x3f));
+            const uint8_t changed = (_crB ^ (value & 0x3f));
             uint8_t newValue = (_crB & 0xc0) | (value & 0x3f); // two upper bits aren't writeable
-            if (_registerChanged != nullptr && changed) {
-                _registerChanged(ControlB, _crB, newValue);
+            if (_changed != nullptr && changed) {
+                _changed(ControlB, _crB, newValue);
+            }
+            // When CRB4=CRB5=1, then mode is output and CB2 always reflects CRA3 bit
+            const uint8_t MODE_OUT = CRB5 | CRB4;
+            if ((changed & (MODE_OUT | CRB3)) && (value & MODE_OUT) == MODE_OUT)  {
+                _outCB = value & CRB3;
+                if (_cb2) {
+                    _cb2(_outCB);
+                }
             }
             _crB = newValue;
-            if (debug && (_crB & (CRB5 | CRB4)) != (CRB5 | CRB4)) { // if not output mode for CB2
-                std::cerr << name() << ": CRB E clock not supported!" << std::endl;
-            }
         }
         break;
     }
 }
 
-// Notes:
-// CA1, CB1:
-//      IRQ_en = CRx0 (where x = A or B)
-//      IRQ_edge = CRx1 ? rising : falling
-// CA2, CB2: (when CRx5 = 0):
-//      IRQ_en = CRx3 (where x = A or B)
-//      IRQ_edge = CRx4 ? rising : falling
-// CRx5 = 1 -> follow E clock (unimplemented)
 void M68B21::set(Port port, uint8_t data) {
     switch (port) {
         case InputA:
@@ -173,7 +175,6 @@ void M68B21::reset(Port port, uint8_t data) {
             _inB &= ~data;
         break;
         case ControlA: {
-            assert((_crA & CRA5) == 0); // E clock config not supported
             data &= (CA1 | CA2); // Only CA1 and CA2 bits can be set
             data = ~data; // invert the bits so we can simply AND them to clear
             const bool checkFallingca1 = !(_crA & CRA1);
@@ -197,7 +198,6 @@ void M68B21::reset(Port port, uint8_t data) {
         }
         break;
         case ControlB: {
-            assert((_crA & CRA5) == 0); // E clock config not supported
             data &= (CB1 | CB2); // Only CB1 and CB2 bits can be reset
             data = ~data; // invert the bits so we can simply AND them to clear
             const bool checkFallingcb1 = !(_crB & CRB1);

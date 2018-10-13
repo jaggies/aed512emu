@@ -11,6 +11,8 @@
 
 bool irqa_called;
 bool irqb_called;
+bool ca2_set = 0;
+bool cb2_set = 0;
 
 const int ca1_en_rising = M68B21::CRA0 | M68B21::CRA1; // CA1 en + rising
 const int ca2_en_rising = M68B21::CRA3 | M68B21::CRA4; // CA2 en + rising
@@ -26,7 +28,11 @@ const int cb2_en_falling = M68B21::CRB3; // CB2 en + falling
 int main(int argc, char **argv) {
     M68B21* pia = new M68B21(0, "pia",
             []() { ::irqa_called = true; },
-            []() { ::irqb_called = true; });
+            []() { ::irqb_called = true; },
+            [](M68B21::Port p, uint8_t old, uint8_t nw) { },
+            [](bool isSet) { ::ca2_set = isSet; },
+            [](bool isSet) { ::cb2_set = isSet; }
+            );
 
     //
     //  Check Rising Edges
@@ -159,9 +165,36 @@ int main(int argc, char **argv) {
     assert((pia->read(M68B21::CRB) & 0xc0) == 0); // no irqs set anymore
 
     //
-    // Check CA1/CA2, CB1, CB2 outputs
+    // Check CA2 output (CRA5:CRA4 = 11)
     //
     pia->reset();
+    ca2_set = cb2_set = false;
+    pia->write(M68B21::CRA, M68B21::CRA3);
+    assert(!ca2_set && !cb2_set); // no effect
+    pia->write(M68B21::CRA, M68B21::CRA4 | M68B21::CRA3);
+    assert(!ca2_set && !cb2_set); // no effect
+    pia->write(M68B21::CRA, M68B21::CRA5 | M68B21::CRA4 | M68B21::CRA3);
+    assert(ca2_set && !cb2_set);  // re-enabling CR5 should always call the callback
+    pia->write(M68B21::CRA, M68B21::CRA5 | M68B21::CRA4 );
+    assert(!ca2_set && !cb2_set); // changing CRA3 should always propagate
+    pia->write(M68B21::CRA, M68B21::CRA5 | M68B21::CRA4 | M68B21::CRA3);
+    assert(ca2_set && !cb2_set); // changing CRA3 should always propagate
+
+    //
+    // Check CB2 output (CRB5:CRB4 = 11)
+    //
+    pia->reset();
+    ca2_set = cb2_set = false;
+    pia->write(M68B21::CRB, M68B21::CRB3);
+    assert(!ca2_set && !cb2_set); // no effect
+    pia->write(M68B21::CRB, M68B21::CRB4 | M68B21::CRB3);
+    assert(!ca2_set && !cb2_set); // no effect
+    pia->write(M68B21::CRB, M68B21::CRB5 | M68B21::CRB4 | M68B21::CRB3);
+    assert(!ca2_set && cb2_set);  // re-enabling CR5 should always call the callback
+    pia->write(M68B21::CRB, M68B21::CRB5 | M68B21::CRB4 );
+    assert(!ca2_set && !cb2_set); // changing CRB3 should always propagate
+    pia->write(M68B21::CRB, M68B21::CRB5 | M68B21::CRB4 | M68B21::CRB3);
+    assert(!ca2_set && cb2_set); // changing CRB3 should always propagate
 
     std::cerr << "*** All tests passed! ***" << std::endl;
 }
