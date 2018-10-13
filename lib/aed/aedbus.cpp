@@ -370,16 +370,14 @@ void AedBus::handleEvents(uint64_t now) {
                 _eventQueue.push(Event(FIELD, event.time + FIELD_DLY_US));
                 // Add all horizontal retraces
                 size_t t = event.time + HBLANK_DLY_US;
-		const size_t end_time = event.time + VBLANK_N_US + VBLANK_P_US;
-		const float nlines = float(end_time - t) / (HBLANK_N_US + HBLANK_P_US);
-		std::cerr << "Lines per frame = " << nlines << std::endl;
-		int lines = 0;
+                const size_t end_time = event.time + VBLANK_N_US + VBLANK_P_US;
+                int lines = 0;
                 while (t < end_time) {
                     _eventQueue.push(Event(HBLANK_N, t));
                     _eventQueue.push(Event(HBLANK_P, t + HBLANK_N_US));
                     t += HBLANK_N_US + HBLANK_P_US;
-		    assert(lines < 1000);
-		    lines++;
+                    lines++;
+                    assert(lines < 1000); //
                 }
                 // Rinse and repeat...
                 _eventQueue.push(Event(VBLANK_N, event.time + VBLANK_N_US + VBLANK_P_US));
