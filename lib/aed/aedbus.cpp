@@ -272,8 +272,11 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi, Redraw redraw)
     // Add peripherals. Lower address peripherals are favored when addresses overlap.
     _mapper.add(_pia0 = new M68B21(pio0da, "PIA0", [this]() { _irq(); }, [this]() {_irq(); },
             [this](M68B21::Port port, uint8_t old, uint8_t new_) { handlePIA0(port, old, new_); }));
-    _mapper.add(_pia1 = new M68B21(pio1da, "PIA1", [this]() { _irq(); }, [this]() {_nmi(); },
-            [this](M68B21::Port port, uint8_t old, uint8_t new_) { handlePIA1(port, old, new_); }));
+    _mapper.add(_pia1 = new M68B21(pio1da, "PIA1", [this]() { _irq(); }, [this]() { _nmi(); },
+            [this](M68B21::Port port, uint8_t old, uint8_t new_) { handlePIA1(port, old, new_); },
+            [this](bool isSet) { std::cerr << "CA2:" << isSet << std::endl; },
+            [this](bool isSet) { std::cerr << "CB2(erase):" << isSet << std::endl; }
+            ));
     _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", [this]() { _irq(); }, [this]() {_irq(); },
             [this](M68B21::Port port, uint8_t old, uint8_t new_) { handlePIA2(port, old, new_); }));
     _mapper.add(_sio0 = new M68B50(sio0st, "SIO0", [this]() { _irq(); },
