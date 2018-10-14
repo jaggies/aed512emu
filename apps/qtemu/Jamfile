@@ -44,4 +44,5 @@ Main qtemu :
 	renderer.cpp
 	vbo.cpp
 	vertex.cpp
+	workerthread.cpp
 	;

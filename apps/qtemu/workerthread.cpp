@@ -5,14 +5,33 @@
  *      Author: jmiller
  */
 
+#include "cpu6502.h"
+#include "mos6502.h"
+#include "dis6502.h"
+#include "config.h"
+#include "aedsequence.h"
 #include "workerthread.h"
 
-WorkerThread::WorkerThread() {
-    // TODO Auto-generated constructor stub
+const int CPU_MHZ = 2000000;
 
+WorkerThread::WorkerThread(QObject *parent): QThread(parent) {
+    _clk = new Clock(CPU_MHZ);
+
+    _bus = new AedBus(
+           [this]() { _cpu->irq(); }, [this]() { _cpu->nmi(); },
+           [this]() { std::cerr << "hsync\n"; emit handleVsync(); });
+
+    _cpu = new USE_CPU(
+           [this](int addr) { return _bus->read(addr); },
+           [this](int addr, uint8_t value) { _bus->write(addr, value); },
+           [this](int cycles) { _clk->add_cpu_cycles(cycles); _bus->setCpuTime(_clk->getCpuTime()); },
+           [this](CPU::ExceptionType ex, int pc) { emit handleException(ex, pc); });
 }
 
-WorkerThread::~WorkerThread() {
-    // TODO Auto-generated destructor stub
+void
+WorkerThread::run() {
+    while (!_flag_stop) {
+        _cpu->cycle(5);
+    }
 }
 

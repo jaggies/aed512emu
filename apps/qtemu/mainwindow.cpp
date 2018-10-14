@@ -12,18 +12,15 @@
 
 #define Number(a) (sizeof(a) / sizeof(a[0]))
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), worker(nullptr)
 {
     ui->setupUi(this);
     glw = findChild<GLWidget*>(QString("openGLWidget"));
     statusBar()->setVisible(false);
-
-    WorkerThread *workerThread = new WorkerThread(this);
-    connect(workerThread, &WorkerThread::vsync, this, &MainWindow::handleVsync);
-    connect(workerThread, &WorkerThread::finished, workerThread, &QObject::deleteLater);
-    workerThread->start();
+    worker = new WorkerThread(this);
+    connect(worker, &WorkerThread::handleVsync, this, &MainWindow::handleVsync);
+    connect(worker, &WorkerThread::finished, worker, &QObject::deleteLater);
+    worker->start();
 }
 
 MainWindow::~MainWindow()
