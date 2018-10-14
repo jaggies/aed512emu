@@ -152,10 +152,10 @@ void AedBus::handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData) {
                     break;
                     case (REFS | ADCH1): // 4V on inverting amp => INT2.5V low
                         _pia1->set(M68B21::InputB, INT2_5_SIGNAL);
-                        _eventQueue.push(Event(JOYSTICK_RESET, _cpuTime + _joyDelay));
+                        addEvent(Event(JOYSTICK_RESET, _cpuTime + _joyDelay));
                     break;
                     case (REFS | ADCH1 | ADCH0): // GND on inverting amp => INT2.5V high
-                        _eventQueue.push(Event(JOYSTICK_SET, _cpuTime));
+                        addEvent(Event(JOYSTICK_SET, _cpuTime));
                     break;
                     case JSTK: // Y joystick tracking - charge Y
                         _joyDelay = 10 * (512 - _joyY); // Y is inverted by hw design.
@@ -319,7 +319,7 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi, Redraw redraw)
     // Kick off VBLANK_N
     vblank(1);
     hblank(1);
-    _eventQueue.push(Event(VBLANK_N, 1000)); // Allow CPU to run for a bit before sending IRQs
+    addEvent(Event(VBLANK_N, 1000)); // Allow CPU to run for a bit before sending IRQs
 
     std::cerr << std::hex; // dump in hex
     std::cerr << _mapper;
@@ -342,10 +342,11 @@ AedBus::reset() {
 }
 
 void AedBus::handleEvents(uint64_t now) {
-    // TODO: when swapping this with an if statement, the video timing is correct, but
-    // the device buffer overflows because it never emits XOFF.
-    if (now > _eventQueue.top().time) {
-        const Event& event = _eventQueue.top();
+    _eventQueueMutex.lock();
+    Event event = now > peekEvent().time ? popEvent() : peekEvent();
+    _eventQueueMutex.unlock();
+
+    if (now > event.time) {
         switch (event.type) {
             case HBLANK_P:
                 hblank(1);
@@ -366,21 +367,21 @@ void AedBus::handleEvents(uint64_t now) {
             case VBLANK_N: {
                 vblank(0);
                 _scanline = 0;
-                _eventQueue.push(Event(VBLANK_P, event.time + VBLANK_N_US));
-                _eventQueue.push(Event(FIELD, event.time + FIELD_DLY_US));
+                addEvent(Event(VBLANK_P, event.time + VBLANK_N_US));
+                addEvent(Event(FIELD, event.time + FIELD_DLY_US));
                 // Add all horizontal retraces
                 size_t t = event.time + HBLANK_DLY_US;
                 const size_t end_time = event.time + VBLANK_N_US + VBLANK_P_US;
                 int lines = 0;
                 while (t < end_time) {
-                    _eventQueue.push(Event(HBLANK_N, t));
-                    _eventQueue.push(Event(HBLANK_P, t + HBLANK_N_US));
+                    addEvent(Event(HBLANK_N, t));
+                    addEvent(Event(HBLANK_P, t + HBLANK_N_US));
                     t += HBLANK_N_US + HBLANK_P_US;
                     lines++;
                     assert(lines < 1000); //
                 }
                 // Rinse and repeat...
-                _eventQueue.push(Event(VBLANK_N, event.time + VBLANK_N_US + VBLANK_P_US));
+                addEvent(Event(VBLANK_N, event.time + VBLANK_N_US + VBLANK_P_US));
             }
             break;
 
@@ -392,6 +393,13 @@ void AedBus::handleEvents(uint64_t now) {
                 _xon = true;
             break;
 
+            case KEY_DOWN:
+                _pia1->reset(M68B21::InputA, 0xff);
+                _pia1->set(M68B21::InputA, event.arg0);
+                _pia1->set(M68B21::ControlA, M68B21::CA1);
+                _pia1->reset(M68B21::ControlA, M68B21::CA1);
+            break;
+
             case JOYSTICK_SET:
                 _pia1->set(M68B21::InputB, INT2_5_SIGNAL);
             break;
@@ -400,7 +408,6 @@ void AedBus::handleEvents(uint64_t now) {
                 _pia1->reset(M68B21::InputB, INT2_5_SIGNAL);
             break;
         }
-        _eventQueue.pop();
     }
     doSerial(now); // TODO: make this entirely event-based
 }
@@ -410,7 +417,7 @@ void
 AedBus::doSerial(uint64_t now) {
    if (_xon && !_serialFifo.empty() && _sio1->receive(_serialFifo.front())) {
        _xon = false;
-       _eventQueue.push(Event(SERIAL, now + SERIAL_HOLDOFF));
+       addEvent(Event(SERIAL, now + SERIAL_HOLDOFF));
        _serialFifo.pop();
    }
 }

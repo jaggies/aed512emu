@@ -8,6 +8,7 @@
 #ifndef AEDBUS_H
 #define AEDBUS_H
 
+#include <mutex>
 #include <vector>
 #include <queue>
 #include <cinttypes>
@@ -23,19 +24,24 @@
 class AedBus : public BUS {
     #define SECS2USECS(a) ((a)*1000000)
     // Events in PriorityQueue
-    enum EventType { FIELD = 0, VBLANK_P, VBLANK_N, HBLANK_P, HBLANK_N,
+    enum EventType { FIELD = 0, KEY_DOWN, VBLANK_P, VBLANK_N, HBLANK_P, HBLANK_N,
         SERIAL, JOYSTICK_SET, JOYSTICK_RESET };
     struct Event {
-        Event(EventType type_, uint64_t time_us) : type(type_), time(time_us) { }
+        Event(EventType type_, uint64_t time_us, int arg0_ = 0)
+                : type(type_), time(time_us),  arg0(arg0_) { }
         EventType type;
         uint64_t time; // time we want the event to happen, in microseconds
+        int     arg0;
     };
+
     struct EventCompare {
         bool operator()(const Event& lhs, const Event& rhs) const {
             return (lhs.time > rhs.time); // stored in reverse
         }
     };
     typedef std::function<void(void)> Redraw;
+
+    typedef std::priority_queue<Event, std::vector<Event>, EventCompare> EventQueue;
 
     public:
         AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi, Redraw redraw = nullptr);
@@ -48,8 +54,22 @@ class AedBus : public BUS {
         // Handles events in the priority queue based on current CPU time.
         void handleEvents(uint64_t time_us);
 
+        // Add event with locking
+        void addEvent(const Event& event) {
+            std::lock_guard<std::recursive_mutex> lock(_eventQueueMutex);
+            _eventQueue.push(event);
+        }
+
+        // Pop highest priority event, with locking
+        const Event& popEvent() {
+            std::lock_guard<std::recursive_mutex> lock(_eventQueueMutex);
+            const Event& result = _eventQueue.top();
+            _eventQueue.pop();
+            return result;
+        }
+
         // Gets next event from queue
-        const Event& getNextEvent() const { return _eventQueue.top(); }
+        const Event& peekEvent() const { return _eventQueue.top(); }
 
         // Handles input FIFO for serial ports
         void doSerial(uint64_t now);
@@ -65,12 +85,9 @@ class AedBus : public BUS {
             _serialFifo.push(c);
         }
 
-        void key(char c) {
+        void keyDown(char c) {
             // TODO: also handle CTRL, SHIFT, REPEAT, BREAK from sheet 14
-            _pia1->reset(M68B21::InputA, 0xff);
-            _pia1->set(M68B21::InputA, c);
-            _pia1->set(M68B21::ControlA, M68B21::CA1);
-            _pia1->reset(M68B21::ControlA, M68B21::CA1);
+            addEvent(Event(KEY_DOWN, _cpuTime, c));
         }
 
         // Saves the current frame to a file in NetPBM format.
@@ -139,7 +156,8 @@ class AedBus : public BUS {
         uint16_t    _joyY = 0; // Y joystick input, range [0, 511]
         uint64_t    _joyDelay = 0; // delay for joyX and joyY, depending on last selection cycle
         std::queue<uint8_t> _serialFifo;
-        std::priority_queue<Event, std::vector<Event>, EventCompare> _eventQueue;
+        std::recursive_mutex _eventQueueMutex;
+        EventQueue _eventQueue;
         Redraw  _redraw;
         bool    _mwe; // memory write enable? Used to debug erase hardwares
 };

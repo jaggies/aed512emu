@@ -213,7 +213,7 @@ static void display(void)
 
 static void keyboard(unsigned char key, int x, int y)
 {
-    bus->key(key);
+    bus->keyDown(key);
 }
 
 static void mouse(int button, int state, int x, int y)

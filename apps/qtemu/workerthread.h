@@ -37,7 +37,7 @@ class WorkerThread: public QThread {
             const QString& str = event->text();
             if (event->type() == QKeyEvent::KeyPress && str.length() > 0) {
                 int key = (int) str.at(0).toLatin1();
-                _bus->key(key); // TODO: locking!
+                _bus->keyDown(key);
             }
         }
 
