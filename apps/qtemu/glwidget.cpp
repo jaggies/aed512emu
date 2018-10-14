@@ -5,6 +5,10 @@
  *      Author: jmiller
  */
 
+
+#include <QtCore/QEvent>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QWheelEvent>
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include "glwidget.h"
@@ -35,16 +39,20 @@ void GLWidget::wheelEvent(QWheelEvent *event) {
     update();
 }
 
+void GLWidget::mousePressEvent ( QMouseEvent * event ) {
+    std::cerr << "Mouse press: " << event->button() << std::endl;
+}
+
 void GLWidget::mouseReleaseEvent ( QMouseEvent * event ) {
     std::cerr << "Mouse release: " << event->button() << std::endl;
 }
 
-bool GLWidget::isPlaying() const {
-    return _timer->isActive();
+void GLWidget::keyPressEvent(QKeyEvent* event) {
+    emit key(event);
 }
 
-void GLWidget::timeout() {
-
+void GLWidget::keyReleaseEvent(QKeyEvent* event) {
+    emit key(event);
 }
 
 void GLWidget::updateVideo(const uint8_t* video, int width, int height) {

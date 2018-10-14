@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     worker = new WorkerThread(this);
     connect(worker, &WorkerThread::handleRedraw, this, &MainWindow::handleRedraw);
     connect(worker, &WorkerThread::finished, worker, &QObject::deleteLater);
+    connect(glw, &GLWidget::key, worker, &WorkerThread::key);
     worker->start();
 }
 

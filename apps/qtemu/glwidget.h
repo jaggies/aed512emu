@@ -25,7 +25,10 @@ class GLWidget : public QOpenGLWidget
         void paintGL() override;
         void resizeGL(int w, int h) override;
         void wheelEvent(QWheelEvent *event) override;
+        void mousePressEvent ( QMouseEvent * event ) override;
         void mouseReleaseEvent ( QMouseEvent * event ) override;
+        void keyPressEvent(QKeyEvent* event) override;
+        void keyReleaseEvent(QKeyEvent* event) override;
 
         void updateVideo(const uint8_t* video, int width, int height);
         void updateLut(const uint8_t* red, const uint8_t* blue, const uint8_t* green);
@@ -36,7 +39,10 @@ class GLWidget : public QOpenGLWidget
         Renderer* getRenderer() { return _renderer; }
 
     public slots:
-        void timeout();
+        void timeout() { }
+
+    signals:
+        void key(QKeyEvent* event);
 
     private:
         Renderer* _renderer;
