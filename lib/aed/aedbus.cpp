@@ -319,7 +319,7 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi, Redraw redraw)
     // Kick off VBLANK_N
     vblank(1);
     hblank(1);
-    addEvent(Event(VBLANK_N, 1000)); // Allow CPU to run for a bit before sending IRQs
+    addEvent(Event(VBLANK_N, 0)); // Allow CPU to run for a bit before sending IRQs
 
     std::cerr << std::hex; // dump in hex
     std::cerr << _mapper;
@@ -342,11 +342,8 @@ AedBus::reset() {
 }
 
 void AedBus::handleEvents(uint64_t now) {
-    _eventQueueMutex.lock();
-    Event event = now > peekEvent().time ? popEvent() : peekEvent();
-    _eventQueueMutex.unlock();
-
-    if (now > event.time) {
+    Event event;
+    while (getNextEvent(now, &event)) {
         switch (event.type) {
             case HBLANK_P:
                 hblank(1);
@@ -407,6 +404,9 @@ void AedBus::handleEvents(uint64_t now) {
             case JOYSTICK_RESET:
                 _pia1->reset(M68B21::InputB, INT2_5_SIGNAL);
             break;
+
+            case NONE: // fix warning
+            break;
         }
     }
     doSerial(now); // TODO: make this entirely event-based
@@ -416,8 +416,10 @@ void AedBus::handleEvents(uint64_t now) {
 void
 AedBus::doSerial(uint64_t now) {
    if (_xon && !_serialFifo.empty() && _sio1->receive(_serialFifo.front())) {
-       _xon = false;
-       addEvent(Event(SERIAL, now + SERIAL_HOLDOFF));
+       if (SERIAL_HOLDOFF > 0) {
+           _xon = false;
+           addEvent(Event(SERIAL, now + SERIAL_HOLDOFF));
+       }
        _serialFifo.pop();
    }
 }

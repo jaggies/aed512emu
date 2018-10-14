@@ -24,10 +24,10 @@
 class AedBus : public BUS {
     #define SECS2USECS(a) ((a)*1000000)
     // Events in PriorityQueue
-    enum EventType { FIELD = 0, KEY_DOWN, VBLANK_P, VBLANK_N, HBLANK_P, HBLANK_N,
+    enum EventType { NONE, FIELD, KEY_DOWN, VBLANK_P, VBLANK_N, HBLANK_P, HBLANK_N,
         SERIAL, JOYSTICK_SET, JOYSTICK_RESET };
     struct Event {
-        Event(EventType type_, uint64_t time_us, int arg0_ = 0)
+        Event(EventType type_ = NONE, uint64_t time_us = 0, int arg0_ = 0)
                 : type(type_), time(time_us),  arg0(arg0_) { }
         EventType type;
         uint64_t time; // time we want the event to happen, in microseconds
@@ -56,16 +56,19 @@ class AedBus : public BUS {
 
         // Add event with locking
         void addEvent(const Event& event) {
-            std::lock_guard<std::recursive_mutex> lock(_eventQueueMutex);
+            std::lock_guard<std::mutex> lock(_eventQueueMutex);
             _eventQueue.push(event);
         }
 
-        // Pop highest priority event, with locking
-        const Event& popEvent() {
-            std::lock_guard<std::recursive_mutex> lock(_eventQueueMutex);
-            const Event& result = _eventQueue.top();
-            _eventQueue.pop();
-            return result;
+        // Gets highest priority event with time < now, with locking
+        bool getNextEvent(uint64_t now, Event* result) {
+            std::lock_guard<std::mutex> lock(_eventQueueMutex);
+            if(_eventQueue.size() > 0 && _eventQueue.top().time < now) {
+                *result = _eventQueue.top();
+                _eventQueue.pop();
+                return true;
+            }
+            return false; // nothing ready for handling or queue empty
         }
 
         // Gets next event from queue
@@ -156,7 +159,7 @@ class AedBus : public BUS {
         uint16_t    _joyY = 0; // Y joystick input, range [0, 511]
         uint64_t    _joyDelay = 0; // delay for joyX and joyY, depending on last selection cycle
         std::queue<uint8_t> _serialFifo;
-        std::recursive_mutex _eventQueueMutex;
+        std::mutex _eventQueueMutex;
         EventQueue _eventQueue;
         Redraw  _redraw;
         bool    _mwe; // memory write enable? Used to debug erase hardwares
