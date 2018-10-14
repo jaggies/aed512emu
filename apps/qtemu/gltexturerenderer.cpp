@@ -29,14 +29,7 @@ static const char _fragmentShader[] =
     "uniform sampler2D image;\n"
     "void main() {\n"
         "vec4 raw = texture2D(image, v_uv);"
-        "if (raw[1] > 0.0 && raw[0] < .25) {"
-            "gl_FragColor = texture1D(alphaLut, raw[1]);"
-        "} else {"
-            "gl_FragColor = texture1D(lumaLut, raw[0]);"
-        "}"
-    "} else {"
-        "gl_FragColor = texture1D(lumaLut, 1.0);"
-    "}"
+        "gl_FragColor = texture1D(lut, raw[0]);"
     "}\n";
 
 void GlTextureRenderer::initialize() {
@@ -110,11 +103,6 @@ void GlTextureRenderer::initialize() {
 
 void GlTextureRenderer::draw() {
     Renderer::draw();
-
-    if (!_program) {
-        std::cerr << "Draw: no program\n";
-        return;
-    }
     glUseProgram(_program);
     checkGlError("glUseProgram");
     glBindTexture(GL_TEXTURE_2D, _imageTexture);
@@ -138,7 +126,7 @@ GLuint GlTextureRenderer::loadShader(GLenum shaderType, const char* source) {
                 char* buf = new char[infoLen];
                 if (buf) {
                     glGetShaderInfoLog(shader, infoLen, nullptr, buf);
-                    std::cerr << "Could not compile shader " << shaderType << "msg=" << buf << std::endl;
+                    std::cerr << "Could not compile shader " << shaderType << ", msg=" << buf << std::endl;
                     delete []buf;
                 }
                 glDeleteShader(shader);
@@ -150,15 +138,15 @@ GLuint GlTextureRenderer::loadShader(GLenum shaderType, const char* source) {
 }
 
 GLuint GlTextureRenderer::createProgram(const char* pVertexSource, const char* pFragmentSource) {
-    return 0;
-
     GLuint vertexShader = loadShader(GL_VERTEX_SHADER, pVertexSource);
     if (!vertexShader) {
+        std::cerr << "Failed to load VERTEX shader" << std::endl;
         return 0;
     }
 
     GLuint pixelShader = loadShader(GL_FRAGMENT_SHADER, pFragmentSource);
     if (!pixelShader) {
+        std::cerr << "Failed to load FRAGMENT shader" << std::endl;
         return 0;
     }
 
@@ -178,7 +166,7 @@ GLuint GlTextureRenderer::createProgram(const char* pVertexSource, const char* p
                 char* buf = new char[bufLength];
                 if (buf) {
                     glGetProgramInfoLog(program, bufLength, nullptr, buf);
-                    printf("Could not link program:\n%s\n", buf);
+                    std::cerr << "Could not link program:\n" << buf << std::endl;
                     delete [] buf;
                 }
             }

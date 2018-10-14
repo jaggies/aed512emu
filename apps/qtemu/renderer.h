@@ -17,14 +17,25 @@
 class Renderer
 {
 public:
+    struct Pixel {
+        Pixel(uint8_t r, uint8_t g) : red(r), green(g) { }
+        uint8_t red;
+        uint8_t green;
+    };
     Renderer(int width = 512, int height = 512):
             _windowWidth(0), _windowHeight(0),
             _textureWidth(width), _textureHeight(height),
-            _texture(width * height, 0) { }
+            _texture(width * height, Pixel(0,0)) {
+        for (int j = 0; j < height; j++) {
+            for (int i = 0; i < width; i++) {
+                _texture[j*width + i] = Pixel(i, j);
+            }
+        }
+    }
     virtual ~Renderer() = default;
     virtual void initialize();  // Initialize GL state
     virtual void draw(); // Draw the current frame
-    virtual const std::vector<uint8_t>& getTexture() const { return _texture; }
+    virtual const std::vector<Pixel>& getTexture() const { return _texture; }
 
     // Resize canvas to width x height
     virtual void resize(int width, int height);
@@ -38,7 +49,7 @@ protected:
     int _windowHeight;
     int _textureWidth;
     int _textureHeight;
-    std::vector<uint8_t> _texture;
+    std::vector<Pixel> _texture;
 };
 
 inline void checkGlError(const char* op) {
