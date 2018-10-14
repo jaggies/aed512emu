@@ -32,9 +32,10 @@ class MainWindow: public QMainWindow {
         void on_actionClose_triggered(UNUSED bool checked);
         void handleRedraw(const uint8_t* video, const uint8_t* red, const uint8_t * green,
                 const uint8_t *blue, int width, int height) {
-            std::cerr << "HandleRedraw: " << std::dec << width << "x" << height << std::endl;
+            //std::cerr << "HandleRedraw: " << std::dec << width << "x" << height << std::endl;
             glw->updateVideo(video, width, height);
             glw->updateLut(red, green, blue);
+            glw->update();
         }
         void closeEvent(QCloseEvent *event) {
             worker->stop();

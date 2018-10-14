@@ -42,6 +42,7 @@ WorkerThread::run() {
     while (!_flag_stop) {
         _cpu->cycle(1);
         _bus->handleEvents(_clk->getCpuTime());
+        usleep(2);
     }
 }
 
