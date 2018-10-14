@@ -27,7 +27,6 @@ class MainWindow: public QMainWindow {
     public:
         explicit MainWindow(QWidget *parent = nullptr);
         virtual ~MainWindow();
-
     public slots:
         void on_actionClose_triggered(UNUSED bool checked);
         void handleRedraw(const uint8_t* video, const uint8_t* red, const uint8_t * green,

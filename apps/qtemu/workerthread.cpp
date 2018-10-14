@@ -29,7 +29,6 @@ WorkerThread::WorkerThread(QObject *parent): QThread(parent) {
                emit handleRedraw(&mem[0], red, green, blue, width, height);
            });
 
-
     _cpu = new USE_CPU(
            [this](int addr) { return _bus->read(addr); },
            [this](int addr, uint8_t value) { _bus->write(addr, value); },
@@ -40,9 +39,9 @@ WorkerThread::WorkerThread(QObject *parent): QThread(parent) {
 void
 WorkerThread::run() {
     while (!_flag_stop) {
-        _cpu->cycle(1);
+        _cpu->cycle(2);
         _bus->handleEvents(_clk->getCpuTime());
-        usleep(2);
+        usleep(1);
     }
 }
 

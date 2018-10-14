@@ -18,7 +18,7 @@ void Renderer::initialize() {
     const GLdouble dv = 1.0;
     const GLdouble kNear = 0.0;
     const GLdouble kFar = 100.0;
-    glOrtho(-du, du, -dv, dv, kNear, kFar);
+    glOrtho(0, du, 0, dv, kNear, kFar);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 }
@@ -32,9 +32,10 @@ void Renderer::draw() {
 void Renderer::resize(int width, int height) {
     _windowWidth = width;
     _windowHeight = height;
+    std::cerr << "Window: " << std::dec << width << "x" << height << std::endl;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    const GLdouble aspect = _windowWidth / _windowHeight;
+    const GLdouble aspect = 1.0; //(double) _windowWidth / _windowHeight;
     GLdouble du = std::max(1.0, aspect);
     GLdouble dv = std::max(1.0, 1.0 / aspect);
     GLdouble kNear = 0.0;
