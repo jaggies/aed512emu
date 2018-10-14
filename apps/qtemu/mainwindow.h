@@ -32,6 +32,10 @@ public:
 public slots:
     void on_actionClose_triggered(UNUSED bool checked);
 
+    void handleVsync() {
+        std::cerr << "Handle Vsync!\n";
+    }
+
     void idle() {
         std::cerr << "idle!\n";
     }

@@ -8,6 +8,7 @@
 #include <QtCore/QFileInfo>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "workerthread.h"
 
 #define Number(a) (sizeof(a) / sizeof(a[0]))
 
@@ -18,7 +19,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     glw = findChild<GLWidget*>(QString("openGLWidget"));
     statusBar()->setVisible(false);
-    QTimer::singleShot(0, this, SLOT(idle()));
+
+    WorkerThread *workerThread = new WorkerThread(this);
+    connect(workerThread, &WorkerThread::vsync, this, &MainWindow::handleVsync);
+    connect(workerThread, &WorkerThread::finished, workerThread, &QObject::deleteLater);
+    workerThread->start();
 }
 
 MainWindow::~MainWindow()

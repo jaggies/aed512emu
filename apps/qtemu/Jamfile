@@ -23,11 +23,12 @@ if $(OS) = MACOSX {
     INCLUDE += $(QT) ;
 }
 
-LINKLIBS on qtemu += -lsseopengl -lmodel -lsseray $(OPENGLLIBS) $(LINKLIBS) ;
+LINKLIBS on qtemu += $(OPENGLLIBS) $(LINKLIBS) ;
 
 Uic ui_mainwindow.h : mainwindow.ui ;
 Moc moc_mainwindow.h : mainwindow.h ;
 Moc moc_glwidget.h : glwidget.h ;
+Moc moc_workerthread.h : workerthread.h ;
 
 Depends qtemu : libemu.a ;
 INCLUDE += -I/opt/local/include ;
