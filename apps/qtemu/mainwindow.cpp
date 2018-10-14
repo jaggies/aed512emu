@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     glw = findChild<GLWidget*>(QString("openGLWidget"));
     statusBar()->setVisible(false);
+    QTimer::singleShot(0, this, SLOT(idle()));
 }
 
 MainWindow::~MainWindow()
@@ -26,21 +27,7 @@ MainWindow::~MainWindow()
 }
 
 void
-MainWindow::on_actionOpen_triggered(UNUSED bool checked) {
-    QString filename = QFileDialog::getOpenFileName(this, tr("Open study"), "", "Study files (*.std);;All files (*.*)");
-}
-
-void
 MainWindow::on_actionClose_triggered(UNUSED bool checked) {
-    if (glw) {
-        glw->update();
-    }
+    std::cerr << "Close!\n";
 }
 
-void
-MainWindow::on_actionNew_triggered(UNUSED bool checked) {
-}
-
-void
-MainWindow::updateUi() {
-}

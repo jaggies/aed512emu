@@ -30,13 +30,12 @@ public:
     virtual ~MainWindow();
 
 public slots:
-    void on_actionOpen_triggered(UNUSED bool checked);
     void on_actionClose_triggered(UNUSED bool checked);
-    void on_actionNew_triggered(UNUSED bool checked);
 
+    void idle() {
+        std::cerr << "idle!\n";
+    }
 private:
-    void updateUi();
-
     Ui::MainWindow *ui;
     GLWidget* glw;
 };
