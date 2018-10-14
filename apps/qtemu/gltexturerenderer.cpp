@@ -111,6 +111,10 @@ void GlTextureRenderer::initialize() {
 void GlTextureRenderer::draw() {
     Renderer::draw();
 
+    if (!_program) {
+        std::cerr << "Draw: no program\n";
+        return;
+    }
     glUseProgram(_program);
     checkGlError("glUseProgram");
     glBindTexture(GL_TEXTURE_2D, _imageTexture);
@@ -146,6 +150,8 @@ GLuint GlTextureRenderer::loadShader(GLenum shaderType, const char* source) {
 }
 
 GLuint GlTextureRenderer::createProgram(const char* pVertexSource, const char* pFragmentSource) {
+    return 0;
+
     GLuint vertexShader = loadShader(GL_VERTEX_SHADER, pVertexSource);
     if (!vertexShader) {
         return 0;
