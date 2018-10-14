@@ -1,4 +1,7 @@
 # These defaults will be overwritten by target/$(TARGET)
+C++ = g++-mp-5 ;
+#C++ = g++-mp-4.9 ;
+#C++ = c++ ;
 C++FLAGS += -std=c++11 ;
 #DEFINES += AED767 ;
 #DEFINES += USE_CPU=mos6502 ;
@@ -6,11 +9,73 @@ DEFINES += USE_CPU=CPU6502 ;
 CCFLAGS += -Wall ;
 C++FLAGS += $(CCFLAGS) -std=c++11 ;
 OPTIM = -g -O3 ;
-LINK = c++ $(OPTIM) ;
+LINK = $(C++) $(OPTIM) ;
 LINKLIBS += -L$(TOP)/build/$(OSFULL) ;
+echo Building $(OSFULL)  ;
 ALL_LOCATE_TARGET = $(TOP)/build/$(OSFULL) ;
+INCLUDE += $(ALL_LOCATE_TARGET) ;
 
-if $(OS) = LINUX {
+if $(OS) = MACOSX {
+	QTDIR = /opt/local/libexec/qt5 ;
+	QTBIN = $(QTDIR)/bin ;
+	QTFRAMEWORK = $(QTDIR)/lib/ ;
+} else {
+	QTDIR = /usr/include/x86_64-linux-gnu/qt5 ;
+	QTBIN = /usr/lib/x86_64-linux-gnu/qt5/bin ;
     AR = ar cUr ; # Turn off deterministic ar. Sigh.
+}
+
+CCFLAGS += -W$(WARN) -D$(DEFINES) -I$(INCLUDE) $(LLVM) ;
+C++FLAGS += -W$(WARN) -D$(DEFINES) -I$(INCLUDE) $(LLVM) ;
+
+MOC = $(QTBIN)/moc ;
+UIC = $(QTBIN)/uic ;
+
+#
+# Rule to build header from Qt UIC file
+#
+
+rule Uic
+{
+    local uicsrc = $(>) ;
+    local hdrsrc = $(<) ;
+    local cppsrc = $(<:S=.cpp) ;
+    local object = $(<:S=.o) ;
+    SEARCH on $(uicsrc) = $(SEARCH_SOURCE) ;
+    MakeLocate $(cppsrc) : $(ALL_LOCATE_TARGET) ;
+    MakeLocate $(hdrsrc) : $(ALL_LOCATE_TARGET) ;
+    MakeLocate $(object) : $(ALL_LOCATE_TARGET) ;
+    RmTemps $(object) : $(cppsrc) ;
+    Depends $(hdrsrc) : $(uicsrc) ;
+    Depends $(cppsrc) : $(uicsrc) ;
+    Depends $(object) : $(cppsrc) ;
+    Clean clean : $(cppsrc) ;
+    Clean clean : $(hdrsrc) ;
+    TEMPORARY $(cppsrc) ;
+}
+
+actions Uic {
+    $(UIC) $(>) -o $(<)
+}
+
+#
+# Rule to build C++ code for signals/slots using moc
+#
+
+rule Moc
+{
+    #echo RULE MOC $(<) $(>) ;
+    local mochdrsrc = $(>) ;
+    local target = $(<) ;
+    MakeLocate $(target) : $(ALL_LOCATE_TARGET) ;
+    SEARCH on $(mochdrsrc) = $(SEARCH_SOURCE) ;
+    Depends $(target) : $(mochdrsrc) ;
+    Depends all : $(target) ;
+    Clean clean : $(target) ;
+}
+
+actions Moc {
+	#echo Moc $(>)
+    $(MOC) $(>) -o $(<)
 }
 

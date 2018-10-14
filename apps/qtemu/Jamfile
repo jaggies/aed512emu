@@ -1,0 +1,46 @@
+SubDir TOP apps qtemu ;
+SubDirHdrs $(TOP) lib aed ;
+SubDirHdrs $(TOP) lib core ;
+SubDirHdrs $(TOP) lib cpu ;
+SubDirHdrs $(TOP) lib devices ;
+SubDirHdrs $(TOP) lib dis6502 ;
+SubDirHdrs $(TOP) lib mos6502 ;
+SubDirHdrs $(TOP) lib util ;
+SubDirHdrs /opt/local/include ;
+
+if $(OS) = MACOSX {
+    FRAMEWORKS += OPENGL GLUT QtCore QtGui QtOpenGL QtWidgets ;
+    LINKLIBS += -F $(QTFRAMEWORK) -framework\ $(FRAMEWORKS) ;
+    INCLUDE += $(QT)/include ;
+    LIBDIRS += $(QT)/lib ;
+    LINKLIBS += -L$(LIBDIRS) ;
+    CCFLAGS += $(LINKLIBS) -DMACOSX ;
+    C++FLAGS += $(LINKLIBS) -DMACOSX -F $(QTFRAMEWORK) ;
+} else {
+    QT = /usr/include/x86_64-linux-gnu/qt5 ;
+    LINKLIBS += -L/usr/lib/x86_64-linux-gnu/ ;
+    LINKLIBS = -lGL -lQt5Gui -lQt5Core -lQt5OpenGL -lQt5Widgets $(LINKLIBS) ;
+    INCLUDE += $(QT) ;
+}
+
+LINKLIBS on qtemu += -lsseopengl -lmodel -lsseray $(OPENGLLIBS) $(LINKLIBS) ;
+
+Uic ui_mainwindow.h : mainwindow.ui ;
+Moc moc_mainwindow.h : mainwindow.h ;
+Moc moc_glwidget.h : glwidget.h ;
+
+Depends qtemu : libemu.a ;
+INCLUDE += -I/opt/local/include ;
+LINKLIBS on qtemu = $(LINKLIBS) -lemu -lglut -lGLU -lGL -lglew ;
+
+Main qtemu : 
+	drawpixelrenderer.cpp
+	gltexturerenderer.cpp
+	glwidget.cpp
+	main.cpp
+	mainwindow.cpp
+	moc.cpp
+	renderer.cpp
+	vbo.cpp
+	vertex.cpp
+	;

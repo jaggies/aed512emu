@@ -9,11 +9,10 @@
 #define MAINWINDOW_H
 
 #include <iostream>
-#include <QMainWindow>
-#include <QString>
-#include <QFileDialog>
-#include <QSpinBox>
-#include <QStatusBar>
+#include <QtWidgets/QMainWindow>
+#include <QtCore/QString>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QStatusBar>
 #include "glwidget.h"
 
 #define UNUSED __attribute__((unused))

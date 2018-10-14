@@ -9,7 +9,7 @@ tuple<int, string> disassemble_6502(int* address, const std::function<uint8_t(in
     int bytelength;
     char *p = cstr;
 
-    int currentbyte;
+    int currentbyte = 0;
     int previousbyte;
     int paramcount;
     int addrmode;

@@ -5,6 +5,7 @@
  *      Author: jmiller
  */
 
+#include <GL/glew.h>
 #include <GL/gl.h>
 #include <iostream>
 #include "drawpixelrenderer.h"

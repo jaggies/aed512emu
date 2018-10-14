@@ -12,7 +12,6 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <GL/gl.h>
 
 // Abstract base class for renderer
 class Renderer

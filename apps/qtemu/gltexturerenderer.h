@@ -1,7 +1,6 @@
 #ifndef GLTEXTURERENDERER_H
 #define GLTEXTURERENDERER_H
 
-#include <GL/gl.h>
 #include "renderer.h"
 #include "vbo.h"
 #include "vertex.h"

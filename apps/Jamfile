@@ -2,4 +2,5 @@ SubDir TOP apps ;
 SubInclude TOP apps aedterm ;
 SubInclude TOP apps checker ;
 SubInclude TOP apps demos ;
+SubInclude TOP apps qtemu ;
 SubInclude TOP apps test ;

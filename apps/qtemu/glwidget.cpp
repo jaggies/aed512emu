@@ -5,6 +5,8 @@
  *      Author: jmiller
  */
 
+#include <GL/glew.h>
+#include <GL/gl.h>
 #include "glwidget.h"
 #include "drawpixelrenderer.h"
 #include "gltexturerenderer.h"

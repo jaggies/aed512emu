@@ -9,10 +9,8 @@
 #define VBO_H
 
 #include <vector>
-#include <GL/gl.h>
-#include <GL/glext.h>
 
-template <class T>
+template <typename T>
 class Vbo {
     public:
         class Attr {

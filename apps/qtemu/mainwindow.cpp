@@ -5,7 +5,7 @@
  *      Author: jmiller
  */
 
-#include <QFileInfo>
+#include <QtCore/QFileInfo>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 

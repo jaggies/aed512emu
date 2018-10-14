@@ -5,10 +5,12 @@
  *      Author: jmiller
  */
 
+#include <GL/glew.h>
 #include <GL/gl.h>
 #include "renderer.h"
 
 void Renderer::initialize() {
+    glewInit();
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     const GLdouble du = 1.0;

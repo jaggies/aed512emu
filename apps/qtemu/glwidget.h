@@ -8,9 +8,9 @@
 #ifndef GLWIDGET_H
 #define GLWIDGET_H
 
-#include <QOpenGLWidget>
-#include <QWheelEvent>
-#include <QTimer>
+#include <QtWidgets/QOpenGLWidget>
+#include <QtGui/QWheelEvent>
+#include <QtCore/QTimer>
 #include <iostream>
 #include "renderer.h"
 
