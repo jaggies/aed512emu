@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     glw = findChild<GLWidget*>(QString("openGLWidget"));
     statusBar()->setVisible(false);
     worker = new WorkerThread(this);
-    connect(worker, &WorkerThread::handleVsync, this, &MainWindow::handleVsync);
+    connect(worker, &WorkerThread::handleRedraw, this, &MainWindow::handleRedraw);
     connect(worker, &WorkerThread::finished, worker, &QObject::deleteLater);
     worker->start();
 }

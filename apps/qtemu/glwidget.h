@@ -17,28 +17,31 @@
 class GLWidget : public QOpenGLWidget
 {
     Q_OBJECT
-public:
-    explicit GLWidget(QWidget *parent = Q_NULLPTR);
-    virtual ~GLWidget() = default;
+    public:
+        explicit GLWidget(QWidget *parent = Q_NULLPTR);
+        virtual ~GLWidget() = default;
 
-    void initializeGL() override;
-    void paintGL() override;
-    void resizeGL(int w, int h) override;
-    void wheelEvent(QWheelEvent *event) override;
-    void mouseReleaseEvent ( QMouseEvent * event ) override;
+        void initializeGL() override;
+        void paintGL() override;
+        void resizeGL(int w, int h) override;
+        void wheelEvent(QWheelEvent *event) override;
+        void mouseReleaseEvent ( QMouseEvent * event ) override;
 
-    void play();
-    bool isPlaying() const;
+        void updateVideo(const uint8_t* video, int width, int height);
+        void updateLut(const uint8_t* red, const uint8_t* blue, const uint8_t* green);
 
-    Renderer* getRenderer() { return _renderer; }
+        void play();
+        bool isPlaying() const;
 
-public slots:
-    void timeout();
+        Renderer* getRenderer() { return _renderer; }
 
-private:
-    Renderer* _renderer;
-    QTimer* _timer;
-    int _accumMouse;
+    public slots:
+        void timeout();
+
+    private:
+        Renderer* _renderer;
+        QTimer* _timer;
+        int _accumMouse;
 };
 
 #endif // GLWIDGET_H

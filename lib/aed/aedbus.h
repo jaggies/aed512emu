@@ -81,6 +81,18 @@ class AedBus : public BUS {
         // in ABGR format.
         void getFrame(std::vector<uint32_t>& frame, int* width, int *height);
 
+        const std::vector<uint8_t>& getRawVideo(int* width, int *height) const {
+            *width = _aedRegs->getDisplayWidth();
+            *height = _aedRegs->getDisplayHeight();
+            return _aedRegs->getVideoMemory();
+        }
+
+        void getLut(const uint8_t** red, const uint8_t** green, const uint8_t** blue) const {
+            *red = &getRed(0);
+            *green = &getGreen(0);
+            *blue = &getBlue(0);
+        }
+
         // Delegate functions.
         const size_t getDisplayWidth() const { return _aedRegs->getDisplayWidth(); }
 

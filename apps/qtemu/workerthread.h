@@ -22,7 +22,8 @@ class WorkerThread: public QThread {
         void stop() { _flag_stop = true; }
 
     signals:
-        void handleVsync();
+        void handleRedraw(const uint8_t* video, const uint8_t* red, const uint8_t * green,
+                const uint8_t *blue, int width, int height);
         void handleException(CPU::ExceptionType ex, int pc);
 
     private:

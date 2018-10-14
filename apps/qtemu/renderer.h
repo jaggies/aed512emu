@@ -25,7 +25,7 @@ public:
     Renderer(int width = 512, int height = 512):
             _windowWidth(0), _windowHeight(0),
             _textureWidth(width), _textureHeight(height),
-            _texture(width * height, Pixel(0,0)) {
+            _texture(width * height, Pixel(0,0)), _lut(256, 0xffffffff) {
         for (int j = 0; j < height; j++) {
             for (int i = 0; i < width; i++) {
                 _texture[j*width + i] = Pixel(i, j);
@@ -36,6 +36,7 @@ public:
     virtual void initialize();  // Initialize GL state
     virtual void draw(); // Draw the current frame
     virtual const std::vector<Pixel>& getTexture() const { return _texture; }
+    virtual const std::vector<uint32_t>& getLut() const { return _lut; }
 
     // Resize canvas to width x height
     virtual void resize(int width, int height);
@@ -44,12 +45,17 @@ public:
     int getTextureWidth() const { return _textureWidth; }
     int getTextureHeight() const { return _textureHeight; }
 
+    void updateVideo(const uint8_t* video, int width, int height);
+    void updateLut(const uint8_t* red, const uint8_t* blue, const uint8_t* green);
+
+
 protected:
     int _windowWidth;
     int _windowHeight;
     int _textureWidth;
     int _textureHeight;
-    std::vector<Pixel> _texture;
+    std::vector<Pixel>  _texture;
+    std::vector<uint32_t> _lut;
 };
 
 inline void checkGlError(const char* op) {

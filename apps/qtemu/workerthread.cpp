@@ -19,7 +19,16 @@ WorkerThread::WorkerThread(QObject *parent): QThread(parent) {
 
     _bus = new AedBus(
            [this]() { _cpu->irq(); }, [this]() { _cpu->nmi(); },
-           [this]() { std::cerr << "hsync\n"; emit handleVsync(); });
+           [this]() {
+               int width; int height;
+               const std::vector<uint8_t>& mem = _bus->getRawVideo(&width, &height);
+               const uint8_t* red;
+               const uint8_t* green;
+               const uint8_t* blue;
+               _bus->getLut(&red, &green, &blue);
+               emit handleRedraw(&mem[0], red, green, blue, width, height);
+           });
+
 
     _cpu = new USE_CPU(
            [this](int addr) { return _bus->read(addr); },
@@ -31,7 +40,8 @@ WorkerThread::WorkerThread(QObject *parent): QThread(parent) {
 void
 WorkerThread::run() {
     while (!_flag_stop) {
-        _cpu->cycle(5);
+        _cpu->cycle(1);
+        _bus->handleEvents(_clk->getCpuTime());
     }
 }
 

@@ -51,10 +51,10 @@ void GlTextureRenderer::initialize() {
     checkGlError("glGetUniformLocation(lut)");
 
     std::vector<Vertex> data;
-    data.push_back(Vertex(-2.0f, -2.0f, 0.0f, -2.0f, -2.0f)); // position 3, color 3
-    data.push_back(Vertex( 2.0f, -2.0f, 0.0f, 2.0f, -2.0f));
-    data.push_back(Vertex( 2.0f,  2.0f, 0.0f, 2.0f, 2.0f));
-    data.push_back(Vertex(-2.0f,  2.0f, 0.0f, -2.0f, 2.0f));
+    data.push_back(Vertex(0.0f, 0.0f, 0.0f, 0.0f, 0.0f)); // position 3, color 3
+    data.push_back(Vertex(1.0f, 0.0f, 0.0f, 1.0f, 0.0f));
+    data.push_back(Vertex(1.0f, 1.0f, 0.0f, 1.0f, 1.0f));
+    data.push_back(Vertex(0.0f, 1.0f, 0.0f, 0.0f, 1.0f));
 
     std::vector<Vbo<Vertex>::Attr> attrs;
     attrs.push_back(Vbo<Vertex>::Attr("position", 3, offsetof(Vertex, position)));
@@ -71,8 +71,8 @@ void GlTextureRenderer::initialize() {
     glBindTexture(GL_TEXTURE_2D, _imageTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, _textureWidth, _textureHeight, 0, GL_RG, GL_UNSIGNED_BYTE, nullptr);
     checkGlError("after glTexImage2D");
 
@@ -87,16 +87,6 @@ void GlTextureRenderer::initialize() {
     glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     checkGlError("after glTexImage1D (luma)");
 
-    glBindTexture(GL_TEXTURE_1D, _lutTexture);
-
-    // Default to gray ramp
-    uint8_t lumaLut[256][4];
-    for (int i = 0; i < 256; i++) {
-        lumaLut[i][0] = lumaLut[i][1] = lumaLut[i][2] =  uint8_t(i);
-        lumaLut[i][3] = 255;
-    }
-    glTexSubImage1D(GL_TEXTURE_1D, 0, 0, sizeof(lumaLut)/sizeof(lumaLut[0]), GL_RGBA, GL_UNSIGNED_BYTE, &lumaLut[0][0]);
-
     glEnable(GL_TEXTURE_1D);
     glEnable(GL_TEXTURE_2D);
 }
@@ -105,8 +95,15 @@ void GlTextureRenderer::draw() {
     Renderer::draw();
     glUseProgram(_program);
     checkGlError("glUseProgram");
+
     glBindTexture(GL_TEXTURE_2D, _imageTexture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _textureWidth, _textureHeight, GL_RG, GL_UNSIGNED_BYTE, &getTexture()[0]);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _textureWidth, _textureHeight, GL_RG, GL_UNSIGNED_BYTE,
+            &getTexture()[0]);
+
+    glBindTexture(GL_TEXTURE_1D, _lutTexture);
+    glTexSubImage1D(GL_TEXTURE_1D, 0, 0, _lut.size(), GL_RGBA, GL_UNSIGNED_BYTE,
+            &getLut()[0]);
+
     checkGlError("after glTexSubImage");
     _vbo->draw();
     checkGlError("after vbo.draw()");
