@@ -158,11 +158,13 @@ class AedBus : public BUS {
         uint16_t    _joyX = 0; // X joystick input, range [0, 511]
         uint16_t    _joyY = 0; // Y joystick input, range [0, 511]
         uint64_t    _joyDelay = 0; // delay for joyX and joyY, depending on last selection cycle
+        bool    _ys8 = 0; // upper bit for y scroll register, set from PIA2
         std::queue<uint8_t> _serialFifo;
         std::mutex _eventQueueMutex;
         EventQueue _eventQueue;
         Redraw  _redraw;
         bool    _mwe; // memory write enable? Used to debug erase hardwares
+
 };
 
 #endif // AEDBUS_H

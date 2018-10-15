@@ -176,7 +176,8 @@ void AedBus::handlePIA2(M68B21::Port port, uint8_t oldData, uint8_t newData) {
     uint8_t changed = oldData ^ newData;
     switch (port) {
         case M68B21::OutputB:
-            if (debug) std::cout << "BaudRates: " << (newData >> 2) << std::endl;
+            _ys8 = newData & 1;
+            if (debug) std::cerr << "PIA2, PortB: " << newData << std::endl;
         break;
         case M68B21::ControlA:
             if (rising(oldData, newData, M68B21::CRA5)) {
@@ -447,10 +448,8 @@ AedBus::getFrame(std::vector<uint32_t>& frame, int* w, int *h) {
     const uint8_t* grn = &getGreen(0);
     const uint8_t* blu = &getBlue(0);
 
-    const size_t yshift = VTOTAL / 2 + 13; // TODO: Why!?!?
-
     const size_t scrollx = _aedRegs->getScrollX();
-    const size_t scrolly = _aedRegs->getScrollY() + yshift;
+    const size_t scrolly = ((_ys8 ? 0x100 : 0x000) | _aedRegs->getScrollY());
     for (size_t j = 0; j < height; j++) {
         for (size_t i = 0; i < width; i++) {
             const size_t x = (i + scrollx) % width;
