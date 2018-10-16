@@ -7,12 +7,16 @@
  *  Renders the Mandelbrot overview.
  */
 #include <iostream>
+#include <cmath>
 #include "demo.h"
 
 const int xres = 512;
 const int yres = 512;
-const int maxCount = 256;
+const int maxCount = 1024;
 static AedSequence seq;
+const float centerX = -0.722;
+const float centerY = 0.244;
+const float width = 0.0019;
 
 void mandel(double xmin, double xmax, double ymin, double ymax) {
     float cr_delta = (xmax - xmin)/(xres-1);
@@ -34,14 +38,20 @@ void mandel(double xmin, double xmax, double ymin, double ymax) {
                 zr = tr + cr;
                 zi = ti + ci;
             } while ((count++ < maxCount) && (zr*zr + zi*zi) < 4.0f);
-            buffer[i] = count;
+            buffer[i] = count % 256;
         }
         seq.mov(0, j).write_horizontal_runs(buffer, xres).send();
     }
 }
 
+float f(float x) {
+    return 127 + 128*sin(x * M_PI);
+}
+
 int main(int argc, char **argv)
 {
-    initLut(seq, 3, 3, 2);
-    mandel(-2.0, 1.0, -1.25, 1.25);
+    for (int i = 0; i < 256; i++) {
+        seq.setlut(i, f(i / 256.0), f((i+64)/256.0), f((i+128)/256.0));
+    }
+    mandel(centerX - width/2, centerX + width/2, centerY - width/2, centerY + width/2);
 }
