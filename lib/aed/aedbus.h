@@ -154,11 +154,11 @@ class AedBus : public BUS {
         bool    _erase = false; // hardware is in erase cycle when true; erase each scanline during scan
         bool    _xon = true; // XON/XOFF protocol
         int     _scanline = 0; // the current scanline
+        bool    _ys8 = 0; // upper bit for y scroll register, set from PIA2
         uint64_t    _cpuTime = 0; // current CPU time. TODO: have this be the source of truth
         uint16_t    _joyX = 0; // X joystick input, range [0, 511]
         uint16_t    _joyY = 0; // Y joystick input, range [0, 511]
         uint64_t    _joyDelay = 0; // delay for joyX and joyY, depending on last selection cycle
-        bool    _ys8 = 0; // upper bit for y scroll register, set from PIA2
         std::queue<uint8_t> _serialFifo;
         std::mutex _eventQueueMutex;
         EventQueue _eventQueue;

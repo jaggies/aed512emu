@@ -78,12 +78,16 @@ static const int8_t SW2 = 0x7d; // Comm 1-8: [Xoff, ForceRTS, AuxBaud[3..5], Hos
 
 // Video timing
 static const int VTOTAL = 525;
-static const uint64_t VBLANK_P_US = 15300;
-static const uint64_t VBLANK_N_US =  1300;
-static const uint64_t HBLANK_P_US = 22; // 22.92
-static const uint64_t HBLANK_N_US = 40; // 40.60
-static const uint64_t FIELD_DLY_US = 387; // 387us (delay from VBLANK_N)
-static const uint64_t HBLANK_DLY_US = 16; // 15.8us (delay from VBLANK_N)
+static const int VISIBLE_LINES = 483;
+static const float FIELD_RATE = 59.97; // yay, NTSC
+static const float FIELD_TIME_US = (float) SECS2USECS(1) / FIELD_RATE;
+static const float LINE_TIME_US = FIELD_TIME_US / ((float) VTOTAL / 2.0f); // half since fields
+static const float VBLANK_P_US = FIELD_TIME_US * VISIBLE_LINES / VTOTAL;
+static const float VBLANK_N_US =  FIELD_TIME_US * (VTOTAL - VISIBLE_LINES) / VTOTAL;
+static const float HBLANK_P_US = 22.92f; // 22.92 measured from device
+static const float HBLANK_N_US = LINE_TIME_US - HBLANK_P_US;
+static const float FIELD_DLY_US = 387; // 387us (delay from VBLANK_N) measured
+static const float HBLANK_DLY_US = 15.8; // 15.8us (delay from VBLANK_N) measured
 
 // Throttle serial port if non-zero. Use if XON/XOFF is disabled on SWx above.
 static const uint64_t SERIAL_HOLDOFF = 0;
@@ -141,9 +145,13 @@ void AedBus::handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData) {
         case M68B21::OutputB:
             if (changed & 0x10) {
                 // Memory Write Enable (enables 6502 writing to video memory?)
-                _mwe = bool(newData & 0x10);
-                std::cerr << "MWE:" << _mwe << std::endl;
 
+                // It appears that the system selects the color through non-incrementing XY
+                // and then expects the hardware to clear one 16-bit video memory word per clock.
+                // how to tie this in...
+
+                _mwe = bool(newData & 0x10);
+                std::cerr << "MWE:" << _mwe << " at " << std::dec << _cpuTime << std::endl;
             }
             if (changed & 0x0f) {
                 // Joystick processing
@@ -339,6 +347,11 @@ AedBus::reset() {
    _mapper.reset(); // This resets all peripherals
    _pia0->set(M68B21::InputA, ~SW1); // update DIP switch settings
    _pia2->set(M68B21::InputA, ~SW2);
+   _scanline = 0;
+   _cpuTime = 0; // TODO: reset external clocl that controls this one
+   _joyDelay = _joyX = _joyY = 0;
+   _erase = false;
+   _ys8 = false;
    _xon = true;
 }
 
