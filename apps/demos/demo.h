@@ -27,4 +27,11 @@ inline void initLut(AedSequence& seq, int rbits, int gbits, int bbits) {
     }
 }
 
+// Initializes color LUT with given allocation of bits.
+inline void initGrayLut(AedSequence& seq) {
+    for (int i = 0; i < 256; i++) {
+        seq.setlut(i, i,i,i).send();
+    }
+}
+
 #endif /* APPS_DEMOS_DEMO_H_ */
