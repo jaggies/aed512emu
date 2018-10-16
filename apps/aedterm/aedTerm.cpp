@@ -55,8 +55,8 @@ static size_t CYCLES_PER_CALL = 3;
 static void drawCircle() {
     AedSequence seq;
     seq.mov(256, 256)
-    .setlut(0, 0x00, 0x00, 0x80)
-    .setlut(1, 0xff, 0xff, 0xff)
+    .set_color_table(0, 0x00, 0x00, 0x80)
+    .set_color_table(1, 0xff, 0xff, 0xff)
     .circle(0x70)
     .send([](uint8_t value) { bus->send(value); });
     return;

@@ -56,7 +56,10 @@ class AedRegs: public Peripheral {
 
         const std::vector<uint8_t>& getVideoMemory() const { return _videoMemory; }
 
+        // Returns the lower 8 bits of scroll. 9th bit comes from PIA0, portB bit 0
         const uint8_t getScrollX() const { return _storage[xscrl]; }
+
+        // Returns the lower 8 bits of scroll. 9th bit comes from PIA2, portB bit 0
         const uint8_t getScrollY() const { return _storage[yscrl]; }
 
         void eraseLine(size_t line) {

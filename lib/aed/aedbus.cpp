@@ -95,6 +95,15 @@ static const uint64_t SERIAL_HOLDOFF = 0;
 void AedBus::handlePIA0(M68B21::Port port, uint8_t oldData, uint8_t newData) {
     uint8_t changed = oldData ^ newData;
     switch (port) {
+            case M68B21::OutputB:
+                if (changed & 1) {
+                    _xs8 = newData & 1;
+                }
+                if (changed & (0x1c)) {
+                    int zoomX = (newData & 0x1c) >> 2;
+                    std::cerr << "ZoomX: " << zoomX << std::endl;
+                }
+            break;
             case M68B21::ControlA:
                 if (rising(oldData, newData, M68B21::CRA5)) {
                     if (newData & M68B21::CRA4) {
@@ -351,7 +360,8 @@ AedBus::reset() {
    _cpuTime = 0; // TODO: reset external clocl that controls this one
    _joyDelay = _joyX = _joyY = 0;
    _erase = false;
-   _ys8 = false;
+   _xs8 = 0;
+   _ys8 = 0;
    _xon = true;
 }
 
@@ -461,7 +471,7 @@ AedBus::getFrame(std::vector<uint32_t>& frame, int* w, int *h) {
     const uint8_t* grn = &getGreen(0);
     const uint8_t* blu = &getBlue(0);
 
-    const size_t scrollx = _aedRegs->getScrollX();
+    const size_t scrollx = ((_xs8 ? 0x100 : 0x000) | _aedRegs->getScrollX());
     const size_t scrolly = ((_ys8 ? 0x100 : 0x000) | _aedRegs->getScrollY());
     for (size_t j = 0; j < height; j++) {
         for (size_t i = 0; i < width; i++) {

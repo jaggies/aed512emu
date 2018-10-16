@@ -77,13 +77,34 @@ class AedSequence {
             return *this;
         }
 
-        AedSequence& setlut(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
+        AedSequence& scroll_relative(int8_t dx, int8_t dy) {
+            if (dx != 0) {
+                _sequence.push_back(HSR);
+                _sequence.push_back(dx);
+            }
+            if (dy != 0) {
+                _sequence.push_back(VSR);
+                _sequence.push_back(dy);
+            }
+            return *this;
+        }
+
+        AedSequence& set_color_table(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
             _sequence.push_back(SCT);
             _sequence.push_back(index);
             _sequence.push_back(1); // just one entry
             _sequence.push_back(r);
             _sequence.push_back(g);
             _sequence.push_back(b);
+            return *this;
+        }
+
+        AedSequence& set_zoom_register(uint8_t x, uint8_t y) {
+            assert(x > 0 && x <= 16);
+            assert(y > 0 && y <= 16);
+            _sequence.push_back(SZR);
+            _sequence.push_back(x);
+            _sequence.push_back(y);
             return *this;
         }
 

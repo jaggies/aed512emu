@@ -21,7 +21,7 @@ inline void initLut(AedSequence& seq, int rbits, int gbits, int bbits) {
                 int red = r << (8-rbits);
                 int grn = g << (8-gbits);
                 int blu = b << (8-bbits);
-                seq.setlut(idx, red, grn, blu).send();
+                seq.set_color_table(idx, red, grn, blu).send();
             }
         }
     }
@@ -30,7 +30,7 @@ inline void initLut(AedSequence& seq, int rbits, int gbits, int bbits) {
 // Initializes color LUT with given allocation of bits.
 inline void initGrayLut(AedSequence& seq) {
     for (int i = 0; i < 256; i++) {
-        seq.setlut(i, i,i,i).send();
+        seq.set_color_table(i, i,i,i).send();
     }
 }
 

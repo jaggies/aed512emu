@@ -58,7 +58,7 @@ float f(float x) {
 int main(int argc, char **argv)
 {
     for (int i = 0; i < 256; i++) {
-        seq.setlut(i, f(i / 256.0), f((i+128)/256.0), f((i+168)/256.0));
+        seq.set_color_table(i, f(i / 256.0), f((i+128)/256.0), f((i+168)/256.0));
     }
     mandel(centerX - width/2, centerX + width/2, centerY - width/2, centerY + width/2);
 }

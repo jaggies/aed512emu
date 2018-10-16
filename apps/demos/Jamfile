@@ -7,9 +7,13 @@ SubDirHdrs $(TOP) lib dis6502 ;
 SubDirHdrs $(TOP) lib util ;
 SubDirHdrs $(TOP) lib aed ;
 
-Depends mandl : libemu.a ;
-LINKLIBS on mandl = $(LINKLIBS) -lemu ;
-Main mandl : mandl.cpp ;
+Depends aoi : libemu.a ;
+LINKLIBS on aoi = $(LINKLIBS) -lemu ;
+Main aoi : aoi.cpp ;
+
+Depends bitplanes : libemu.a ;
+LINKLIBS on bitplanes = $(LINKLIBS) -lemu ;
+Main bitplanes : bitplanes.cpp ;
 
 Depends circles : libemu.a ;
 LINKLIBS on circles = $(LINKLIBS) -lemu ;
@@ -19,18 +23,19 @@ Depends doily : libemu.a ;
 LINKLIBS on doily = $(LINKLIBS) -lemu ;
 Main doily : doily.cpp ;
 
+Depends mandl : libemu.a ;
+LINKLIBS on mandl = $(LINKLIBS) -lemu ;
+Main mandl : mandl.cpp ;
+
 Depends rectangles : libemu.a ;
 LINKLIBS on rectangles = $(LINKLIBS) -lemu ;
 Main rectangles : rectangles.cpp ;
 
-Depends aoi : libemu.a ;
-LINKLIBS on aoi = $(LINKLIBS) -lemu ;
-Main aoi : aoi.cpp ;
+Depends scroller : libemu.a ;
+LINKLIBS on scroller = $(LINKLIBS) -lemu ;
+Main scroller : scroller.cpp ;
 
 Depends showpbm : libemu.a ;
 LINKLIBS on showpbm = $(LINKLIBS) -lemu ;
 Main showpbm : showpbm.cpp ;
 
-Depends bitplanes : libemu.a ;
-LINKLIBS on bitplanes = $(LINKLIBS) -lemu ;
-Main bitplanes : bitplanes.cpp ;
