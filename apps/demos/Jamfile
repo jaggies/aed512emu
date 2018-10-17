@@ -39,3 +39,7 @@ Depends showpbm : libemu.a ;
 LINKLIBS on showpbm = $(LINKLIBS) -lemu ;
 Main showpbm : showpbm.cpp ;
 
+Depends zoom : libemu.a ;
+LINKLIBS on zoom = $(LINKLIBS) -lemu ;
+Main zoom : zoom.cpp ;
+
