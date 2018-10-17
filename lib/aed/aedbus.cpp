@@ -101,7 +101,7 @@ void AedBus::handlePIA0(M68B21::Port port, uint8_t oldData, uint8_t newData) {
                 }
                 if (changed & (0x1c)) {
                     int zoomX = (newData & 0x1c) >> 2;
-                    std::cerr << "ZoomX: " << zoomX << std::endl;
+                    // std::cerr << "pia_zoomx: " << zoomX << std::endl;
                 }
             break;
             case M68B21::ControlA:

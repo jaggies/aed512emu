@@ -31,6 +31,8 @@
 #define sio1da 0xf // SIO1 Tx/RX data register
 
 #define vzoom  0x10 // vertical zoom register 0 - 15
+#define unkn0  0x11
+#define unkn1  0x12
 #define hzoom  0x13 // horizontal zoom register 0 - 15
 
 #define rmks0  0x10 // read mask0 (origin) or LL quadrant (AED767)

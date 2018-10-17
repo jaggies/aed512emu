@@ -86,6 +86,20 @@ void AedRegs::write(int offset, uint8_t value) {
             }
         break;
 
+        case vzoom:
+            std::cerr << "vzoom: " << (int) (value & 0x0f) << std::endl;
+        break;
+        case unkn0:
+            std::cerr << "unkn0: " << (int) (value & 0x0f) << std::endl;
+        break;
+        case unkn1:
+            std::cerr << "unkn1: " << (int) (value & 0x0f) << std::endl;
+        break;
+        case hzoom:
+            std::cerr << "hzoom: " << (int) (value & 0x0f) << std::endl;
+        break;
+
+
         case pxcnth:
             if (_pixcntoflo && ((_storage[offset] ^ value) & 0x0f)) {
                 // This is the difference between A/B versions of the AED512
