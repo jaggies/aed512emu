@@ -5,6 +5,7 @@
  *      Author: jmiller
  */
 
+#include <unistd.h>
 #include "demo.h"
 
 const int xres = 512;
@@ -16,7 +17,9 @@ int main(int argc, char **argv) {
         int zx = (i & 0xf) + 1;
         int zy = (i >> 4) + 1;
         seq.set_zoom_register(zx, zy).send();
+		usleep(100000);
     }
+    seq.set_zoom_register(1, 1).send();
 }
 
 

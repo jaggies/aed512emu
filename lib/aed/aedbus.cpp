@@ -100,7 +100,7 @@ void AedBus::handlePIA0(M68B21::Port port, uint8_t oldData, uint8_t newData) {
                     _xs8 = newData & 1;
                 }
                 if (changed & (0x1c)) {
-                    int zoomX = (newData & 0x1c) >> 2;
+                    //int zoomX = (newData & 0x1c) >> 2;
                     // std::cerr << "pia_zoomx: " << zoomX << std::endl;
                 }
             break;
@@ -473,10 +473,12 @@ AedBus::getFrame(std::vector<uint32_t>& frame, int* w, int *h) {
 
     const size_t scrollx = ((_xs8 ? 0x100 : 0x000) | _aedRegs->getScrollX());
     const size_t scrolly = ((_ys8 ? 0x100 : 0x000) | _aedRegs->getScrollY());
+    const int zoomX = _aedRegs->getZoomX();
+    const int zoomY = _aedRegs->getZoomY();
     for (size_t j = 0; j < height; j++) {
         for (size_t i = 0; i < width; i++) {
-            const size_t x = (i + scrollx) % width;
-            const size_t y = (j + scrolly) % height;
+            const size_t x = (i/zoomX + scrollx) % width;
+            const size_t y = (j/zoomY + scrolly) % height;
             const uint8_t lut = raw[y * width + x];
             frame[j * width + i] = 0xff000000 | (blu[lut] << 16) | (grn[lut] << 8) | (red[lut]);
         }
