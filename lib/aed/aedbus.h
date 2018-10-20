@@ -22,7 +22,6 @@
 #include "aedregs.h"
 
 class AedBus : public BUS {
-    #define SECS2USECS(a) ((a)*1000000)
     // Events in PriorityQueue
     enum EventType { NONE, FIELD, KEY_DOWN, VBLANK_P, VBLANK_N, HBLANK_P, HBLANK_N,
         SERIAL, JOYSTICK_SET, JOYSTICK_RESET };

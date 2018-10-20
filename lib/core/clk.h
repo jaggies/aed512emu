@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include "coreutil.h"
 
 class CLK {
     public:
@@ -21,7 +22,7 @@ class CLK {
         virtual uint32_t getFrequency() const { return _hz; }
         // Returns CPU time in microseconds (us)
         virtual uint64_t getCpuTime() const {
-            return _hz * _cycleCount / _hz;
+            return SECS2USECS(1) * _cycleCount / _hz;
         }
     private:
         const uint32_t _hz;

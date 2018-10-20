@@ -20,4 +20,6 @@ inline bool falling(uint8_t prev, uint8_t cur, uint8_t bit) {
 
 #define Number(a) (sizeof(a) / sizeof(a[0]))
 
+#define SECS2USECS(a) ((a)*1000000)
+
 #endif /* LIB_CORE_COREUTIL_H_ */
