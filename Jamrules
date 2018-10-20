@@ -1,7 +1,5 @@
 # These defaults will be overwritten by target/$(TARGET)
-C++ = g++-mp-5 ;
-#C++ = g++-mp-4.9 ;
-#C++ = c++ ;
+C++ = g++ ;
 C++FLAGS += -std=c++11 ;
 #DEFINES += AED767 ;
 #DEFINES += USE_CPU=mos6502 ;
@@ -19,10 +17,12 @@ if $(OS) = MACOSX {
 	QTDIR = /opt/local/libexec/qt5 ;
 	QTBIN = $(QTDIR)/bin ;
 	QTFRAMEWORK = $(QTDIR)/lib/ ;
-} else {
+	C++ = g++-mp-5 ;
+} else { # Linux
 	QTDIR = /usr/include/x86_64-linux-gnu/qt5 ;
 	QTBIN = /usr/lib/x86_64-linux-gnu/qt5/bin ;
-    AR = ar cUr ; # Turn off deterministic ar. Sigh.
+	AR = ar cUr ; # Turn off deterministic ar. Sigh.
+        C++FLAGS += -fPIC ; #Qt requires this
 }
 
 CCFLAGS += -W$(WARN) -D$(DEFINES) -I$(INCLUDE) $(LLVM) ;

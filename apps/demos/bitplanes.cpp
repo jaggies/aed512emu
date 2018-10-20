@@ -5,6 +5,7 @@
  *      Author: jmiller
  */
 
+#include <unistd.h>
 #include "demo.h"
 #include "aedsequence.h"
 

@@ -10,6 +10,7 @@
 #include <vector>
 #include <functional>
 #include <iostream>
+#include <unistd.h>
 #include "aedcmds.h"
 
 class AedSequence {
