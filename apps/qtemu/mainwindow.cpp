@@ -10,8 +10,6 @@
 #include "ui_mainwindow.h"
 #include "workerthread.h"
 
-#define Number(a) (sizeof(a) / sizeof(a[0]))
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), worker(nullptr)
 {
     ui->setupUi(this);

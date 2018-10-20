@@ -16,7 +16,7 @@
 #include "ram.h"
 #include "generic.h"
 #include "io.h"
-#include "util.h"
+#include "coreutil.h"
 
 static bool debug = false;
 static bool debug_timing = false;

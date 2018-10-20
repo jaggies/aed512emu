@@ -12,26 +12,22 @@
 #include <GL/gl.h>
 #include "gltexturerenderer.h"
 #include "vbo.h"
+#include "coreutil.h"
 
 static const char _vertexShader[] =
     "#version 120\n"
-    "struct State { mat4 modelview; mat4 projection; mat3 normal;};\n"
     "attribute vec4 position;"
-    "attribute vec2 uv;\n"
-    "varying vec2 v_uv;\n"
+    "attribute vec4 uv;\n"
     "void main() {\n"
         "gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * position;\n"
-        "v_uv = uv;\n"
+        "gl_TexCoord[0] = gl_TextureMatrix[0] * uv;" //gl_MultiTexCoord0
     "}\n";
 
 static const char _fragmentShader[] =
-    "varying vec2 v_uv;\n"
-    "uniform vec2 scroll;"
-    "uniform vec2 zoom;"
     "uniform sampler1D lut;\n"
     "uniform sampler2D image;\n"
     "void main() {\n"
-        "vec4 raw = texture2D(image, v_uv * zoom + scroll);"
+        "vec4 raw = texture2D(image, vec2(gl_TexCoord[0][0], gl_TexCoord[0][1]));"
         "gl_FragColor = texture1D(lut, raw[0]);"
     "}\n";
 
@@ -46,15 +42,9 @@ void GlTextureRenderer::initialize() {
     glUseProgram(_program);
     _positionHandle = glGetAttribLocation(_program, "position");
     checkGlError("glGetAttribLocation(position)");
-    _colorHandle = glGetAttribLocation(_program, "color");
-    checkGlError("glGetAttribLocation(color)");
     _imageUniform = glGetUniformLocation(_program, "image");
     checkGlError("glGetUniformLocation(image)");
     _lutUniform = glGetUniformLocation(_program, "lut");
-    checkGlError("glGetUniformLocation(lut)");
-    _scrollUniform = glGetUniformLocation(_program, "scroll");
-    checkGlError("glGetUniformLocation(lut)");
-    _zoomUniform = glGetUniformLocation(_program, "zoom");
     checkGlError("glGetUniformLocation(lut)");
 
     std::vector<Vertex> data;
@@ -64,8 +54,8 @@ void GlTextureRenderer::initialize() {
     data.push_back(Vertex(0.0f, 1.0f, 0.0f, 0.0f, 1.0f));
 
     std::vector<Vbo<Vertex>::Attr> attrs;
-    attrs.push_back(Vbo<Vertex>::Attr("position", 3, offsetof(Vertex, position)));
-    attrs.push_back(Vbo<Vertex>::Attr("uv", 2, offsetof(Vertex, uv)));
+    attrs.push_back(Vbo<Vertex>::Attr("position", Number(Vertex::position), offsetof(Vertex, position)));
+    attrs.push_back(Vbo<Vertex>::Attr("uv", Number(Vertex::uv), offsetof(Vertex, uv)));
     _vbo = new Vbo<Vertex>(_program, GL_QUADS, data, attrs);
 
     glShadeModel(GL_FLAT);
@@ -91,13 +81,7 @@ void GlTextureRenderer::initialize() {
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    checkGlError("after glTexImage1D (luma)");
-
-    glUniform2f(_scrollUniform, 0.0f, 0.0f);
-    checkGlError("_scrollUniform");
-
-    glUniform2f(_zoomUniform, 1.0f, 1.0f);
-    checkGlError("_zoomUniform");
+    checkGlError("after glTexImage1D (lut)");
 
     glEnable(GL_TEXTURE_1D);
     glEnable(GL_TEXTURE_2D);
@@ -127,17 +111,12 @@ void GlTextureRenderer::draw() {
             &getLut()[0]);
     checkGlError("after glTexSubImage");
 
-    glUniform2f(_scrollUniform, (float) _scrollX / _textureWidth,
-            (float) _scrollY / _textureHeight);
-    checkGlError("scroll");
-
-    glMatrixMode(GL_TEXTURE); // lut texture
+    glActiveTexture(GL_TEXTURE0);
+    glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
-    glScalef(2.0, 1.0, 1.0);
-    checkGlError("texturematrix");
-
-    glUniform2f(_zoomUniform, 1.0f / _zoomX, 1.0f / _zoomY);
-    checkGlError("zoom");
+    glScalef(1.0f / _zoomX, 1.0 / _zoomY, 1.0);
+    glTranslatef((float) _scrollX / _textureWidth, (float) _scrollY / _textureHeight, 0);
+    checkGlError("after texture transform");
 
     _vbo->draw();
     checkGlError("after vbo.draw()");
