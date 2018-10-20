@@ -7,7 +7,6 @@ DEFINES += USE_CPU=CPU6502 ;
 CCFLAGS += -Wall ;
 C++FLAGS += $(CCFLAGS) -std=c++11 ;
 OPTIM = -g -O3 ;
-LINK = $(C++) $(OPTIM) ;
 LINKLIBS += -L$(TOP)/build/$(OSFULL) ;
 echo Building $(OSFULL)  ;
 ALL_LOCATE_TARGET = $(TOP)/build/$(OSFULL) ;
@@ -27,6 +26,7 @@ if $(OS) = MACOSX {
 
 CCFLAGS += -W$(WARN) -D$(DEFINES) -I$(INCLUDE) $(LLVM) ;
 C++FLAGS += -W$(WARN) -D$(DEFINES) -I$(INCLUDE) $(LLVM) ;
+LINK = $(C++) $(OPTIM) ;
 
 MOC = $(QTBIN)/moc ;
 UIC = $(QTBIN)/uic ;
