@@ -76,6 +76,7 @@ int main(int argc, char** argv) {
     }
     std::cerr << "Loading " << argv[1] << " : " << pbm->width << "x" << pbm->height << std::endl;
     AedSequence seq;
+    seq.set_zoom_register(1,1).send();
     initLut(seq, 3, 3, 2);
 
     buffer = new uint8_t[width];

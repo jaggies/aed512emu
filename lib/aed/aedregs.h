@@ -62,6 +62,12 @@ class AedRegs: public Peripheral {
         // Returns the lower 8 bits of scroll. 9th bit comes from PIA2, portB bit 0
         const uint8_t getScrollY() const { return _storage[yscrl]; }
 
+        // Returns the current zoom factor for X, from 1..16
+        const uint8_t getZoomX() const { return 1 + (0x0f - (_storage[unkn1] & 0x0f)); }
+
+        //  Returns the current zoom factor for Y, from 1..16
+        const uint8_t getZoomY() const { return 1 + (0x0f - (_storage[vzoom] & 0x0f)); }
+
         void eraseLine(size_t line) {
             if (line >= DISPLAY_HEIGHT) return;
             uint8_t* pixel = &_videoMemory[line * DISPLAY_WIDTH];

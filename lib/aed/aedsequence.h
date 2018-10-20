@@ -109,14 +109,16 @@ class AedSequence {
             return *this;
         }
 
-        AedSequence& send(std::function<void(uint8_t)> snd
-                = [](uint8_t value) { std::cout << value; }) {
+        AedSequence& send(
+                std::function<void(uint8_t)> snd = [](uint8_t value) { std::cout << value; },
+                std::function<void()> end = []() { std::cout << std::flush; }) {
             snd(ESC); // enter interpreter
             for (uint8_t c : _sequence) {
                 snd(c);
             }
             snd(XXX); // leave interpreter
             _sequence.clear();
+            end();
             return *this;
         }
 

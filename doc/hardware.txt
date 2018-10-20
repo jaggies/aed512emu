@@ -35,7 +35,8 @@ vminxy (0x1b) = "Video memory load/store and inc/dec XY"
 	Increments X and Y CAP.
 	pixel[7:0] = data[7:0]
 
-unused (0x20)
+unknown (0x20) (not represented on early schematic)
+	likely vsync, requires misc0:0 = 1
 
 pxcntl (0x21) "Horizontal DMA Pixel Count (low byte)"
 	[7:0] = data[7:0]
