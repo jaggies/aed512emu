@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <cstddef> // offsetof()
+#include <cassert>
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include "gltexturerenderer.h"
@@ -20,15 +21,17 @@ static const char _vertexShader[] =
     "varying vec2 v_uv;\n"
     "void main() {\n"
         "gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * position;\n"
-        "v_uv = uv;"
+        "v_uv = uv;\n"
     "}\n";
 
 static const char _fragmentShader[] =
     "varying vec2 v_uv;\n"
+    "uniform vec2 scroll;"
+    "uniform vec2 zoom;"
     "uniform sampler1D lut;\n"
     "uniform sampler2D image;\n"
     "void main() {\n"
-        "vec4 raw = texture2D(image, v_uv);"
+        "vec4 raw = texture2D(image, v_uv * zoom + scroll);"
         "gl_FragColor = texture1D(lut, raw[0]);"
     "}\n";
 
@@ -48,6 +51,10 @@ void GlTextureRenderer::initialize() {
     _imageUniform = glGetUniformLocation(_program, "image");
     checkGlError("glGetUniformLocation(image)");
     _lutUniform = glGetUniformLocation(_program, "lut");
+    checkGlError("glGetUniformLocation(lut)");
+    _scrollUniform = glGetUniformLocation(_program, "scroll");
+    checkGlError("glGetUniformLocation(lut)");
+    _zoomUniform = glGetUniformLocation(_program, "zoom");
     checkGlError("glGetUniformLocation(lut)");
 
     std::vector<Vertex> data;
@@ -86,8 +93,24 @@ void GlTextureRenderer::initialize() {
     glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     checkGlError("after glTexImage1D (luma)");
 
+    glUniform2f(_scrollUniform, 0.0f, 0.0f);
+    checkGlError("_scrollUniform");
+
+    glUniform2f(_zoomUniform, 1.0f, 1.0f);
+    checkGlError("_zoomUniform");
+
     glEnable(GL_TEXTURE_1D);
     glEnable(GL_TEXTURE_2D);
+}
+
+void GlTextureRenderer::updateScroll(int offsetX, int offsetY) {
+    _scrollX = offsetX;
+    _scrollY = _textureHeight/2 + offsetY; // TODO: WHY!??!?!?!
+}
+
+void GlTextureRenderer::updateZoom(int zoomX, int zoomY) {
+    _zoomX = zoomX;
+    _zoomY = zoomY;
 }
 
 void GlTextureRenderer::draw() {
@@ -102,8 +125,20 @@ void GlTextureRenderer::draw() {
     glBindTexture(GL_TEXTURE_1D, _lutTexture);
     glTexSubImage1D(GL_TEXTURE_1D, 0, 0, _lut.size(), GL_RGBA, GL_UNSIGNED_BYTE,
             &getLut()[0]);
-
     checkGlError("after glTexSubImage");
+
+    glUniform2f(_scrollUniform, (float) _scrollX / _textureWidth,
+            (float) _scrollY / _textureHeight);
+    checkGlError("scroll");
+
+    glMatrixMode(GL_TEXTURE); // lut texture
+    glLoadIdentity();
+    glScalef(2.0, 1.0, 1.0);
+    checkGlError("texturematrix");
+
+    glUniform2f(_zoomUniform, 1.0f / _zoomX, 1.0f / _zoomY);
+    checkGlError("zoom");
+
     _vbo->draw();
     checkGlError("after vbo.draw()");
 }
@@ -149,9 +184,9 @@ GLuint GlTextureRenderer::createProgram(const char* pVertexSource, const char* p
     GLuint program = glCreateProgram();
     if (program) {
         glAttachShader(program, vertexShader);
-        checkGlError("glAttachShader");
+        checkGlError("vertexShader");
         glAttachShader(program, pixelShader);
-        checkGlError("glAttachShader");
+        checkGlError("fragmentShader");
         glLinkProgram(program);
         GLint linkStatus = GL_FALSE;
         glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);

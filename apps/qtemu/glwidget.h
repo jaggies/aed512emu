@@ -30,9 +30,6 @@ class GLWidget : public QOpenGLWidget
         void keyPressEvent(QKeyEvent* event) override;
         void keyReleaseEvent(QKeyEvent* event) override;
 
-        void updateVideo(const uint8_t* video, int width, int height);
-        void updateLut(const uint8_t* red, const uint8_t* blue, const uint8_t* green);
-
         void play();
         bool isPlaying() const;
 

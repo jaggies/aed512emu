@@ -55,11 +55,4 @@ void GLWidget::keyReleaseEvent(QKeyEvent* event) {
     emit key(event);
 }
 
-void GLWidget::updateVideo(const uint8_t* video, int width, int height) {
-    _renderer->updateVideo(video, width, height);
-}
-
-void GLWidget::updateLut(const uint8_t* red, const uint8_t* blue, const uint8_t* green) {
-    _renderer->updateLut(red, green, blue);
-}
 

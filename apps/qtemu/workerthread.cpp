@@ -14,7 +14,13 @@
 
 const int CPU_MHZ = 2000000;
 
+// These need to be static because they're passed asynchronously to the UI thread.
+// TODO: eliminate this dependency.
+ static int zoom[2];
+ static int scroll[2];
+
 WorkerThread::WorkerThread(QObject *parent): QThread(parent) {
+
     _clk = new Clock(CPU_MHZ);
 
     _bus = new AedBus(
@@ -26,7 +32,9 @@ WorkerThread::WorkerThread(QObject *parent): QThread(parent) {
                const uint8_t* green;
                const uint8_t* blue;
                _bus->getLut(&red, &green, &blue);
-               emit handleRedraw(&mem[0], red, green, blue, width, height);
+               _bus->getZoom(&zoom[0], &zoom[1]);
+               _bus->getScroll(&scroll[0], &scroll[1]);
+               emit handleRedraw(&mem[0], red, green, blue, zoom, scroll, width, height);
            });
 
     _cpu = new USE_CPU(

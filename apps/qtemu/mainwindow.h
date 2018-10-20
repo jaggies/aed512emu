@@ -30,10 +30,12 @@ class MainWindow: public QMainWindow {
     public slots:
         void on_actionClose_triggered(UNUSED bool checked);
         void handleRedraw(const uint8_t* video, const uint8_t* red, const uint8_t * green,
-                const uint8_t *blue, int width, int height) {
-            //std::cerr << "HandleRedraw: " << std::dec << width << "x" << height << std::endl;
-            glw->updateVideo(video, width, height);
-            glw->updateLut(red, green, blue);
+                const uint8_t *blue, const int* zoom, const int* scroll, int width, int height) {
+            Renderer* renderer = glw->getRenderer();
+            renderer->updateVideo(video, width, height);
+            renderer->updateLut(red, green, blue);
+            renderer->updateScroll(scroll[0], scroll[1]);
+            renderer->updateZoom(zoom[0], zoom[1]);
             glw->update();
         }
         void closeEvent(QCloseEvent *event) {

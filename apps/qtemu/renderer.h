@@ -45,8 +45,10 @@ public:
     int getTextureWidth() const { return _textureWidth; }
     int getTextureHeight() const { return _textureHeight; }
 
+    virtual void updateScroll(int offsetX, int offsetY) { }
+    virtual void updateZoom(int zoomX, int zoomY) { }
     void updateVideo(const uint8_t* video, int width, int height);
-    void updateLut(const uint8_t* red, const uint8_t* blue, const uint8_t* green);
+    void updateLut(const uint8_t* red, const uint8_t* green, const uint8_t* blue);
 
 
 protected:

@@ -479,7 +479,7 @@ AedBus::getFrame(std::vector<uint32_t>& frame, int* w, int *h) {
         for (size_t i = 0; i < width; i++) {
             const size_t x = (i/zoomX + scrollx) % width;
             const size_t y = (j/zoomY - scrolly) % height;
-            const uint8_t lut = raw[(511-y) * width + x];
+            const uint8_t lut = raw[((height - 1) - y) * width + x];
             frame[j * width + i] = 0xff000000 | (blu[lut] << 16) | (grn[lut] << 8) | (red[lut]);
         }
     }

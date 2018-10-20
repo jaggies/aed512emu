@@ -54,7 +54,7 @@ void Renderer::updateVideo(const uint8_t* video, int width, int height) {
     }
 }
 
-void Renderer::updateLut(const uint8_t* red, const uint8_t* blue, const uint8_t* green) {
+void Renderer::updateLut(const uint8_t* red, const uint8_t* green, const uint8_t* blue) {
     for (size_t i = 0; i < 256; i++) {
         _lut[i] = 0xff000000 | (blue[i] << 16) | (green[i] << 8) | red[i];
     }
