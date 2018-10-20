@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cmath>
 #include <sys/stat.h>
 #include <vector>
 #include <string>
@@ -391,15 +392,14 @@ void AedBus::handleEvents(uint64_t now) {
                 addEvent(Event(VBLANK_P, event.time + VBLANK_N_US));
                 addEvent(Event(FIELD, event.time + FIELD_DLY_US));
                 // Add all horizontal retraces
-                size_t t = event.time + HBLANK_DLY_US;
-                const size_t end_time = event.time + VBLANK_N_US + VBLANK_P_US;
+                float t = HBLANK_DLY_US;
                 int lines = 0;
-                while (t < end_time) {
-                    addEvent(Event(HBLANK_N, t));
-                    addEvent(Event(HBLANK_P, t + HBLANK_N_US));
+                while (t < FIELD_TIME_US) {
+                    addEvent(Event(HBLANK_N, event.time + roundl(t)));
+                    addEvent(Event(HBLANK_P, event.time + roundl(t + HBLANK_N_US) ));
                     t += HBLANK_N_US + HBLANK_P_US;
                     lines++;
-                    assert(lines < 1000); //
+                    assert(lines <= ceilf(VTOTAL/2.0f)); // for interlaced signal
                 }
                 // Rinse and repeat...
                 addEvent(Event(VBLANK_N, event.time + VBLANK_N_US + VBLANK_P_US));
