@@ -12,8 +12,6 @@ public:
     virtual ~GlTextureRenderer() override = default;
     void draw() override;
     void initialize() override;
-    void updateScroll(int offsetX, int offsetY) override;
-    void updateZoom(int zoomX, int zoomY) override;
 private:
     GLuint  loadShader(GLenum shaderType, const char* shaderSource);
     GLuint  createProgram(const char* vertexSource, const char* fragmentSource);
@@ -23,10 +21,7 @@ private:
     GLint   _imageUniform = 0;
     GLuint  _imageTexture = 0;
     GLint   _positionHandle = 0;
-    int     _scrollX = 0;
-    int     _scrollY = 0;
-    int     _zoomX = 1;
-    int     _zoomY = 1;
+
     Vbo<Vertex>* _vbo = nullptr;
 };
 

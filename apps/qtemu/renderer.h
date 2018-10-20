@@ -17,18 +17,14 @@
 class Renderer
 {
 public:
-    struct Pixel {
-        Pixel(uint8_t r, uint8_t g) : red(r), green(g) { }
-        uint8_t red;
-        uint8_t green;
-    };
+    typedef uint8_t Pixel;
     Renderer(int width = 512, int height = 512):
             _windowWidth(0), _windowHeight(0),
             _textureWidth(width), _textureHeight(height),
-            _texture(width * height, Pixel(0,0)), _lut(256, 0xffffffff) {
+            _texture(width * height, 0), _lut(256, 0xffffffff) {
         for (int j = 0; j < height; j++) {
             for (int i = 0; i < width; i++) {
-                _texture[j*width + i] = Pixel(i, j);
+                _texture[j*width + i] = ((i^j) & 1) ? 255:0;
             }
         }
     }
@@ -45,17 +41,20 @@ public:
     int getTextureWidth() const { return _textureWidth; }
     int getTextureHeight() const { return _textureHeight; }
 
-    virtual void updateScroll(int offsetX, int offsetY) { }
-    virtual void updateZoom(int zoomX, int zoomY) { }
+    virtual void updateLut(const uint8_t* red, const uint8_t* green, const uint8_t* blue);
+    virtual void updateScroll(int offsetX, int offsetY);
+    virtual void updateZoom(int zoomX, int zoomY);
     void updateVideo(const uint8_t* video, int width, int height);
-    void updateLut(const uint8_t* red, const uint8_t* green, const uint8_t* blue);
-
 
 protected:
     int _windowWidth;
     int _windowHeight;
     int _textureWidth;
     int _textureHeight;
+    int _scrollX = 0;
+    int _scrollY = 0;
+    int _zoomX = 1;
+    int _zoomY = 1;
     std::vector<Pixel>  _texture;
     std::vector<uint32_t> _lut;
 };

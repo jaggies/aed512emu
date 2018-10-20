@@ -49,7 +49,7 @@ void Renderer::updateVideo(const uint8_t* video, int width, int height) {
     assert(width == _textureWidth);
     assert(height == _textureHeight);
     for (size_t i = 0; i < _texture.size(); i++) {
-        _texture[i] = Pixel(*video, *video);
+        _texture[i] = *video;
         video++;
     }
 }
@@ -58,4 +58,14 @@ void Renderer::updateLut(const uint8_t* red, const uint8_t* green, const uint8_t
     for (size_t i = 0; i < 256; i++) {
         _lut[i] = 0xff000000 | (blue[i] << 16) | (green[i] << 8) | red[i];
     }
+}
+
+void Renderer::updateScroll(int offsetX, int offsetY) {
+    _scrollX = offsetX;
+    _scrollY = _textureHeight/2 + offsetY; // TODO: WHY!??!?!?!
+}
+
+void Renderer::updateZoom(int zoomX, int zoomY) {
+    _zoomX = zoomX;
+    _zoomY = zoomY;
 }

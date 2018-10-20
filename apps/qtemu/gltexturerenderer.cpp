@@ -70,7 +70,7 @@ void GlTextureRenderer::initialize() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, _textureWidth, _textureHeight, 0, GL_RG, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, _textureWidth, _textureHeight, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
     checkGlError("after glTexImage2D");
 
     glActiveTexture(GL_TEXTURE1);
@@ -87,23 +87,13 @@ void GlTextureRenderer::initialize() {
     glEnable(GL_TEXTURE_2D);
 }
 
-void GlTextureRenderer::updateScroll(int offsetX, int offsetY) {
-    _scrollX = offsetX;
-    _scrollY = _textureHeight/2 + offsetY; // TODO: WHY!??!?!?!
-}
-
-void GlTextureRenderer::updateZoom(int zoomX, int zoomY) {
-    _zoomX = zoomX;
-    _zoomY = zoomY;
-}
-
 void GlTextureRenderer::draw() {
     Renderer::draw();
     glUseProgram(_program);
     checkGlError("glUseProgram");
 
     glBindTexture(GL_TEXTURE_2D, _imageTexture);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _textureWidth, _textureHeight, GL_RG, GL_UNSIGNED_BYTE,
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _textureWidth, _textureHeight, GL_RED, GL_UNSIGNED_BYTE,
             &getTexture()[0]);
 
     glBindTexture(GL_TEXTURE_1D, _lutTexture);
