@@ -87,16 +87,14 @@ void AedRegs::write(int offset, uint8_t value) {
         break;
 
         case vzoom:
-            std::cerr << "vzoom: " << (int) (value & 0x0f) << std::endl;
-        break;
         case unkn0:
-            std::cerr << "unkn0: " << (int) (value & 0x0f) << std::endl;
-        break;
         case unkn1:
-            std::cerr << "unkn1: " << (int) (value & 0x0f) << std::endl;
-        break;
         case hzoom:
-            std::cerr << "hzoom: " << (int) (value & 0x0f) << std::endl;
+            if (!(_storage[misc0] & 1)) {
+                return; // return w/o storing it.
+            } else {
+                std::cerr << "zoom[" << offset << "] = " << (int) value << std::endl;
+            }
         break;
 
         case pxcnth:

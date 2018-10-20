@@ -63,10 +63,10 @@ class AedRegs: public Peripheral {
         const uint8_t getScrollY() const { return _storage[yscrl]; }
 
         // Returns the current zoom factor for X, from 1..16
-        const uint8_t getZoomX() const { return 1 + (_storage[hzoom] & 0x0f); }
+        const uint8_t getZoomX() const { return 1 + (0x0f - (_storage[unkn1] & 0x0f)); }
 
         //  Returns the current zoom factor for Y, from 1..16
-        const uint8_t getZoomY() const { return 1 + (_storage[vzoom] & 0x0f); }
+        const uint8_t getZoomY() const { return 1 + (0x0f - (_storage[vzoom] & 0x0f)); }
 
         void eraseLine(size_t line) {
             if (line >= DISPLAY_HEIGHT) return;

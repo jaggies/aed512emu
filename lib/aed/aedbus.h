@@ -156,6 +156,7 @@ class AedBus : public BUS {
         int     _scanline = 0; // the current scanline
         bool    _xs8 = 0; // upper bit for x scroll register, set from PIA0, PB0
         bool    _ys8 = 0; // upper bit for y scroll register, set from PIA2, PB0
+        int     _xzoom = 0;
         uint64_t    _cpuTime = 0; // current CPU time. TODO: have this be the source of truth
         uint16_t    _joyX = 0; // X joystick input, range [0, 511]
         uint16_t    _joyY = 0; // Y joystick input, range [0, 511]

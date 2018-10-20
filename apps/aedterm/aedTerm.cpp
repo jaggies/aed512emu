@@ -188,16 +188,16 @@ static void display(void)
         // Compute (u,v) and (x,y) scaling factors to center the image on the screen
         glClearColor(0.0, 0.0, 0.5, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        if (false) {
+        if (true) {
             glEnable(GL_TEXTURE_2D);
             glDisable(GL_BLEND);
             glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
             glBindTexture(GL_TEXTURE_2D, texName);
             glBegin(GL_QUADS);
-                glTexCoord2f(0.0, 0.0); glVertex3f(0.0, 0.0, 0.0);
-                glTexCoord2f(0.0, 1.0); glVertex3f(0.0, 1.0, 0.0);
-                glTexCoord2f(1.0, 1.0); glVertex3f(1.0, 1.0, 0.0);
-                glTexCoord2f(1.0, 0.0); glVertex3f(1.0, 0.0, 0.0);
+                glTexCoord2f(0.0, 1.0); glVertex3f(0.0, 0.0, 0.0);
+                glTexCoord2f(0.0, 0.0); glVertex3f(0.0, 1.0, 0.0);
+                glTexCoord2f(1.0, 0.0); glVertex3f(1.0, 1.0, 0.0);
+                glTexCoord2f(1.0, 1.0); glVertex3f(1.0, 0.0, 0.0);
             glEnd();
             glDisable(GL_TEXTURE_2D);
         } else {
