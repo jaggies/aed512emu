@@ -16,7 +16,12 @@ if $(OS) = MACOSX {
 	QTDIR = /opt/local/libexec/qt5 ;
 	QTBIN = $(QTDIR)/bin ;
 	QTFRAMEWORK = $(QTDIR)/lib/ ;
-	C++ = g++-mp-5 ;
+	#C++ = g++-mp-5 ;
+	C++ = c++ ;
+	# Temporary workaround for OpenGL deprecation.
+	# This is why my next computer won't be an Apple product.
+	C++FLAGS += -Wno-deprecated ;
+	C++FLAGS += -Wno-deprecated-declarations ;
 } else { # Linux
 	QTDIR = /usr/include/x86_64-linux-gnu/qt5 ;
 	QTBIN = /usr/lib/x86_64-linux-gnu/qt5/bin ;

@@ -11,12 +11,13 @@ SubDirHdrs $(QTDIR) ;
 
 if $(OS) = MACOSX {
     FRAMEWORKS += OPENGL GLUT QtCore QtGui QtOpenGL QtWidgets ;
-    LINKLIBS += -F $(QTFRAMEWORK) -framework\ $(FRAMEWORKS) ;
+    LINKLIBS += -framework\ $(FRAMEWORKS) ;
     INCLUDE += $(QT)/include ;
     LIBDIRS += $(QT)/lib ;
     LINKLIBS += -L$(LIBDIRS) ;
-    CCFLAGS += $(LINKLIBS) -DMACOSX ;
-    C++FLAGS += $(LINKLIBS) -DMACOSX -F $(QTFRAMEWORK) ;
+    LINKFLAGS += -F $(QTFRAMEWORK) ;
+    CCFLAGS += -DMACOSX -F $(QTFRAMEWORK) ;
+    C++FLAGS += -DMACOSX -F $(QTFRAMEWORK) ;
 } else {
     LINKLIBS += -L/usr/lib/x86_64-linux-gnu/ ;
     LINKLIBS = -lGL -lQt5Gui -lQt5Core -lQt5OpenGL -lQt5Widgets $(LINKLIBS) ;

@@ -8,9 +8,6 @@
 #include <unistd.h>
 #include "demo.h"
 
-const int xres = 512;
-const int yres = 480;
-
 int main(int argc, char **argv) {
     AedSequence seq;
     for (int i = 0; i < 256; i++) {
