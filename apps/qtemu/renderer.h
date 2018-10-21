@@ -12,6 +12,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <GL/glu.h>
 
 // Abstract base class for renderer
 class Renderer
@@ -61,7 +62,8 @@ protected:
 
 inline void checkGlError(const char* op) {
     for (GLenum error = glGetError(); error; error = glGetError()) {
-        std::cerr << "after " << op << " glError=" << error << std::endl;
+        const GLubyte* msg = gluErrorString(error);
+        std::cerr << "GlError(" << error << ") at '" << op << "' : \""  << msg << "\"" << std::endl;
     }
 }
 
