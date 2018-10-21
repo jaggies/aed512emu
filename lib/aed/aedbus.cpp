@@ -176,10 +176,10 @@ void AedBus::handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData) {
                         addEvent(Event(JOYSTICK_SET, _cpuTime));
                     break;
                     case JSTK: // Y joystick tracking - charge Y
-                        _joyDelay = 10 * (512 - _joyY); // Y is inverted by hw design.
+                        _joyDelay = 5 * (512 - _joyY); // Y is inverted by hw design.
                     break;
                     case (JSTK | ADCH0): // X joystick tracking - charge X
-                        _joyDelay = 10 * _joyX;
+                        _joyDelay = 5 * _joyX;
                     break;
                 }
             }
@@ -293,8 +293,8 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi, Redraw redraw)
             [this](M68B21::Port port, uint8_t old, uint8_t new_) { handlePIA0(port, old, new_); }));
     _mapper.add(_pia1 = new M68B21(pio1da, "PIA1", [this]() { _irq(); }, [this]() { _nmi(); },
             [this](M68B21::Port port, uint8_t old, uint8_t new_) { handlePIA1(port, old, new_); },
-            [this](bool isSet) { std::cerr << "CA2:" << isSet << std::endl; },
-            [this](bool isSet) { std::cerr << "CB2(erase):" << isSet << std::endl; }
+            [](bool isSet) { std::cerr << "CA2:" << isSet << std::endl; },
+            [](bool isSet) { std::cerr << "CB2(erase):" << isSet << std::endl; }
             ));
     _mapper.add(_pia2 = new M68B21(pio2da, "PIA2", [this]() { _irq(); }, [this]() {_irq(); },
             [this](M68B21::Port port, uint8_t old, uint8_t new_) { handlePIA2(port, old, new_); }));
@@ -304,8 +304,8 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi, Redraw redraw)
             [this](uint8_t byte) { return handleSIO1(byte); }));
 #if !defined(AED767) && !defined(AED1024)
     _mapper.add(new Generic(0xe9, 1,
-            [this](int offset) { return 0x01; },
-            [this](int offset, uint8_t value) {
+            [](int offset) { return 0x01; },
+            [](int offset, uint8_t value) {
                 if (debug) std::cerr << "write 0xe9:" << (int) value << std::endl;
             },
             "hack_0xe9"));
