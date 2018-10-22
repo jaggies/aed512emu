@@ -10,17 +10,14 @@ SubDirHdrs /opt/local/include ;
 SubDirHdrs $(QTDIR) ;
 
 if $(OS) = MACOSX {
-    FRAMEWORKS += OPENGL AGL QtCore QtGui QtOpenGL QtWidgets ;
-    LINKLIBS += -framework\ $(FRAMEWORKS) ;
+    FRAMEWORKS += QtCore QtGui QtOpenGL QtWidgets OpenGL ;
     INCLUDE += $(QT)/include ;
     LIBDIRS += $(QT)/lib ;
-    LINKLIBS += -L$(LIBDIRS) ;
-    LINKFLAGS += -F $(QTFRAMEWORK) ;
     CCFLAGS += -DMACOSX -F $(QTFRAMEWORK) ;
     C++FLAGS += -DMACOSX -F $(QTFRAMEWORK) ;
+    LINKLIBS on qtemu = $(LINKLIBS) -F $(QTFRAMEWORK) -lemu -lGLEW -framework\ $(FRAMEWORKS) ;
 } else {
-    LINKLIBS += -L/usr/lib/x86_64-linux-gnu/ ;
-    LINKLIBS = -lGL -lQt5Gui -lQt5Core -lQt5OpenGL -lQt5Widgets $(LINKLIBS) ;
+    LINKLIBS on qtemu = $(LINKLIBS) -L/usr/lib/x86_64-linux-gnu/ -lGL -lQt5Gui -lQt5Core -lQt5OpenGL -lQt5Widgets $(LINKLIBS) ;
 }
 
 Uic ui_mainwindow.h : mainwindow.ui ;
@@ -29,7 +26,6 @@ Moc moc_glwidget.h : glwidget.h ;
 Moc moc_workerthread.h : workerthread.h ;
 
 Depends qtemu : libemu.a ;
-LINKLIBS on qtemu = $(LINKLIBS) -lemu -lGLEW ;
 
 Main qtemu : 
 	drawpixelrenderer.cpp
