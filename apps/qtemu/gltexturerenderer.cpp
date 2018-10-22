@@ -14,6 +14,8 @@
 #include "vbo.h"
 #include "coreutil.h"
 
+static bool debug = false;
+
 static const char _vertexShader[] =
     "#version 120\n"
     "attribute vec4 position;"
@@ -35,11 +37,14 @@ void GlTextureRenderer::initialize() {
     Renderer::initialize();
     _program = createProgram(_vertexShader, _fragmentShader);
     if (!_program) {
-        std::cout << "Could not create program." << std::endl;
+        std::cerr << "Could not create program." << std::endl;
         return;
+    } else if (debug) {
+        std::cerr << "Successfully created program" << std::endl;
     }
 
     glUseProgram(_program);
+    checkGlError("glUseProgram in initialize()");
     _positionHandle = glGetAttribLocation(_program, "position");
     checkGlError("glGetAttribLocation(position)");
     _imageUniform = glGetUniformLocation(_program, "image");
