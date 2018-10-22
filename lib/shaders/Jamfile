@@ -1,0 +1,6 @@
+SubDir TOP lib shaders ;
+
+Main shader2hdr : shader2hdr.cpp ;
+
+Depends single_channel.h : single_channel.frag single_channel.vert ;
+
