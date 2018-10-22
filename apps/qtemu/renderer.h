@@ -63,7 +63,9 @@ protected:
 inline void checkGlError(const char* op) {
     for (GLenum error = glGetError(); error; error = glGetError()) {
         const GLubyte* msg = gluErrorString(error);
-        std::cerr << "GlError(" << error << ") at '" << op << "' : \""  << msg << "\"" << std::endl;
+	if (error != 1286) { // Qt bug!!
+            std::cerr << "GlError(" << error << ") at '" << op << "' : \""  << msg << "\"" << std::endl;
+	}
     }
 }
 
