@@ -10,7 +10,7 @@ SubDirHdrs /opt/local/include ;
 SubDirHdrs $(QTDIR) ;
 
 if $(OS) = MACOSX {
-    FRAMEWORKS += OPENGL GLUT QtCore QtGui QtOpenGL QtWidgets ;
+    FRAMEWORKS += OPENGL AGL QtCore QtGui QtOpenGL QtWidgets ;
     LINKLIBS += -framework\ $(FRAMEWORKS) ;
     INCLUDE += $(QT)/include ;
     LIBDIRS += $(QT)/lib ;
@@ -23,15 +23,13 @@ if $(OS) = MACOSX {
     LINKLIBS = -lGL -lQt5Gui -lQt5Core -lQt5OpenGL -lQt5Widgets $(LINKLIBS) ;
 }
 
-LINKLIBS on qtemu += $(OPENGLLIBS) $(LINKLIBS) ;
-
 Uic ui_mainwindow.h : mainwindow.ui ;
 Moc moc_mainwindow.h : mainwindow.h ;
 Moc moc_glwidget.h : glwidget.h ;
 Moc moc_workerthread.h : workerthread.h ;
 
 Depends qtemu : libemu.a ;
-LINKLIBS on qtemu = $(LINKLIBS) -lemu -lglut -lGLU -lGL -lGLEW ;
+LINKLIBS on qtemu = $(LINKLIBS) -lemu -lGLEW ;
 
 Main qtemu : 
 	drawpixelrenderer.cpp
