@@ -439,6 +439,7 @@ void AedBus::handleEvents(uint64_t now) {
 // Checks for data available in serial port FIFO and sends to device.
 void
 AedBus::doSerial(uint64_t now) {
+   std::lock_guard<std::mutex> lock(_mutex);
    if (_xon && !_serialFifo.empty() && _sio1->receive(_serialFifo.front())) {
        if (SERIAL_HOLDOFF > 0) {
            _xon = false;

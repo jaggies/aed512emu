@@ -55,13 +55,13 @@ class AedBus : public BUS {
 
         // Add event with locking
         void addEvent(const Event& event) {
-            std::lock_guard<std::mutex> lock(_eventQueueMutex);
+            std::lock_guard<std::mutex> lock(_mutex);
             _eventQueue.push(event);
         }
 
         // Gets highest priority event with time < now, with locking
         bool getNextEvent(uint64_t now, Event* result) {
-            std::lock_guard<std::mutex> lock(_eventQueueMutex);
+            std::lock_guard<std::mutex> lock(_mutex);
             if(_eventQueue.size() > 0 && _eventQueue.top().time < now) {
                 *result = _eventQueue.top();
                 _eventQueue.pop();
@@ -79,11 +79,12 @@ class AedBus : public BUS {
         // Copies string to FIFO for handling in doSerial()
         void send(const std::string& string) {
             for (char c : string) {
-                _serialFifo.push(c);
+                send(c);
             }
         }
 
         void send(char c) {
+            std::lock_guard<std::mutex> lock(_mutex);
             _serialFifo.push(c);
         }
 
@@ -164,7 +165,7 @@ class AedBus : public BUS {
         uint16_t    _joyY = 0; // Y joystick input, range [0, 511]
         uint64_t    _joyDelay = 0; // delay for joyX and joyY, depending on last selection cycle
         std::queue<uint8_t> _serialFifo;
-        std::mutex _eventQueueMutex;
+        std::mutex _mutex;
         EventQueue _eventQueue;
         Redraw  _redraw;
         bool    _mwe; // memory write enable? Used to debug erase hardwares
