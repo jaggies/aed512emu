@@ -93,7 +93,7 @@ void AedRegs::write(int offset, uint8_t value) {
             if (!(_storage[misc0] & 1)) {
                 return; // return w/o storing it.
             } else {
-                std::cerr << "zoom[" << offset << "] = " << (int) value << std::endl;
+                if (debug) std::cerr << "zoom[" << offset << "] = " << (int) value << std::endl;
             }
         break;
 

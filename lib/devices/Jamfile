@@ -5,5 +5,5 @@ SubDirHdrs $(TOP) lib cpu ;
 Library libemu : 
 	68B21.cpp
 	68B50.cpp
-	generic.cpp
+	#generic.cpp
 	;
