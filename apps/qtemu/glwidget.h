@@ -39,7 +39,7 @@ class GLWidget : public QOpenGLWidget
         void timeout() { }
 
     signals:
-        void key(QKeyEvent* event);
+        void signal_key(QKeyEvent* event);
 
     private:
         Renderer* _renderer;

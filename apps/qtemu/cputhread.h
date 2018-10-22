@@ -1,12 +1,12 @@
 /*
- * WorkerThread.h
+ * CpuThread.h
  *
  *  Created on: Oct 14, 2018
  *      Author: jmiller
  */
 
-#ifndef APPS_QTEMU_WORKERTHREAD_H_
-#define APPS_QTEMU_WORKERTHREAD_H_
+#ifndef APPS_QTEMU_CPUTHREAD_H_
+#define APPS_QTEMU_CPUTHREAD_H_
 
 #include <QtCore/QThread>
 #include <QtGui/QMouseEvent>
@@ -14,21 +14,25 @@
 #include "clk.h"
 #include "aedbus.h"
 
-class WorkerThread: public QThread {
+class CpuThread: public QThread {
     Q_OBJECT
     public:
-        explicit WorkerThread(QObject *parent = nullptr);
-        virtual ~WorkerThread() override = default;
+        explicit CpuThread(QObject *parent = nullptr);
+        virtual ~CpuThread() override = default;
         void run() override;
         void stop() { _flag_stop = true; }
 
     signals:
-        void handleRedraw(const uint8_t* video, const uint8_t* red, const uint8_t * green,
+        void signal_redraw(const uint8_t* video, const uint8_t* red, const uint8_t * green,
                 const uint8_t *blue, const int* zoom, const int* scroll, int width, int height);
-        void handleException(CPU::ExceptionType ex, int pc);
+        void signal_exception(CPU::ExceptionType ex, int pc);
+        void signal_serial0_out(char ch);
+        void signal_serial1_out(char ch);
 
     public slots:
-        void key(QKeyEvent* event) {
+        void slot_serial0_in(char ch) { _bus->send(ch); }
+        void slot_serial1_in(char ch) { _bus->send(ch); }
+        void slot_key(QKeyEvent* event) {
             //    int qtmods = event->modifiers();
             //    const bool meta = qtmods & Qt::MetaModifier;
             //    const bool shift = qtmods & Qt::ShiftModifier;
@@ -49,4 +53,4 @@ class WorkerThread: public QThread {
         bool    _flag_stop = false;
 };
 
-#endif /* APPS_QTEMU_WORKERTHREAD_H_ */
+#endif /* APPS_QTEMU_CPUTHREAD_H_ */

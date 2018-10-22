@@ -23,19 +23,21 @@ if $(OS) = MACOSX {
 Uic ui_mainwindow.h : mainwindow.ui ;
 Moc moc_mainwindow.h : mainwindow.h ;
 Moc moc_glwidget.h : glwidget.h ;
-Moc moc_workerthread.h : workerthread.h ;
+Moc moc_cputhread.h : cputhread.h ;
+Moc moc_iothread.h : iothread.h ;
 
 Depends qtemu : libemu.a ;
 
 Main qtemu : 
+	cputhread.cpp
 	drawpixelrenderer.cpp
 	gltexturerenderer.cpp
 	glwidget.cpp
+	iothread.cpp
 	main.cpp
 	mainwindow.cpp
 	moc.cpp
 	renderer.cpp
 	vbo.cpp
 	vertex.cpp
-	workerthread.cpp
 	;

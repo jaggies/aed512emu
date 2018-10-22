@@ -13,8 +13,9 @@
 #include <QtCore/QString>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QStatusBar>
+#include "cputhread.h"
+#include "iothread.h"
 #include "glwidget.h"
-#include "workerthread.h"
 
 #define UNUSED __attribute__((unused))
 
@@ -29,7 +30,7 @@ class MainWindow: public QMainWindow {
         virtual ~MainWindow();
     public slots:
         void on_actionClose_triggered(UNUSED bool checked);
-        void handleRedraw(const uint8_t* video, const uint8_t* red, const uint8_t * green,
+        void slot_redraw(const uint8_t* video, const uint8_t* red, const uint8_t * green,
                 const uint8_t *blue, const int* zoom, const int* scroll, int width, int height) {
             Renderer* renderer = glw->getRenderer();
             renderer->updateVideo(video, width, height);
@@ -39,13 +40,16 @@ class MainWindow: public QMainWindow {
             glw->update();
         }
         void closeEvent(QCloseEvent *event) {
-            worker->stop();
-            worker->wait();
+            cpuThread->stop();
+            cpuThread->wait();
+            ioThread->stop();
+            ioThread->wait();
         }
     private:
-        Ui::MainWindow* ui;
-        GLWidget*       glw;
-        WorkerThread*   worker;
+        Ui::MainWindow* ui = nullptr;
+        GLWidget*       glw = nullptr;
+        CpuThread*      cpuThread = nullptr;
+        IoThread*       ioThread = nullptr;
 };
 
 #endif // MAINWINDOW_H

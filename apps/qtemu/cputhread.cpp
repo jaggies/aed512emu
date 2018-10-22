@@ -1,16 +1,17 @@
 /*
- * WorkerThread.cpp
+ * CpuThread.cpp
  *
  *  Created on: Oct 14, 2018
  *      Author: jmiller
  */
+
+#include "cputhread.h"
 
 #include "cpu6502.h"
 #include "mos6502.h"
 #include "dis6502.h"
 #include "config.h"
 #include "aedsequence.h"
-#include "workerthread.h"
 
 const int CPU_MHZ = 2000000;
 
@@ -19,7 +20,7 @@ const int CPU_MHZ = 2000000;
  static int zoom[2];
  static int scroll[2];
 
-WorkerThread::WorkerThread(QObject *parent): QThread(parent) {
+CpuThread::CpuThread(QObject *parent): QThread(parent) {
 
     _clk = new Clock(CPU_MHZ);
 
@@ -34,18 +35,18 @@ WorkerThread::WorkerThread(QObject *parent): QThread(parent) {
                _bus->getLut(&red, &green, &blue);
                _bus->getZoom(&zoom[0], &zoom[1]);
                _bus->getScroll(&scroll[0], &scroll[1]);
-               emit handleRedraw(&mem[0], red, green, blue, zoom, scroll, width, height);
+               emit signal_redraw(&mem[0], red, green, blue, zoom, scroll, width, height);
            });
 
     _cpu = new USE_CPU(
            [this](int addr) { return _bus->read(addr); },
            [this](int addr, uint8_t value) { _bus->write(addr, value); },
            [this](int cycles) { _clk->add_cpu_cycles(cycles); _bus->setCpuTime(_clk->getCpuTime()); },
-           [this](CPU::ExceptionType ex, int pc) { emit handleException(ex, pc); });
+           [this](CPU::ExceptionType ex, int pc) { emit signal_exception(ex, pc); });
 }
 
 void
-WorkerThread::run() {
+CpuThread::run() {
     while (!_flag_stop) {
         _cpu->cycle(2);
         _bus->handleEvents(_clk->getCpuTime());

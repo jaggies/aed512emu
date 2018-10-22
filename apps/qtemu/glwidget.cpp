@@ -68,11 +68,11 @@ void GLWidget::mouseReleaseEvent ( QMouseEvent * event ) {
 }
 
 void GLWidget::keyPressEvent(QKeyEvent* event) {
-    emit key(event);
+    emit signal_key(event);
 }
 
 void GLWidget::keyReleaseEvent(QKeyEvent* event) {
-    emit key(event);
+    emit signal_key(event);
 }
 
 
