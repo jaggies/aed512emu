@@ -15,6 +15,10 @@ Depends bitplanes : libemu.a ;
 LINKLIBS on bitplanes = $(LINKLIBS) -lemu ;
 Main bitplanes : bitplanes.cpp ;
 
+Depends boundary : libemu.a ;
+LINKLIBS on boundary = $(LINKLIBS) -lemu ;
+Main boundary : boundary.cpp ;
+
 Depends circles : libemu.a ;
 LINKLIBS on circles = $(LINKLIBS) -lemu ;
 Main circles : circles.cpp ;

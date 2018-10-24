@@ -25,6 +25,12 @@ class AedSequence {
             return *this;
         }
 
+        AedSequence& boundary_fill(uint8_t color) {
+            _sequence.push_back(BFL);
+            _sequence.push_back(color);
+            return *this;
+        }
+
         AedSequence& define_area_of_interest(uint16_t x, uint16_t y) {
             _sequence.push_back(DAI);
             coordinate(x, y);
@@ -48,9 +54,8 @@ class AedSequence {
             return *this;
         }
 
-        AedSequence& fill(uint8_t clr) {
-            _sequence.push_back(IFL);
-            _sequence.push_back(clr);
+        AedSequence& interior_fill() {
+            _sequence.push_back(IFL); // fills at CAP with current color
             return *this;
         }
 
