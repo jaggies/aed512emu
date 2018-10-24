@@ -113,7 +113,11 @@ class AedBus : public BUS {
             *blue = &getBlue(0);
         }
 
-        void getScroll(int* x, int* y) { *x = _aedRegs->getScrollX(); *y = _aedRegs->getScrollY(); }
+        void getScroll(int* x, int* y) {
+            *x = (_xs8 << 8) | _aedRegs->getScrollX();
+            *y = (_ys8 << 8) | _aedRegs->getScrollY();
+        }
+
         void getZoom(int* x, int* y) { *x = _aedRegs->getZoomX(); *y = _aedRegs->getZoomY(); }
 
         // Delegate functions.

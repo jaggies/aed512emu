@@ -472,8 +472,8 @@ AedBus::getFrame(std::vector<uint32_t>& frame, int* w, int *h) {
     const uint8_t* grn = &getGreen(0);
     const uint8_t* blu = &getBlue(0);
 
-    const size_t scrollx = ((_xs8 ? 0x100 : 0x000) | _aedRegs->getScrollX());
-    const size_t scrolly = ((_ys8 ? 0x100 : 0x000) | _aedRegs->getScrollY());
+    int scrollx, scrolly;
+    getScroll(&scrollx, &scrolly);
     const int zoomX = _aedRegs->getZoomX();
     const int zoomY = _aedRegs->getZoomY();
     for (size_t j = 0; j < height; j++) {

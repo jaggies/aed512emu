@@ -62,7 +62,7 @@ void Renderer::updateLut(const uint8_t* red, const uint8_t* green, const uint8_t
 
 void Renderer::updateScroll(int offsetX, int offsetY) {
     _scrollX = offsetX;
-    _scrollY = _textureHeight/2 + offsetY; // TODO: WHY!??!?!?!
+    _scrollY = offsetY;
 }
 
 void Renderer::updateZoom(int zoomX, int zoomY) {
