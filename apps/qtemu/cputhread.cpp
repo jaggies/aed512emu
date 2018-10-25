@@ -48,7 +48,7 @@ CpuThread::CpuThread(QObject *parent): QThread(parent) {
 void
 CpuThread::run() {
     while (!_flag_stop) {
-        _cpu->cycle(2);
+        _cpu->cycle(8);
         _bus->handleEvents(_clk->getCpuTime());
         usleep(1);
     }
