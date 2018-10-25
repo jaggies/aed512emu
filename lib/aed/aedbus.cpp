@@ -161,7 +161,15 @@ void AedBus::handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData) {
                 // how to tie this in...
 
                 _mwe = bool(newData & 0x10);
+                static uint64_t start = 0;
                 std::cerr << "MWE:" << _mwe << " at " << std::dec << _cpuTime << std::endl;
+                if (_mwe) {
+                    start = _cpuTime;
+                } else if (start > 0) {
+                    uint64_t elapsed = _cpuTime - start;
+                    start = 0;
+                    std::cerr << "MWE duration: " <<  elapsed << std::endl;
+                }
             }
             if (changed & 0x0f) {
                 // Joystick processing
@@ -311,8 +319,8 @@ AedBus::AedBus(Peripheral::IRQ irq, Peripheral::IRQ nmi, Redraw redraw)
             "hack_0xe9"));
 #else
     _mapper.add(new Generic(0xe5, 1,
-            [this](int offset) { return 0xff; },
-            [this](int offset, uint8_t value) {
+            [](int offset) { return 0xff; },
+            [](int offset, uint8_t value) {
                 if (debug) std::cerr << "write 0xe5:" << (int) value << std::endl;
             },
             "hack_0xe5"));
