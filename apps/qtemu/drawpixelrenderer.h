@@ -13,9 +13,9 @@
 class DrawPixelRenderer : public Renderer
 {
 public:
-    DrawPixelRenderer() { }
+    DrawPixelRenderer(int textureWidth, int textureHeight) : Renderer(textureWidth, textureHeight) { }
     virtual ~DrawPixelRenderer() override = default;
-    virtual void draw() override; 
+    virtual void draw() override;
 };
 
 #endif // DRAWPIXELRENDERER_H

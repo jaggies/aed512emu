@@ -8,7 +8,7 @@
 class GlTextureRenderer : public Renderer
 {
 public:
-    GlTextureRenderer() = default;
+    GlTextureRenderer(int textureWidth, int textureHeight) : Renderer(textureWidth, textureHeight) { }
     virtual ~GlTextureRenderer() override = default;
     void draw() override;
     void initialize() override;

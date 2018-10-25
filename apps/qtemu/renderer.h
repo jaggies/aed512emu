@@ -19,13 +19,13 @@ class Renderer
 {
 public:
     typedef uint8_t Pixel;
-    Renderer(int width = 512, int height = 512):
+    Renderer(int textureWidth, int textureHeight):
             _windowWidth(0), _windowHeight(0),
-            _textureWidth(width), _textureHeight(height),
-            _texture(width * height, 0), _lut(256, 0xffffffff) {
-        for (int j = 0; j < height; j++) {
-            for (int i = 0; i < width; i++) {
-                _texture[j*width + i] = ((i^j) & 1) ? 255:0;
+            _textureWidth(textureWidth), _textureHeight(textureHeight),
+            _texture(textureWidth * textureHeight, 0), _lut(256, 0xffffffff) {
+        for (int j = 0; j < textureHeight; j++) {
+            for (int i = 0; i < textureWidth; i++) {
+                _texture[j*textureWidth + i] = ((i^j) & 1) ? 255:0;
             }
         }
     }

@@ -34,7 +34,7 @@ GLWidget::GLWidget(QWidget *parent) : QOpenGLWidget(parent), _accumMouse(0)
     sformat.setStereo(false);
     setFormat(sformat);
 
-    _renderer = new GlTextureRenderer();
+    _renderer = new GlTextureRenderer(512, 512); // TODO
     _timer = new QTimer();
     connect(_timer, SIGNAL(timeout()), this, SLOT(timeout()));
 }
