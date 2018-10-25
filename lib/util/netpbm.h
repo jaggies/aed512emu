@@ -17,6 +17,7 @@ struct NetPBM {
     void (*read)(NetPBM* pbm, PixelCallback cb, void* clientData);
     void (*close)(NetPBM* pbm);
     void (*write)(NetPBM* pbm, const unsigned char color[3]);
+    void (*reset)(NetPBM* pbm);
     int width;
     int height;
     int depth;

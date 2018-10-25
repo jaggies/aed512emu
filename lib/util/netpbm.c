@@ -88,6 +88,10 @@ static void writeNetPBM(NetPBM* pbm, const unsigned char color[3]) {
     fputc(color[2], pbm->fp);
 }
 
+static void resetNetPBM(NetPBM* pbm) {
+    fseek(pbm->fp, 0L, SEEK_SET);
+}
+
 NetPBM* createNetPBM() {
     NetPBM* pbm;
     pbm = (NetPBM*) malloc(sizeof(NetPBM));
@@ -96,6 +100,7 @@ NetPBM* createNetPBM() {
     pbm->read = readNetPBM;
     pbm->write = writeNetPBM;
     pbm->close = closeNetPBM;
+    pbm->reset = resetNetPBM;
     return pbm;
 }
 
