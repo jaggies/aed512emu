@@ -67,6 +67,7 @@ static int dist(uint32_t a, uint32_t b) {
 
 static void optimalDisplayCB(void* clientData, int x, int y, unsigned char pixel[3]) {
     static int ylast = -1;
+    static int rerr, gerr, berr;
     MultiMap& map = *(MultiMap*) clientData;
     if (ylast != y) {
         ylast = y;
@@ -75,20 +76,29 @@ static void optimalDisplayCB(void* clientData, int x, int y, unsigned char pixel
         }
         idx = 0;
     }
-    const uint32_t color = compose(pixel[0], pixel[1], pixel[2]);
+    const uint32_t color = compose(
+            std::max(0, std::min(255,int(pixel[0])+rerr)),
+            std::max(0, std::min(255,int(pixel[1])+gerr)),
+            std::max(0, std::min(255,int(pixel[2])+berr)));
     uint32_t bestIndex = 0;
-    int bestDist = dist(color, map.begin()->second);
+    uint32_t bestColor = map.begin()->second;
+    int bestDist = dist(color, bestColor); // pick the first color to start
     int index = 0;
     for (auto iter = map.begin(); iter != map.end(); iter++) {
         uint32_t d = dist(color, iter->second);
         if (d < bestDist) {
             bestIndex = index;
+            bestColor = iter->second;
             bestDist = d;
         }
         index++;
     }
-    assert(index <= 256);
     buffer[idx++] = bestIndex;
+    uint8_t r, g, b;
+    decompose(bestColor, r, g, b);
+    rerr += (int) pixel[0] - (int) r;
+    gerr += (int) pixel[1] - (int) g;
+    berr += (int) pixel[2] - (int) b;
 }
 
 void usage(const char* name) {
