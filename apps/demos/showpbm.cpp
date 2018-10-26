@@ -102,27 +102,24 @@ static void optimalDisplayCB(void* clientData, int x, int y, unsigned char pixel
 }
 
 void usage(const char* name) {
-    std::cerr << "Usage: " << name << " -d <ordered|diffusion|threshold> <image.pbm>" << std::endl;
+    std::cerr << "Usage: " << name
+            << " -d(iffusion) | -t(hreshold) | -o(rdered) -O(ptimized)> <image.pbm>" << std::endl;
 }
 
 int main(int argc, char** argv) {
     NetPBM* pbm = createNetPBM();
     bool optimize = false;
     int opt;
-    while ((opt = getopt(argc, argv, "Od:")) != -1) {
+    while ((opt = getopt(argc, argv, "Odot")) != -1) {
         switch (opt) {
-            case 'd':
-                switch (*optarg) {
-                    case 'd': // error diffusion
-                        dither = new DiffusionDither(RBITS, GBITS, BBITS);
-                    break;
-                    case 'o': // ordered dither
-                        dither = new OrderedDither(RBITS, GBITS, BBITS);
-                    break;
-                    case 't': // threshold dither (no dither)
-                        dither = new Threshold(RBITS, GBITS, BBITS);
-                    break;
-                }
+            case 'd': // error diffusion
+                dither = new DiffusionDither(RBITS, GBITS, BBITS);
+            break;
+            case 'o': // ordered dither
+                dither = new OrderedDither(RBITS, GBITS, BBITS);
+            break;
+            case 't': // threshold dither (no dither)
+                dither = new Threshold(RBITS, GBITS, BBITS);
             break;
             case 'O': // optimize image
                 optimize = true;
@@ -175,7 +172,6 @@ int main(int argc, char** argv) {
 
         std::cerr << colorMap.size() << " unique colors" << std::endl;
         std::cerr << "After reduction: " << mm.size() << " colors" << std::endl;
-
 
         seq.mov(0,0).define_area_of_interest(width, height).send();
 
