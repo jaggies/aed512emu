@@ -41,7 +41,7 @@ class GLWidget : public QOpenGLWidget
 
     signals:
         void signal_key(QKeyEvent* event);
-        void signal_mouseMove(QMouseEvent* event);
+        void signal_mouseMove(int x, int y);
 
     private:
         Renderer* _renderer;

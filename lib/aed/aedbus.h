@@ -129,6 +129,8 @@ class AedBus : public BUS {
         uint32_t getPixel(int x, int y);
 
         void setCpuTime(uint64_t t) { _cpuTime = t; }
+
+        // X and Y are supposed to have 12-bit precision, so they range from 0..4095
         void setJoystick(uint16_t x, uint16_t y) { _joyX = x; _joyY = y; }
 
     private:

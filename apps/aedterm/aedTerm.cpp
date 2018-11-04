@@ -228,7 +228,7 @@ static void motion(int x, int y)
 
 static void passiveMotion(int x, int y)
 {
-    bus->setJoystick(x, y);
+    bus->setJoystick(x * 4096 / (windowWidth-1), y * 4096 / (windowHeight-1));
 }
 
 static void idle() {

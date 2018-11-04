@@ -70,7 +70,9 @@ void GLWidget::mouseReleaseEvent ( QMouseEvent * event ) {
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event) {
-    emit signal_mouseMove(event);
+    const int x = event->pos().x() * 4096 / (width() - 1);
+    const int y = event->pos().y() * 4096 / (height() - 1);
+    emit signal_mouseMove(x, y);
 }
 
 void GLWidget::keyPressEvent(QKeyEvent* event) {

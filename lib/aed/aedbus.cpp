@@ -184,10 +184,10 @@ void AedBus::handlePIA1(M68B21::Port port, uint8_t oldData, uint8_t newData) {
                         addEvent(Event(JOYSTICK_SET, _cpuTime));
                     break;
                     case JSTK: // Y joystick tracking - charge Y
-                        _joyDelay = 5 * (512 - _joyY); // Y is inverted by hw design.
+                        _joyDelay = (4096 - _joyY)*2564/4096; // Y is inverted by hw design.
                     break;
                     case (JSTK | ADCH0): // X joystick tracking - charge X
-                        _joyDelay = 5 * _joyX;
+                        _joyDelay = _joyX*2564/4096;
                     break;
                 }
             }

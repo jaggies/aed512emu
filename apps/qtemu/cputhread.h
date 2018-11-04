@@ -44,8 +44,8 @@ class CpuThread: public QThread {
                 _bus->keyDown(key);
             }
         }
-        void slot_mouse(QMouseEvent* event) {
-            _bus->setJoystick(event->pos().x() , event->pos().y());
+        void slot_mouse(int x, int y) {
+            _bus->setJoystick(x, y);
         }
 
     private:
