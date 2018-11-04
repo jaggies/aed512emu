@@ -27,6 +27,7 @@ class GLWidget : public QOpenGLWidget
         void wheelEvent(QWheelEvent *event) override;
         void mousePressEvent ( QMouseEvent * event ) override;
         void mouseReleaseEvent ( QMouseEvent * event ) override;
+        void mouseMoveEvent(QMouseEvent *event) override;
         void keyPressEvent(QKeyEvent* event) override;
         void keyReleaseEvent(QKeyEvent* event) override;
 
@@ -40,6 +41,7 @@ class GLWidget : public QOpenGLWidget
 
     signals:
         void signal_key(QKeyEvent* event);
+        void signal_mouseMove(QMouseEvent* event);
 
     private:
         Renderer* _renderer;

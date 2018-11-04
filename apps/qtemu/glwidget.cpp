@@ -37,6 +37,8 @@ GLWidget::GLWidget(QWidget *parent) : QOpenGLWidget(parent), _accumMouse(0)
     _renderer = new GlTextureRenderer(512, 512); // TODO
     _timer = new QTimer();
     connect(_timer, SIGNAL(timeout()), this, SLOT(timeout()));
+
+    setMouseTracking(true);
 }
 
 void GLWidget::initializeGL() {
@@ -65,6 +67,10 @@ void GLWidget::mousePressEvent ( QMouseEvent * event ) {
 
 void GLWidget::mouseReleaseEvent ( QMouseEvent * event ) {
     std::cerr << "Mouse release: " << event->button() << std::endl;
+}
+
+void GLWidget::mouseMoveEvent(QMouseEvent *event) {
+    emit signal_mouseMove(event);
 }
 
 void GLWidget::keyPressEvent(QKeyEvent* event) {

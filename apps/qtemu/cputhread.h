@@ -44,6 +44,9 @@ class CpuThread: public QThread {
                 _bus->keyDown(key);
             }
         }
+        void slot_mouse(QMouseEvent* event) {
+            _bus->setJoystick(event->pos().x() , event->pos().y());
+        }
 
     private:
         typedef CLK Clock;

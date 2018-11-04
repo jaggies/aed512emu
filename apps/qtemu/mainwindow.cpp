@@ -25,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(cpuThread, &CpuThread::signal_serial0_out, ioThread, &IoThread::slot_serial0_in);
     connect(cpuThread, &CpuThread::signal_serial1_out, ioThread, &IoThread::slot_serial1_in);
     connect(glw, &GLWidget::signal_key, cpuThread, &CpuThread::slot_key);
+    connect(glw, &GLWidget::signal_mouseMove, cpuThread, &CpuThread::slot_mouse);
     cpuThread->start();
     ioThread->start();
 }
