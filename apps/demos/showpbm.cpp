@@ -43,6 +43,7 @@ static void analyzeCB(void* clientData, int x, int y, unsigned char pixel[3]) {
 
 static void ditherCB(void* clientData, int x, int y, unsigned char pixel[3]) {
     static int ylast = -1;
+    if (y < 0 || y > 511) return;
     if (ylast != y) {
         ylast = y;
         if (idx > 0) {
@@ -69,6 +70,9 @@ static void optimalDisplayCB(void* clientData, int x, int y, unsigned char pixel
     static int ylast = -1;
     static int rerr, gerr, berr;
     MultiMap& map = *(MultiMap*) clientData;
+
+    if (y < 0 || y > 511) return;
+
     if (ylast != y) {
         ylast = y;
         if (idx > 0) {
