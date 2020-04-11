@@ -72,13 +72,13 @@ static void checkGLError(const char* msg) {
 static void doShell(const char* path) {
     int parentToChild[2];
     int childToParent[2];
-    if (!pipe(parentToChild)) {
-	std::cerr << "Failed to open parent pipe: " << strerror(errno) << std::endl;
-	exit(0);
+    if (pipe(parentToChild)) {
+	    std::cerr << "Failed to open parent pipe: " << strerror(errno) << std::endl;
+	    exit(0);
     }
-    if (!pipe(childToParent)) {
-	std::cerr << "Failed to open child pipe: " << strerror(errno) << std::endl;
-	exit(0);
+    if (pipe(childToParent)) {
+	    std::cerr << "Failed to open child pipe: " << strerror(errno) << std::endl;
+	    exit(0);
     }
     pid_t pid;
     if ((pid = fork()) == -1) { //error
@@ -444,9 +444,13 @@ int main(int argc, char **argv)
     }
 
     int opt;
+	int zoom = 1;
     const char* shell = nullptr;
-    while ((opt = getopt(argc, argv, "e:")) != -1) {
+    while ((opt = getopt(argc, argv, "e:z:")) != -1) {
         switch (opt) {
+			case 'z':
+			    zoom = atoi(optarg);
+			break;
             case 'e':
                 shell = optarg;
             break;
@@ -466,7 +470,7 @@ int main(int argc, char **argv)
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     //glutInitDisplayString("rgba stencil double samples=64 hidpi");
-    glutInitWindowSize(bus->getDisplayWidth(), bus->getDisplayHeight());
+    glutInitWindowSize(zoom*bus->getDisplayWidth(), zoom*bus->getDisplayHeight());
     glutIdleFunc(idle);
     glutCreateWindow(argv[0]);
     checkGLError("before gentex");
