@@ -20,6 +20,7 @@ const int BBITS = 2;
 static Dither* dither;
 
 static int width, height, depth;
+static int centerX, centerY;
 static uint8_t* buffer;
 static int idx;
 static AedSequence seq;
@@ -47,7 +48,7 @@ static void ditherCB(void* clientData, int x, int y, unsigned char pixel[3]) {
     if (ylast != y) {
         ylast = y;
         if (idx > 0) {
-            seq.mov(0,511-y).write_horizontal_runs(buffer, idx).send();
+            seq.mov(centerX, 511-(y+centerY)).write_horizontal_runs(buffer, idx).send();
         }
         idx = 0;
     }
@@ -60,7 +61,7 @@ static void grayCB(void* clientData, int x, int y, unsigned char pixel[3]) {
     if (ylast != y) {
         ylast = y;
         if (idx > 0) {
-            seq.mov(0,511-y).write_horizontal_runs(buffer, idx).send();
+			seq.mov(centerX, 511-(y+centerY)).write_horizontal_runs(buffer, idx).send();
         }
         idx = 0;
     }
@@ -90,7 +91,7 @@ static void optimalDisplayCB(void* clientData, int x, int y, unsigned char pixel
     if (ylast != y) {
         ylast = y;
         if (idx > 0) {
-            seq.mov(0,511-y).write_horizontal_runs(buffer, idx).send();
+            seq.mov(centerX, centerY + 511-y).write_horizontal_runs(buffer, idx).send();
         }
         idx = 0;
     }
@@ -164,6 +165,11 @@ int main(int argc, char** argv) {
 
     buffer = new uint8_t[width];
     Map colorMap;
+
+	centerX = (512 - pbm->width) / 2;
+	centerY = (512 - pbm->height) / 2;
+	centerX = centerX < 0 ? 0 : centerX;
+	centerY = centerY < 0 ? 0 : centerX;
 
     if (!optimize) {
         if (pbm->mode == 6) {
