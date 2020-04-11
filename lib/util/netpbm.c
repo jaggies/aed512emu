@@ -18,26 +18,30 @@ static int openNetPBM(NetPBM* pbm, const char* path, int* width, int* height, in
     }
     if (mode == NETPBM_WRITE) {
         if (*width == 0 || *height == 0) {
-            fprintf(stderr, "Width and height must be non-zero\n");
+            printf("Width and height must be non-zero\n");
             return 0;
         }
-        pbm->fp = fopen(path, "w");
+        pbm->fp = fopen(path, "wb");
         if (!pbm->fp) {
-            fprintf(stderr, "Couldn't open file %s for write!\n", path);
+            printf("Couldn't open file %s for write!\n", path);
             return 0;
         }
         fprintf(pbm->fp, "P6 %d %d %d\n", *width, *height, *depth);
         return 1;
     } else if (mode == NETPBM_READ) {
-        char hdr[8];
-        pbm->fp = fopen(path, "r");
+        int n;
+        pbm->fp = fopen(path, "rb");
         if (!pbm->fp) {
-            fprintf(stderr, "Couldn't open pbm file '%s'\n", path);
+            printf("Couldn't open pbm file '%s'\n", path);
             return 0;
         }
-        int n = fscanf(pbm->fp, "%s %d %d %d\n", hdr, &pbm->width, &pbm->height, &pbm->depth);
+        n = fscanf(pbm->fp, "P%d %d %d %d\n", &pbm->mode, &pbm->width, &pbm->height, &pbm->depth);
+        if (pbm->mode != 6 && pbm->mode != 5 && pbm->mode != 1) {
+            printf("Invalid mode %d\n", pbm->mode);
+            return 0;
+        }
         if (n != 4 || pbm->width == 0 || pbm->height == 0) {
-            fprintf(stderr, "Invalid width/height while reading pbm header\n");
+            printf("Invalid width/height while reading pbm header\n");
             fclose(pbm->fp);
             pbm->fp = 0;
             return 0;
@@ -47,7 +51,7 @@ static int openNetPBM(NetPBM* pbm, const char* path, int* width, int* height, in
         *depth = pbm->depth; /* TODO: convert to # bits */
         return 1;
     } else {
-        fprintf(stderr, "Invalid mode: %d\n", mode);
+        printf("Invalid mode: %d\n", mode);
     }
     return 0;
 }
@@ -61,10 +65,24 @@ static void readNetPBM(NetPBM* pbm, PixelCallback cb, void* clientData)
         return;
     }
     for (y = 0; y < pbm->height; y++) {
+        unsigned char pix = 0; // for bitmap mode
         for (x = 0; x < pbm->width; x++) {
-            pixel[0] = fgetc(pbm->fp);
-            pixel[1] = fgetc(pbm->fp);
-            pixel[2] = fgetc(pbm->fp);
+            if (pbm->mode == 1) {
+                // Bitmap
+                if (!(x%8)) {
+                    pix = fgetc(pbm->fp);
+                }
+                pixel[0] =  pixel[1] = pixel[2] = (pix & 0x80) ? 255 : 0;
+                pix <<= 1;
+            } else if (pbm->mode == 5) {
+                // Grayscale
+                pixel[0] =  pixel[1] = pixel[2] = fgetc(pbm->fp);
+            } else if (pbm->mode == 6) {
+                // RGB
+                pixel[0] = fgetc(pbm->fp);
+                pixel[1] = fgetc(pbm->fp);
+                pixel[2] = fgetc(pbm->fp);
+            }
             (*cb)(clientData, x, y, pixel);
             if (feof(pbm->fp)) {
                 printf("EOF detected\n");
