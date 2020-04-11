@@ -54,6 +54,20 @@ static void ditherCB(void* clientData, int x, int y, unsigned char pixel[3]) {
     buffer[idx++] = dither->dither(pixel[0], pixel[1], pixel[2], x, 511-y);
 }
 
+static void grayCB(void* clientData, int x, int y, unsigned char pixel[3]) {
+    static int ylast = -1;
+    if (y < 0 || y > 511) return;
+    if (ylast != y) {
+        ylast = y;
+        if (idx > 0) {
+            seq.mov(0,511-y).write_horizontal_runs(buffer, idx).send();
+        }
+        idx = 0;
+    }
+    buffer[idx++] = pixel[0]; // all the same
+}
+
+
 static int dist(uint32_t a, uint32_t b) {
     uint8_t r1, g1, b1;
     decompose(a, r1, g1, b1);
@@ -152,8 +166,16 @@ int main(int argc, char** argv) {
     Map colorMap;
 
     if (!optimize) {
-        initLut(seq, 3, 3, 2);
-        pbm->read(pbm, ditherCB, nullptr);
+        if (pbm->mode == 6) {
+            initLut(seq, 3, 3, 2);
+            pbm->read(pbm, ditherCB, nullptr);
+        } else if (pbm->mode == 5 || pbm->mode == 4) {
+            initGrayLut(seq);
+            pbm->read(pbm, grayCB, nullptr);
+        } else {
+            printf("Unrecognized PBM mode %d\n", pbm->mode);
+        }
+
     } else {
         // Find the 256 most common colors
         pbm->read(pbm, analyzeCB, &colorMap);
