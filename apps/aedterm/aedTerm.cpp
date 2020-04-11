@@ -444,13 +444,13 @@ int main(int argc, char **argv)
     }
 
     int opt;
-	int zoom = 1;
+    float zoom = 1.0f;
     const char* shell = nullptr;
     while ((opt = getopt(argc, argv, "e:z:")) != -1) {
         switch (opt) {
-			case 'z':
-			    zoom = atoi(optarg);
-			break;
+            case 'z':
+                zoom = atof(optarg);
+            break;
             case 'e':
                 shell = optarg;
             break;
