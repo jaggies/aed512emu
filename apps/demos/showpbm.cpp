@@ -82,7 +82,7 @@ static void optimalDisplayCB(void* clientData, int x, int y, unsigned char pixel
             std::max(0, std::min(255,int(pixel[2])+berr)));
     uint32_t bestIndex = 0;
     uint32_t bestColor = map.begin()->second;
-    int bestDist = dist(color, bestColor); // pick the first color to start
+    uint32_t bestDist = dist(color, bestColor); // pick the first color to start
     int index = 0;
     for (auto iter = map.begin(); iter != map.end(); iter++) {
         uint32_t d = dist(color, iter->second);

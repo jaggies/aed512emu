@@ -17,7 +17,7 @@ if $(OS) = MACOSX {
     C++FLAGS += -DMACOSX -F $(QTFRAMEWORK) ;
     LINKLIBS on qtemu = $(LINKLIBS) -F $(QTFRAMEWORK) -lemu -lGLEW -framework\ $(FRAMEWORKS) ;
 } else {
-    LINKLIBS on qtemu = $(LINKLIBS) -L/usr/lib/x86_64-linux-gnu/ -lGL -lQt5Gui -lQt5Core -lQt5OpenGL -lQt5Widgets $(LINKLIBS) ;
+    LINKLIBS on qtemu = $(LINKLIBS) -L/usr/lib/x86_64-linux-gnu/ -lGL -lGLEW -lGLU -lQt5Gui -lQt5Core -lQt5OpenGL -lQt5Widgets $(LINKLIBS) -lemu ;
 }
 
 Uic ui_mainwindow.h : mainwindow.ui ;
